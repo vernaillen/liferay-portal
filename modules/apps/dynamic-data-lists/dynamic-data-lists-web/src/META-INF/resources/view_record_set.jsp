@@ -19,18 +19,20 @@
 <%
 String redirect = ParamUtil.getString(request, "redirect");
 
+if (Validator.isNull(redirect)) {
+	PortletURL redirectURL = renderResponse.createRenderURL();
+
+	redirectURL.setParameter("mvcPath", "/view.jsp");
+
+	redirect = redirectURL.toString();
+}
+
 DDLRecordSet recordSet = (DDLRecordSet)request.getAttribute(DDLWebKeys.DYNAMIC_DATA_LISTS_RECORD_SET);
 
 long displayDDMTemplateId = ParamUtil.getLong(request, "displayDDMTemplateId");
 
 boolean spreadsheet = ParamUtil.getBoolean(request, "spreadsheet");
 %>
-
-<liferay-ui:header
-	backURL="<%= redirect %>"
-	localizeTitle="<%= false %>"
-	title="<%= recordSet.getName(locale) %>"
-/>
 
 <c:choose>
 	<c:when test="<%= displayDDMTemplateId > 0 %>">
@@ -49,7 +51,12 @@ boolean spreadsheet = ParamUtil.getBoolean(request, "spreadsheet");
 </c:choose>
 
 <%
-if (portletName.equals(DDLPortletKeys.DYNAMIC_DATA_LISTS)) {
+if (ddlDisplayContext.isAdminPortlet()) {
+	portletDisplay.setShowBackIcon(true);
+	portletDisplay.setURLBack(redirect);
+
+	renderResponse.setTitle(recordSet.getName(locale));
+
 	PortalUtil.setPageSubtitle(recordSet.getName(locale), request);
 	PortalUtil.setPageDescription(recordSet.getDescription(locale), request);
 }

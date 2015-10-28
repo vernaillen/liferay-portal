@@ -22,7 +22,6 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
@@ -57,7 +56,6 @@ import com.liferay.portal.service.PortletLocalServiceUtil;
 import com.liferay.portal.service.RoleLocalServiceUtil;
 import com.liferay.portal.service.UserGroupLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
-import com.liferay.portal.service.permission.GroupPermissionUtil;
 import com.liferay.portal.service.permission.LayoutPermissionUtil;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
@@ -74,9 +72,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
 
 /**
  * Represents either a site or a generic resource container.
@@ -110,20 +105,6 @@ public class GroupImpl extends GroupBaseImpl {
 	@Override
 	public void clearStagingGroup() {
 		_stagingGroup = null;
-	}
-
-	@Override
-	public PortletURL getAdministrationURL(ThemeDisplay themeDisplay) {
-		Portlet portlet = PortalUtil.getFirstSiteAdministrationPortlet(
-			themeDisplay);
-
-		if (portlet == null) {
-			return null;
-		}
-
-		return PortalUtil.getControlPanelPortletURL(
-			themeDisplay.getRequest(), this, portlet.getPortletId(), 0,
-			PortletRequest.RENDER_PHASE);
 	}
 
 	@Override
@@ -213,6 +194,13 @@ public class GroupImpl extends GroupBaseImpl {
 		Group curGroup = this;
 
 		String name = getName(locale);
+
+		if (Validator.isNull(name)) {
+			Locale siteDefaultLocale = PortalUtil.getSiteDefaultLocale(
+				getGroupId());
+
+			name = getName(siteDefaultLocale);
+		}
 
 		if (isCompany() && !isCompanyStagingGroup()) {
 			name = LanguageUtil.get(locale, "global");
@@ -315,21 +303,6 @@ public class GroupImpl extends GroupBaseImpl {
 
 				return PortalUtil.addPreservedParameters(
 					themeDisplay, groupFriendlyURL);
-			}
-			catch (PortalException pe) {
-				_log.error(pe);
-			}
-		}
-		else {
-			try {
-				if (GroupPermissionUtil.contains(
-						themeDisplay.getPermissionChecker(), this,
-						ActionKeys.VIEW_SITE_ADMINISTRATION)) {
-
-					PortletURL portletURL = getAdministrationURL(themeDisplay);
-
-					return portletURL.toString();
-				}
 			}
 			catch (PortalException pe) {
 				_log.error(pe);
@@ -587,28 +560,14 @@ public class GroupImpl extends GroupBaseImpl {
 		throws PortalException {
 
 		if (getGroupId() == themeDisplay.getScopeGroupId()) {
-			StringBundler sb = new StringBundler(5);
-
-			sb.append(themeDisplay.translate("current-site"));
-			sb.append(StringPool.SPACE);
-			sb.append(StringPool.OPEN_PARENTHESIS);
-			sb.append(
+			return StringUtil.appendParentheticalSuffix(
+				themeDisplay.translate("current-site"),
 				HtmlUtil.escape(getDescriptiveName(themeDisplay.getLocale())));
-			sb.append(StringPool.CLOSE_PARENTHESIS);
-
-			return sb.toString();
 		}
 		else if (isLayout() && (getClassPK() == themeDisplay.getPlid())) {
-			StringBundler sb = new StringBundler(5);
-
-			sb.append(themeDisplay.translate("current-page"));
-			sb.append(StringPool.SPACE);
-			sb.append(StringPool.OPEN_PARENTHESIS);
-			sb.append(
+			return StringUtil.appendParentheticalSuffix(
+				themeDisplay.translate("current-page"),
 				HtmlUtil.escape(getDescriptiveName(themeDisplay.getLocale())));
-			sb.append(StringPool.CLOSE_PARENTHESIS);
-
-			return sb.toString();
 		}
 		else if (isLayoutPrototype()) {
 			return themeDisplay.translate("default");
@@ -724,15 +683,8 @@ public class GroupImpl extends GroupBaseImpl {
 	@Override
 	public String getUnambiguousName(String name, Locale locale) {
 		try {
-			StringBundler sb = new StringBundler(5);
-
-			sb.append(name);
-			sb.append(StringPool.SPACE);
-			sb.append(StringPool.OPEN_PARENTHESIS);
-			sb.append(getDescriptiveName(locale));
-			sb.append(StringPool.CLOSE_PARENTHESIS);
-
-			return sb.toString();
+			return StringUtil.appendParentheticalSuffix(
+				name, getDescriptiveName(locale));
 		}
 		catch (Exception e) {
 			return name;

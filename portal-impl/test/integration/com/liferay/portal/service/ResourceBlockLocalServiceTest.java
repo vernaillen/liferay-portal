@@ -88,6 +88,13 @@ public class ResourceBlockLocalServiceTest {
 				expectedType = ExpectedType.PREFIX
 			),
 			@ExpectedLog(
+				dbType = DB.TYPE_HYPERSONIC,
+				expectedLog =
+					"integrity constraint violation: unique constraint or " +
+						"index violation:",
+				expectedType = ExpectedType.PREFIX
+			),
+			@ExpectedLog(
 				dbType = DB.TYPE_MYSQL,
 				expectedLog =
 					"Deadlock found when trying to get lock; try restarting " +
@@ -119,7 +126,7 @@ public class ResourceBlockLocalServiceTest {
 				expectedLog =
 					"Attempt to insert duplicate key row in object " +
 						"'ResourceBlock'",
-				expectedType = ExpectedType.PREFIX
+				expectedType = ExpectedType.CONTAINS
 			)
 		},
 		level = "ERROR", loggerClass = JDBCExceptionReporter.class
@@ -211,6 +218,13 @@ public class ResourceBlockLocalServiceTest {
 				expectedType = ExpectedType.PREFIX
 			),
 			@ExpectedLog(
+				dbType = DB.TYPE_HYPERSONIC,
+				expectedLog =
+					"integrity constraint violation: unique constraint or " +
+						"index violation:",
+				expectedType = ExpectedType.PREFIX
+			),
+			@ExpectedLog(
 				dbType = DB.TYPE_MYSQL,
 				expectedLog =
 					"Deadlock found when trying to get lock; try restarting " +
@@ -242,7 +256,7 @@ public class ResourceBlockLocalServiceTest {
 				expectedLog =
 					"Attempt to insert duplicate key row in object " +
 						"'ResourceBlock'",
-				expectedType = ExpectedType.PREFIX
+				expectedType = ExpectedType.CONTAINS
 			)
 		},
 		level = "ERROR", loggerClass = JDBCExceptionReporter.class

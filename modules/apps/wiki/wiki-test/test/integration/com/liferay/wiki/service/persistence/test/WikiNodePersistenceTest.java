@@ -45,6 +45,7 @@ import com.liferay.wiki.service.persistence.WikiNodeUtil;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -64,8 +65,9 @@ import java.util.Set;
  */
 @RunWith(Arquillian.class)
 public class WikiNodePersistenceTest {
+	@ClassRule
 	@Rule
-	public final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
+	public static final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
 			PersistenceTestRule.INSTANCE,
 			new TransactionalTestRule(Propagation.REQUIRED));
 
@@ -402,11 +404,9 @@ public class WikiNodePersistenceTest {
 
 		ActionableDynamicQuery actionableDynamicQuery = WikiNodeLocalServiceUtil.getActionableDynamicQuery();
 
-		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod() {
+		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<WikiNode>() {
 				@Override
-				public void performAction(Object object) {
-					WikiNode wikiNode = (WikiNode)object;
-
+				public void performAction(WikiNode wikiNode) {
 					Assert.assertNotNull(wikiNode);
 
 					count.increment();
@@ -501,13 +501,13 @@ public class WikiNodePersistenceTest {
 		Assert.assertTrue(Validator.equals(existingWikiNode.getUuid(),
 				ReflectionTestUtil.invoke(existingWikiNode, "getOriginalUuid",
 					new Class<?>[0])));
-		Assert.assertEquals(existingWikiNode.getGroupId(),
-			ReflectionTestUtil.invoke(existingWikiNode, "getOriginalGroupId",
-				new Class<?>[0]));
+		Assert.assertEquals(Long.valueOf(existingWikiNode.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(existingWikiNode,
+				"getOriginalGroupId", new Class<?>[0]));
 
-		Assert.assertEquals(existingWikiNode.getGroupId(),
-			ReflectionTestUtil.invoke(existingWikiNode, "getOriginalGroupId",
-				new Class<?>[0]));
+		Assert.assertEquals(Long.valueOf(existingWikiNode.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(existingWikiNode,
+				"getOriginalGroupId", new Class<?>[0]));
 		Assert.assertTrue(Validator.equals(existingWikiNode.getName(),
 				ReflectionTestUtil.invoke(existingWikiNode, "getOriginalName",
 					new Class<?>[0])));

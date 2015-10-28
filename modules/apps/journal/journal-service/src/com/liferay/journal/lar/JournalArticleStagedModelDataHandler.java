@@ -16,8 +16,10 @@ package com.liferay.journal.lar;
 
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
-import com.liferay.dynamic.data.mapping.service.DDMStructureLocalServiceUtil;
-import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalServiceUtil;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
+import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
+import com.liferay.exportimport.lar.BaseStagedModelDataHandler;
+import com.liferay.journal.exportimport.content.processor.JournalArticleExportImportContentProcessor;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.model.JournalArticleConstants;
 import com.liferay.journal.model.JournalArticleImage;
@@ -45,12 +47,10 @@ import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Image;
 import com.liferay.portal.model.Layout;
 import com.liferay.portal.model.User;
-import com.liferay.portal.service.ImageLocalServiceUtil;
+import com.liferay.portal.service.ImageLocalService;
 import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.service.UserLocalServiceUtil;
+import com.liferay.portal.service.UserLocalService;
 import com.liferay.portal.util.PortalUtil;
-import com.liferay.portlet.exportimport.lar.BaseStagedModelDataHandler;
-import com.liferay.portlet.exportimport.lar.ExportImportHelperUtil;
 import com.liferay.portlet.exportimport.lar.ExportImportPathUtil;
 import com.liferay.portlet.exportimport.lar.PortletDataContext;
 import com.liferay.portlet.exportimport.lar.PortletDataException;
@@ -176,7 +176,7 @@ public class JournalArticleStagedModelDataHandler
 		long defaultUserId = 0;
 
 		try {
-			defaultUserId = UserLocalServiceUtil.getDefaultUserId(
+			defaultUserId = _userLocalService.getDefaultUserId(
 				article.getCompanyId());
 		}
 		catch (Exception e) {
@@ -308,7 +308,7 @@ public class JournalArticleStagedModelDataHandler
 				PortletDataContext.REFERENCE_TYPE_PARENT);
 		}
 
-		DDMStructure ddmStructure = DDMStructureLocalServiceUtil.getStructure(
+		DDMStructure ddmStructure = _ddmStructureLocalService.getStructure(
 			article.getGroupId(),
 			PortalUtil.getClassNameId(JournalArticle.class),
 			article.getDDMStructureKey(), true);
@@ -320,7 +320,7 @@ public class JournalArticleStagedModelDataHandler
 		if (article.getClassNameId() !=
 				PortalUtil.getClassNameId(DDMStructure.class)) {
 
-			DDMTemplate ddmTemplate = DDMTemplateLocalServiceUtil.getTemplate(
+			DDMTemplate ddmTemplate = _ddmTemplateLocalService.getTemplate(
 				article.getGroupId(),
 				PortalUtil.getClassNameId(DDMStructure.class),
 				article.getDDMTemplateKey(), true);
@@ -339,15 +339,16 @@ public class JournalArticleStagedModelDataHandler
 		}
 
 		if (article.isSmallImage()) {
-			Image smallImage = ImageLocalServiceUtil.fetchImage(
+			Image smallImage = _imageLocalService.fetchImage(
 				article.getSmallImageId());
 
 			if (Validator.isNotNull(article.getSmallImageURL())) {
 				String smallImageURL =
-					ExportImportHelperUtil.replaceExportContentReferences(
-						portletDataContext, article,
-						article.getSmallImageURL() + StringPool.SPACE, true,
-						false);
+					_journalArticleExportImportContentProcessor.
+						replaceExportContentReferences(
+							portletDataContext, article,
+							article.getSmallImageURL() + StringPool.SPACE, true,
+							false);
 
 				article.setSmallImageURL(smallImageURL);
 			}
@@ -378,15 +379,17 @@ public class JournalArticleStagedModelDataHandler
 
 		article.setStatusByUserUuid(article.getStatusByUserUuid());
 
-		String content = ExportImportHelperUtil.replaceExportContentReferences(
-			portletDataContext, article, article.getContent(),
-			portletDataContext.getBooleanParameter(
-				"journal", "referenced-content"),
-			false);
+		String content =
+			_journalArticleExportImportContentProcessor.
+				replaceExportContentReferences(
+					portletDataContext, article, article.getContent(),
+					portletDataContext.getBooleanParameter(
+						"journal", "referenced-content"),
+					false);
 
 		article.setContent(content);
 
-		long defaultUserId = UserLocalServiceUtil.getDefaultUserId(
+		long defaultUserId = _userLocalService.getDefaultUserId(
 			article.getCompanyId());
 
 		if (defaultUserId == article.getUserId()) {
@@ -415,7 +418,7 @@ public class JournalArticleStagedModelDataHandler
 			userId = authorId;
 		}
 
-		User user = UserLocalServiceUtil.getUser(userId);
+		User user = _userLocalService.getUser(userId);
 
 		Map<Long, Long> folderIds =
 			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
@@ -453,8 +456,10 @@ public class JournalArticleStagedModelDataHandler
 
 		String content = article.getContent();
 
-		content = ExportImportHelperUtil.replaceImportContentReferences(
-			portletDataContext, article, content);
+		content =
+			_journalArticleExportImportContentProcessor.
+				replaceImportContentReferences(
+					portletDataContext, article, content);
 
 		article.setContent(content);
 
@@ -582,9 +587,10 @@ public class JournalArticleStagedModelDataHandler
 
 				if (Validator.isNotNull(article.getSmallImageURL())) {
 					String smallImageURL =
-						ExportImportHelperUtil.replaceImportContentReferences(
-							portletDataContext, article,
-							article.getSmallImageURL());
+						_journalArticleExportImportContentProcessor.
+							replaceImportContentReferences(
+								portletDataContext, article,
+								article.getSmallImageURL());
 
 					article.setSmallImageURL(smallImageURL);
 				}
@@ -792,7 +798,7 @@ public class JournalArticleStagedModelDataHandler
 		PortletDataContext portletDataContext, JournalArticleImage articleImage,
 		JournalArticle article, Element articleElement) {
 
-		Image image = ImageLocalServiceUtil.fetchImage(
+		Image image = _imageLocalService.fetchImage(
 			articleImage.getArticleImageId());
 
 		if ((image == null) || (image.getTextObj() == null)) {
@@ -892,21 +898,49 @@ public class JournalArticleStagedModelDataHandler
 			groupId, articleId, version);
 	}
 
-	@Reference
+	@Reference(unbind = "-")
+	protected void setDDMStructureLocalService(
+		DDMStructureLocalService ddmStructureLocalService) {
+
+		_ddmStructureLocalService = ddmStructureLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setDDMTemplateLocalService(
+		DDMTemplateLocalService ddmTemplateLocalService) {
+
+		_ddmTemplateLocalService = ddmTemplateLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setImageLocalService(ImageLocalService imageLocalService) {
+		_imageLocalService = imageLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setJournalArticleExportImportContentProcessor(
+		JournalArticleExportImportContentProcessor
+			journalArticleExportImportContentProcessor) {
+
+		_journalArticleExportImportContentProcessor =
+			journalArticleExportImportContentProcessor;
+	}
+
+	@Reference(unbind = "-")
 	protected void setJournalArticleImageLocalService(
 		JournalArticleImageLocalService journalArticleImageLocalService) {
 
 		_journalArticleImageLocalService = journalArticleImageLocalService;
 	}
 
-	@Reference
+	@Reference(unbind = "-")
 	protected void setJournalArticleLocalService(
 		JournalArticleLocalService journalArticleLocalService) {
 
 		_journalArticleLocalService = journalArticleLocalService;
 	}
 
-	@Reference
+	@Reference(unbind = "-")
 	protected void setJournalArticleResourceLocalService(
 		JournalArticleResourceLocalService journalArticleResourceLocalService) {
 
@@ -914,9 +948,20 @@ public class JournalArticleStagedModelDataHandler
 			journalArticleResourceLocalService;
 	}
 
+	@Reference(unbind = "-")
+	protected void setUserLocalService(UserLocalService userLocalService) {
+		_userLocalService = userLocalService;
+	}
+
+	private DDMStructureLocalService _ddmStructureLocalService;
+	private DDMTemplateLocalService _ddmTemplateLocalService;
+	private ImageLocalService _imageLocalService;
+	private JournalArticleExportImportContentProcessor
+		_journalArticleExportImportContentProcessor;
 	private JournalArticleImageLocalService _journalArticleImageLocalService;
 	private JournalArticleLocalService _journalArticleLocalService;
 	private JournalArticleResourceLocalService
 		_journalArticleResourceLocalService;
+	private UserLocalService _userLocalService;
 
 }

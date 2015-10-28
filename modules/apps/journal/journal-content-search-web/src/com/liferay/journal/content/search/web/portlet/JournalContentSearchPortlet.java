@@ -14,8 +14,6 @@
 
 package com.liferay.journal.content.search.web.portlet;
 
-import com.liferay.journal.content.search.web.upgrade.JournalContentSearchWebUpgrade;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.LayoutTypePortlet;
@@ -30,7 +28,6 @@ import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Eudaldo Alonso
@@ -74,20 +71,11 @@ public class JournalContentSearchPortlet extends MVCPortlet {
 
 		String portletId = PortalUtil.getPortletId(renderRequest);
 
-		try {
-			if (!layoutTypePortlet.hasPortletId(portletId)) {
-				renderResponse.setTitle(themeDisplay.translate("search"));
-			}
-		}
-		catch (PortalException pe) {
+		if (!layoutTypePortlet.hasPortletId(portletId)) {
+			renderResponse.setTitle(themeDisplay.translate("search"));
 		}
 
 		super.doView(renderRequest, renderResponse);
-	}
-
-	@Reference(unbind = "-")
-	protected void setJournalContentSearchWebUpgrade(
-		JournalContentSearchWebUpgrade journalContentSearchWebUpgrade) {
 	}
 
 }

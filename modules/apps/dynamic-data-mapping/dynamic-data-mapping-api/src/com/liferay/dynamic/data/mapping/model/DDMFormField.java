@@ -39,6 +39,9 @@ public class DDMFormField implements Serializable {
 
 		setDDMFormFieldOptions(
 			new DDMFormFieldOptions(ddmFormField.getDDMFormFieldOptions()));
+		setDDMFormFieldValidation(
+			new DDMFormFieldValidation(
+				ddmFormField.getDDMFormFieldValidation()));
 		setLabel(new LocalizedValue(ddmFormField.getLabel()));
 		setPredefinedValue(
 			new LocalizedValue(ddmFormField.getPredefinedValue()));
@@ -83,6 +86,10 @@ public class DDMFormField implements Serializable {
 		return (DDMFormFieldOptions)_properties.get("options");
 	}
 
+	public DDMFormFieldValidation getDDMFormFieldValidation() {
+		return (DDMFormFieldValidation)_properties.get("validation");
+	}
+
 	public String getFieldNamespace() {
 		return MapUtil.getString(_properties, "fieldNamespace");
 	}
@@ -122,6 +129,10 @@ public class DDMFormField implements Serializable {
 		return (LocalizedValue)_properties.get("predefinedValue");
 	}
 
+	public Map<String, Object> getProperties() {
+		return _properties;
+	}
+
 	public Object getProperty(String name) {
 		return _properties.get(name);
 	}
@@ -136,14 +147,6 @@ public class DDMFormField implements Serializable {
 
 	public String getType() {
 		return MapUtil.getString(_properties, "type");
-	}
-
-	public String getValidationExpression() {
-		return MapUtil.getString(_properties, "validationExpression");
-	}
-
-	public String getValidationMessage() {
-		return MapUtil.getString(_properties, "validationMessage");
 	}
 
 	public String getVisibilityExpression() {
@@ -198,6 +201,12 @@ public class DDMFormField implements Serializable {
 		DDMFormFieldOptions ddmFormFieldOptions) {
 
 		_properties.put("options", ddmFormFieldOptions);
+	}
+
+	public void setDDMFormFieldValidation(
+		DDMFormFieldValidation ddmFormFieldValidation) {
+
+		_properties.put("validation", ddmFormFieldValidation);
 	}
 
 	public void setFieldNamespace(String fieldNamespace) {
@@ -262,14 +271,6 @@ public class DDMFormField implements Serializable {
 
 	public void setType(String type) {
 		_properties.put("type", type);
-	}
-
-	public void setValidationExpression(String validationExpression) {
-		_properties.put("validationExpression", validationExpression);
-	}
-
-	public void setValidationMessage(String validationMessage) {
-		_properties.put("validationMessage", validationMessage);
 	}
 
 	public void setVisibilityExpression(String visibilityExpression) {

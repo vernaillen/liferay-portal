@@ -8,9 +8,6 @@
 	<command name="configureExportSiteCP">
 		<execute macro="LAR#gotoExportSiteCmd" />
 
-		<execute function="SelectFrameTop" value1="relative=top" />
-		<execute function="SelectFrame" locator1="BasePortletExport#EXPORT_IMPORT_IFRAME" />
-
 		<execute macro="LAR#configureExportSiteOptionsCmd" />
 	</command>
 
@@ -233,6 +230,8 @@
 	</command>
 
 	<command name="exportCmd">
+		<execute function="SelectFrame" locator1="ExportImport#EXPORT_IMPORT_IFRAME" />
+
 		<if>
 			<isset var="larFileName" />
 			<then>
@@ -252,7 +251,7 @@
 		<var name="key_larFileName" value="${larFileName}" />
 
 		<execute function="AssertTextEquals" locator1="ExportImport#CURRENT_AND_PREVIOUS_STATUS" value1="Successful" />
-		<execute function="AssertClick#assertPartialTextClickAt" locator1="ExportImport#CURRENT_AND_PREVIOUS_DOWNLOAD" value1="${larFileName}" />
+		<execute function="Click" locator1="ExportImport#CURRENT_AND_PREVIOUS_DOWNLOAD" />
 		<execute function="DownloadTempFile" locator1="${larFileName}" />
 		<execute function="SelectFrame" value1="relative=top" />
 	</command>
@@ -283,8 +282,7 @@
 	<command name="exportPortlet">
 		<execute macro="LAR#gotoExportImportCmd" />
 
-		<execute function="SelectFrameTop" value1="relative=top" />
-		<execute function="SelectFrame" locator1="BasePortletExport#EXPORT_IMPORT_IFRAME" />
+		<execute function="AssertElementPresent" locator1="BasePortletExport#EXPORT_IMPORT_IFRAME" />
 
 		<execute macro="LAR#exportCmd">
 			<var name="exportPermissions" value="${exportPermissions}" />
@@ -334,6 +332,8 @@
 			<var name="portletNameBorderless" value="${portletNameBorderless}" />
 			<var name="portletOption" value="Export / Import" />
 		</execute>
+
+		<execute function="Pause" locator1="5000" />
 	</command>
 
 	<command name="gotoExportSite">
@@ -341,13 +341,11 @@
 
 		<execute function="SelectFrameTop" value1="relative=top" />
 		<execute function="SelectFrame" locator1="BasePortletExport#EXPORT_IMPORT_IFRAME" />
-
-		<execute function="Pause" locator1="5000" />
 	</command>
 
 	<command name="gotoExportSiteCmd">
-		<execute macro="Page#gotoConfigurationCP">
-			<var name="portletCategoryName" value="Configuration" />
+		<execute macro="Page#gotoPublishingTools">
+			<var name="portletCategoryName" value="Publishing Tools" />
 			<var name="portletName" value="Export/Import" />
 			<var name="siteScopeName" value="${siteScopeName}" />
 		</execute>
@@ -356,23 +354,26 @@
 	</command>
 
 	<command name="gotoExportTemplateCP">
-		<execute macro="LAR#gotoExportSiteCmd" />
-
-		<execute function="SelectFrameTop" value1="relative=top" />
-		<execute function="SelectFrame" locator1="BasePortletExport#EXPORT_IMPORT_IFRAME" />
+		<execute function="AssertClick" locator1="SitePages#TOOLBAR_EXPORT" value1="Export" />
 
 		<execute function="Click" locator1="SitePagesExport#EXPORT_TEMPLATE_BUTTON" />
 	</command>
 
 	<command name="gotoImportSiteCmd">
-		<execute macro="Page#gotoConfigurationCP">
-			<var name="portletCategoryName" value="Configuration" />
-			<var name="portletName" value="Export/Import" />
+		<if>
+			<isset var="siteName" />
+			<then>
+				<execute macro="ProductMenu#gotoSite">
+					<var name="site" value="${siteName}" />
+				</execute>
+			</then>
+		</if>
+
+		<execute macro="ProductMenu#gotoSitesPublishingTools">
+			<var name="portlet" value="Export/Import" />
 		</execute>
 
 		<execute function="AssertClick" locator1="SitePages#TOOLBAR_IMPORT" value1="Import" />
-
-		<execute function="SelectFrame" locator1="BasePortletExport#EXPORT_IMPORT_IFRAME" />
 	</command>
 
 	<command name="importDDL">
@@ -390,9 +391,6 @@
 
 	<command name="importPortlet">
 		<execute macro="LAR#gotoExportImportCmd" />
-
-		<execute function="SelectFrameTop" value1="relative=top" />
-		<execute function="SelectFrame" locator1="BasePortletExport#EXPORT_IMPORT_IFRAME" />
 
 		<execute macro="LAR#selectImportFileCmd">
 			<var name="cannotImport" value="${cannotImport}" />
@@ -444,7 +442,9 @@
 	</command>
 
 	<command name="importSiteCP">
-		<execute macro="LAR#gotoImportSiteCmd" />
+		<execute macro="LAR#gotoImportSiteCmd">
+			<var name="siteName" value="${siteName}" />
+		</execute>
 
 		<execute macro="LAR#selectImportFileSiteCmd">
 			<var name="importCampaignValidationError" value="${importCampaignValidationError}" />
@@ -489,7 +489,19 @@
 		<execute function="AssertTextEquals" locator1="SitePagesExport#EXPORT_TEMPLATES_TABLE_DESCRIPTION" value1="${exportTemplateDescription}" />
 	</command>
 
+	<command name="searchTemplate">
+		<execute function="Type" locator1="Search#SEARCH_FIELD" value1="${exportTemplateName}" />
+		<execute function="AssertClick" locator1="Button#SEARCH" value1="Search" />
+
+		<var name="key_exportTemplateName" value="${exportTemplateName}" />
+
+		<execute function="AssertTextEquals" locator1="SitePagesExport#EXPORT_TEMPLATES_TABLE_NAME" value1="${exportTemplateName}" />
+		<execute function="AssertTextEquals" locator1="SitePagesExport#EXPORT_TEMPLATES_TABLE_DESCRIPTION" value1="${exportTemplateDescription}" />
+	</command>
+
 	<command name="selectImportFileCmd">
+		<execute function="SelectFrame" locator1="ExportImport#EXPORT_IMPORT_IFRAME" />
+
 		<execute function="AssertClick" locator1="ExportImport#NAVIGATION_IMPORT" value1="Import" />
 		<execute function="AssertClick" locator1="Button#SELECT_FILE" value1="Select File" />
 
@@ -658,7 +670,7 @@
 
 		<execute macro="Portlet#gotoPortletOptions">
 			<var name="portletNameBorderless" value="${portletNameBorderless}" />
-			<var name="portletOption" value="Configuration" />
+			<var name="portletOption" value="Export/Import" />
 		</execute>
 
 		<execute macro="UserSegmentContentDisplayPortlet#configureDisplayContent">
@@ -712,7 +724,7 @@
 
 		<execute macro="Portlet#gotoPortletOptions">
 			<var name="portletNameBorderless" value="${portletNameBorderless}" />
-			<var name="portletOption" value="Configuration" />
+			<var name="portletOption" value="Export/Import" />
 		</execute>
 
 		<execute macro="CampaignDisplayPortlet#configureCampaignRule">

@@ -50,10 +50,11 @@ String viewCalendarBookingURL = ParamUtil.getString(request, "viewCalendarBookin
 		window.<portlet:namespace />dayView = new Liferay.SchedulerDayView(
 			{
 				headerViewConfig: {
+					eventsOverlayConstrain: '#p_p_id<portlet:namespace />',
 					strings: showMoreStrings
 				},
 				height: 700,
-				isoTime: <%= isoTimeFormat %>,
+				isoTime: <%= useIsoTimeFormat %>,
 				readOnly: <%= readOnly %>,
 				strings: {
 					allDay: '<liferay-ui:message key="all-day" />'
@@ -67,10 +68,11 @@ String viewCalendarBookingURL = ParamUtil.getString(request, "viewCalendarBookin
 			{
 				headerViewConfig: {
 					displayDaysInterval: A.DataType.DateMath.WEEK_LENGTH,
+					eventsOverlayConstrain: '#p_p_id<portlet:namespace />',
 					strings: showMoreStrings
 				},
 				height: 700,
-				isoTime: <%= isoTimeFormat %>,
+				isoTime: <%= useIsoTimeFormat %>,
 				readOnly: <%= readOnly %>,
 				strings: {
 					allDay: '<liferay-ui:message key="all-day" />'
@@ -82,8 +84,9 @@ String viewCalendarBookingURL = ParamUtil.getString(request, "viewCalendarBookin
 	<c:if test="<%= !hideMonthView %>">
 		window.<portlet:namespace />monthView = new Liferay.SchedulerMonthView(
 			{
+				eventsOverlayConstrain: '#p_p_id<portlet:namespace />',
 				height: 'auto',
-				isoTime: <%= isoTimeFormat %>,
+				isoTime: <%= useIsoTimeFormat %>,
 				readOnly: <%= readOnly %>,
 				strings: showMoreStrings
 			}
@@ -94,7 +97,7 @@ String viewCalendarBookingURL = ParamUtil.getString(request, "viewCalendarBookin
 		window.<portlet:namespace />agendaView = new Liferay.SchedulerAgendaView(
 			{
 				height: 700,
-				isoTime: <%= isoTimeFormat %>,
+				isoTime: <%= useIsoTimeFormat %>,
 				readOnly: <%= readOnly %>,
 				strings: {
 					noEvents: '<liferay-ui:message key="no-events" />'
@@ -119,6 +122,9 @@ String viewCalendarBookingURL = ParamUtil.getString(request, "viewCalendarBookin
 					width: width
 				},
 				portletNamespace: '<portlet:namespace />',
+				strings: {
+					'description-hint': '<liferay-ui:message key="description-hint" />'
+				},
 				viewCalendarBookingURL: '<%= HtmlUtil.escapeJS(viewCalendarBookingURL) %>'
 			}
 		);

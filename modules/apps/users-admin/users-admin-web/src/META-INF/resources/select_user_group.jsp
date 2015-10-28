@@ -88,7 +88,7 @@ portletURL.setParameter("eventName", eventName);
 			/>
 
 			<liferay-ui:search-container-column-text>
-				<c:if test="<%= (UserGroupMembershipPolicyUtil.isMembershipAllowed((selUser != null) ? selUser.getUserId() : 0, userGroup.getUserGroupId())) %>">
+				<c:if test="<%= UserGroupMembershipPolicyUtil.isMembershipAllowed((selUser != null) ? selUser.getUserId() : 0, userGroup.getUserGroupId()) %>">
 
 					<%
 					Map<String, Object> data = new HashMap<String, Object>();
@@ -98,11 +98,13 @@ portletURL.setParameter("eventName", eventName);
 
 					boolean disabled = false;
 
-					for (long curUserGroupId : selUser.getUserGroupIds()) {
-						if (curUserGroupId == userGroup.getUserGroupId()) {
-							disabled = true;
+					if (selUser != null) {
+						for (long curUserGroupId : selUser.getUserGroupIds()) {
+							if (curUserGroupId == userGroup.getUserGroupId()) {
+								disabled = true;
 
-							break;
+								break;
+							}
 						}
 					}
 					%>

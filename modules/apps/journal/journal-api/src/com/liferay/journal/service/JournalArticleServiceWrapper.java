@@ -40,8 +40,9 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	* @param folderId the primary key of the web content article folder
 	* @param classNameId the primary key of the DDMStructure class if the web
 	content article is related to a DDM structure, the primary key of
-	the class name associated with the article, or {@link
-	JournalArticleConstants#CLASSNAME_ID_DEFAULT} otherwise
+	the class name associated with the article, or
+	JournalArticleConstants.CLASSNAME_ID_DEFAULT in the journal-api
+	module otherwise
 	* @param classPK the primary key of the DDM structure, if the primary key
 	of the DDMStructure class is given as the
 	<code>classNameId</code> parameter, the primary key of the class
@@ -96,9 +97,9 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	* @param serviceContext the service context to be applied. Can set the
 	UUID, creation date, modification date, expando bridge
 	attributes, guest permissions, group permissions, asset category
-	IDs, asset tag names, asset link entry IDs, URL title, and
-	workflow actions for the web content article. Can also set
-	whether to add the default guest and group permissions.
+	IDs, asset tag names, asset link entry IDs, asset priority, URL
+	title, and workflow actions for the web content article. Can also
+	set whether to add the default guest and group permissions.
 	* @return the web content article
 	* @throws PortalException if the user did not have permission to add the
 	web content article or if a portal exception occurred
@@ -138,8 +139,9 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	* @param folderId the primary key of the web content article folder
 	* @param classNameId the primary key of the DDMStructure class if the web
 	content article is related to a DDM structure, the primary key of
-	the class name associated with the article, or {@link
-	JournalArticleConstants#CLASSNAME_ID_DEFAULT} otherwise
+	the class name associated with the article, or
+	JournalArticleConstants.CLASSNAME_ID_DEFAULT in the journal-api
+	module otherwise
 	* @param classPK the primary key of the DDM structure, if the primary key
 	of the DDMStructure class is given as the
 	<code>classNameId</code> parameter, the primary key of the class
@@ -200,9 +202,9 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	* @param serviceContext the service context to be applied. Can set the
 	UUID, creation date, modification date, expando bridge
 	attributes, guest permissions, group permissions, asset category
-	IDs, asset tag names, asset link entry IDs, URL title, and
-	workflow actions for the web content article. Can also set
-	whether to add the default guest and group permissions.
+	IDs, asset tag names, asset link entry IDs, asset priority, URL
+	title, and workflow actions for the web content article. Can also
+	set whether to add the default guest and group permissions.
 	* @return the web content article
 	* @throws PortalException if the user did not have permission to add the
 	web content article or if a portal exception occurred
@@ -423,12 +425,13 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	* @param groupId the primary key of the web content article's group
 	* @param className the DDMStructure class name if the web content article
 	is related to a DDM structure, the primary key of the class name
-	associated with the article, or {@link
-	JournalArticleConstants#CLASSNAME_ID_DEFAULT} otherwise
-	* @param classPK the primary key of the DDM structure, if the the
-	DDMStructure class name is given as the <code>className</code>
-	parameter, the primary key of the class associated with the web
-	content article, or <code>0</code> otherwise
+	associated with the article, or
+	JournalArticleConstants.CLASSNAME_ID_DEFAULT in the journal-api
+	module otherwise
+	* @param classPK the primary key of the DDM structure, if the DDMStructure
+	class name is given as the <code>className</code> parameter, the
+	primary key of the class associated with the web content article,
+	or <code>0</code> otherwise
 	* @return the matching web content article
 	* @throws PortalException if a matching web content article could not be
 	found or if the user did not have permission to view the web
@@ -686,8 +689,9 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	* @param groupId the primary key of the web content article's group
 	* @param classNameId the primary key of the DDMStructure class if the web
 	content article is related to a DDM structure, the primary key of
-	the class name associated with the article, or {@link
-	JournalArticleConstants#CLASSNAME_ID_DEFAULT} otherwise
+	the class name associated with the article, or
+	JournalArticleConstants.CLASSNAME_ID_DEFAULT in the journal-api
+	module otherwise
 	* @param ddmStructureKey the primary key of the web content article's DDM
 	structure
 	* @param status the web content article's workflow status. For more
@@ -793,8 +797,9 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	* @param groupId the primary key of the web content article's group
 	* @param classNameId the primary key of the DDMStructure class if the web
 	content article is related to a DDM structure, the primary key of
-	the class name associated with the article, or {@link
-	JournalArticleConstants#CLASSNAME_ID_DEFAULT} otherwise
+	the class name associated with the article, or
+	JournalArticleConstants.CLASSNAME_ID_DEFAULT in the journal-api
+	module otherwise
 	* @param ddmStructureKey the primary key of the web content article's DDM
 	structure
 	* @param status the web content article's workflow status. For more
@@ -1029,8 +1034,8 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	}
 
 	/**
-	* Returns the number of web content articles matching the group, user,
-	* the root folder or any of its subfolders.
+	* Returns the number of web content articles matching the group, user, the
+	* root folder or any of its subfolders.
 	*
 	* @param groupId the primary key of the web content article's group
 	* @param userId the primary key of the user (optionally <code>0</code>)
@@ -1082,8 +1087,8 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	* @param groupId the primary key of the web content article's group
 	* @param className the DDMStructure class name if the web content article
 	is related to a DDM structure, the class name associated with the
-	article, or {@link JournalArticleConstants#CLASSNAME_ID_DEFAULT}
-	otherwise
+	article, or JournalArticleConstants.CLASSNAME_ID_DEFAULT in the
+	journal-api module otherwise
 	* @param classPK the primary key of the DDM structure, if the DDMStructure
 	class name is given as the <code>className</code> parameter, the
 	primary key of the class associated with the web content article,
@@ -1120,7 +1125,7 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	}
 
 	/**
-	* Moves all versions of the the web content article matching the group and
+	* Moves all versions of the web content article matching the group and
 	* article ID to the folder.
 	*
 	* @param groupId the primary key of the web content article's group
@@ -1143,7 +1148,7 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	}
 
 	/**
-	* Moves all versions of the the web content article matching the group and
+	* Moves all versions of the web content article matching the group and
 	* article ID to the folder.
 	*
 	* @param groupId the primary key of the web content article's group
@@ -1258,8 +1263,8 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	* @param companyId the primary key of the web content article's company
 	* @param languageId the primary key of the language locale to remove
 	* @throws PortalException if the user did not have permission to update any
-	one of the the web content articles or if web content matching
-	the language could not be found for any one of the articles
+	one of the web content articles or if web content matching the
+	language could not be found for any one of the articles
 	*/
 	@Override
 	public void removeArticleLocale(long companyId, java.lang.String languageId)
@@ -1342,8 +1347,9 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	(optionally {@link java.util.Collections#EMPTY_LIST})
 	* @param classNameId the primary key of the DDMStructure class if the web
 	content article is related to a DDM structure, the primary key of
-	the class name associated with the article, or {@link
-	JournalArticleConstants#CLASSNAME_ID_DEFAULT} otherwise
+	the class name associated with the article, or
+	JournalArticleConstants.CLASSNAME_ID_DEFAULT in the journal-api
+	module otherwise
 	* @param articleId the article ID keywords (space separated, optionally
 	<code>null</code>)
 	* @param version the web content article's version (optionally
@@ -1419,8 +1425,9 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	(optionally {@link java.util.Collections#EMPTY_LIST})
 	* @param classNameId the primary key of the DDMStructure class if the web
 	content article is related to a DDM structure, the primary key of
-	the class name associated with the article, or {@link
-	JournalArticleConstants#CLASSNAME_ID_DEFAULT} otherwise
+	the class name associated with the article, or
+	JournalArticleConstants.CLASSNAME_ID_DEFAULT in the journal-api
+	module otherwise
 	* @param articleId the article ID keywords (space separated, optionally
 	<code>null</code>)
 	* @param version the web content article's version (optionally
@@ -1498,8 +1505,9 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	(optionally {@link java.util.Collections#EMPTY_LIST})
 	* @param classNameId the primary key of the DDMStructure class if the web
 	content article is related to a DDM structure, the primary key of
-	the class name associated with the article, or {@link
-	JournalArticleConstants#CLASSNAME_ID_DEFAULT} otherwise
+	the class name associated with the article, or
+	JournalArticleConstants.CLASSNAME_ID_DEFAULT in the journal-api
+	module otherwise
 	* @param keywords the keywords (space separated), which may occur in the
 	web content article ID, title, description, or content
 	(optionally <code>null</code>). If the keywords value is not
@@ -1593,8 +1601,9 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	(optionally {@link java.util.Collections#EMPTY_LIST})
 	* @param classNameId the primary key of the DDMStructure class if the web
 	content article is related to a DDM structure, the primary key of
-	the class name associated with the article, or {@link
-	JournalArticleConstants#CLASSNAME_ID_DEFAULT} otherwise
+	the class name associated with the article, or
+	JournalArticleConstants.CLASSNAME_ID_DEFAULT in the journal-api
+	module otherwise
 	* @param articleId the article ID keywords (space separated, optionally
 	<code>null</code>)
 	* @param version the web content article's version (optionally
@@ -1653,8 +1662,9 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	(optionally {@link java.util.Collections#EMPTY_LIST})
 	* @param classNameId the primary key of the DDMStructure class if the web
 	content article is related to a DDM structure, the primary key of
-	the class name associated with the article, or {@link
-	JournalArticleConstants#CLASSNAME_ID_DEFAULT} otherwise
+	the class name associated with the article, or
+	JournalArticleConstants.CLASSNAME_ID_DEFAULT in the journal-api
+	module otherwise
 	* @param articleId the article ID keywords (space separated, optionally
 	<code>null</code>)
 	* @param version the web content article's version (optionally
@@ -1715,8 +1725,9 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	(optionally {@link java.util.Collections#EMPTY_LIST})
 	* @param classNameId the primary key of the DDMStructure class if the web
 	content article is related to a DDM structure, the primary key of
-	the class name associated with the article, or {@link
-	JournalArticleConstants#CLASSNAME_ID_DEFAULT} otherwise
+	the class name associated with the article, or
+	JournalArticleConstants.CLASSNAME_ID_DEFAULT in the journal-api
+	module otherwise
 	* @param keywords the keywords (space separated), which may occur in the
 	web content article ID, title, description, or content
 	(optionally <code>null</code>). If the keywords value is not
@@ -1829,13 +1840,13 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	* @param content the HTML content wrapped in XML.
 	* @param serviceContext the service context to be applied. Can set the
 	modification date, expando bridge attributes, asset category IDs,
-	asset tag names, asset link entry IDs, workflow actions, URL
-	title, and can set whether to add the default command update for
-	the web content article. With respect to social activities, by
-	setting the service context's command to {@link
-	com.liferay.portal.kernel.util.Constants#UPDATE}, the invocation
-	is considered a web content update activity; otherwise it is
-	considered a web content add activity.
+	asset tag names, asset link entry IDs, asset priority, workflow
+	actions, URL title, and can set whether to add the default
+	command update for the web content article. With respect to
+	social activities, by setting the service context's command to
+	{@link com.liferay.portal.kernel.util.Constants#UPDATE}, the
+	invocation is considered a web content update activity; otherwise
+	it is considered a web content add activity.
 	* @return the updated web content article
 	* @throws PortalException if the user did not have permission to update the
 	web content article, if a user with the primary key or a matching
@@ -1918,13 +1929,13 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	<code>null</code>)
 	* @param serviceContext the service context to be applied. Can set the
 	modification date, expando bridge attributes, asset category IDs,
-	asset tag names, asset link entry IDs, workflow actions, URL
-	title, and can set whether to add the default command update for
-	the web content article. With respect to social activities, by
-	setting the service context's command to {@link
-	com.liferay.portal.kernel.util.Constants#UPDATE}, the invocation
-	is considered a web content update activity; otherwise it is
-	considered a web content add activity.
+	asset tag names, asset link entry IDs, asset priority, workflow
+	actions, URL title, and can set whether to add the default
+	command update for the web content article. With respect to
+	social activities, by setting the service context's command to
+	{@link com.liferay.portal.kernel.util.Constants#UPDATE}, the
+	invocation is considered a web content update activity; otherwise
+	it is considered a web content add activity.
 	* @return the updated web content article
 	* @throws PortalException if the user did not have permission to update the
 	web content article, if a user with the primary key or a matching
@@ -1982,13 +1993,13 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 	article's display page
 	* @param serviceContext the service context to be applied. Can set the
 	modification date, expando bridge attributes, asset category IDs,
-	asset tag names, asset link entry IDs, workflow actions, URL
-	title, and can set whether to add the default command update for
-	the web content article. With respect to social activities, by
-	setting the service context's command to {@link
-	com.liferay.portal.kernel.util.Constants#UPDATE}, the invocation
-	is considered a web content update activity; otherwise it is
-	considered a web content add activity.
+	asset tag names, asset link entry IDs, asset priority, workflow
+	actions, URL title, and can set whether to add the default
+	command update for the web content article. With respect to
+	social activities, by setting the service context's command to
+	{@link com.liferay.portal.kernel.util.Constants#UPDATE}, the
+	invocation is considered a web content update activity; otherwise
+	it is considered a web content add activity.
 	* @return the updated web content article
 	* @throws PortalException if a user with the primary key or a matching web
 	content article could not be found, or if a portal exception
@@ -2010,9 +2021,8 @@ public class JournalArticleServiceWrapper implements JournalArticleService,
 
 	/**
 	* @deprecated As of 6.2.0, replaced by {@link
-	#updateArticleTranslation(long, String, double,
-	java.util.Locale, String, String, String, java.util.Map,
-	ServiceContext)}
+	#updateArticleTranslation(long, String, double, Locale,
+	String, String, String, Map, ServiceContext)}
 	*/
 	@Deprecated
 	@Override

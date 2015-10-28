@@ -45,6 +45,7 @@ import com.liferay.portal.test.rule.PersistenceTestRule;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -64,8 +65,9 @@ import java.util.Set;
  */
 @RunWith(Arquillian.class)
 public class DDMStructurePersistenceTest {
+	@ClassRule
 	@Rule
-	public final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
+	public static final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
 			PersistenceTestRule.INSTANCE,
 			new TransactionalTestRule(Propagation.REQUIRED));
 
@@ -465,11 +467,9 @@ public class DDMStructurePersistenceTest {
 
 		ActionableDynamicQuery actionableDynamicQuery = DDMStructureLocalServiceUtil.getActionableDynamicQuery();
 
-		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod() {
+		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<DDMStructure>() {
 				@Override
-				public void performAction(Object object) {
-					DDMStructure ddmStructure = (DDMStructure)object;
-
+				public void performAction(DDMStructure ddmStructure) {
 					Assert.assertNotNull(ddmStructure);
 
 					count.increment();
@@ -564,15 +564,15 @@ public class DDMStructurePersistenceTest {
 		Assert.assertTrue(Validator.equals(existingDDMStructure.getUuid(),
 				ReflectionTestUtil.invoke(existingDDMStructure,
 					"getOriginalUuid", new Class<?>[0])));
-		Assert.assertEquals(existingDDMStructure.getGroupId(),
-			ReflectionTestUtil.invoke(existingDDMStructure,
+		Assert.assertEquals(Long.valueOf(existingDDMStructure.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(existingDDMStructure,
 				"getOriginalGroupId", new Class<?>[0]));
 
-		Assert.assertEquals(existingDDMStructure.getGroupId(),
-			ReflectionTestUtil.invoke(existingDDMStructure,
+		Assert.assertEquals(Long.valueOf(existingDDMStructure.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(existingDDMStructure,
 				"getOriginalGroupId", new Class<?>[0]));
-		Assert.assertEquals(existingDDMStructure.getClassNameId(),
-			ReflectionTestUtil.invoke(existingDDMStructure,
+		Assert.assertEquals(Long.valueOf(existingDDMStructure.getClassNameId()),
+			ReflectionTestUtil.<Long>invoke(existingDDMStructure,
 				"getOriginalClassNameId", new Class<?>[0]));
 		Assert.assertTrue(Validator.equals(
 				existingDDMStructure.getStructureKey(),

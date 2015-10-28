@@ -16,7 +16,7 @@ AUI.add(
 			},
 
 			visible: {
-				value: true
+				valueFn: '_valueVisible'
 			}
 		};
 
@@ -28,7 +28,6 @@ AUI.add(
 
 				instance._eventHandlers.push(
 					evaluator.after('evaluationEnded', A.bind('_afterVisibilityEvaluationEnded', instance)),
-					evaluator.after('evaluationStarted', A.bind('_afterVisibilityEvaluationStarted', instance)),
 					instance.after('valueChanged', instance._afterValueChanged),
 					instance.after('visibleChange', instance._afterVisibleChange)
 				);
@@ -37,11 +36,29 @@ AUI.add(
 			processVisibility: function(result) {
 				var instance = this;
 
-				var instanceId = instance.get('instanceId');
+				var visibility;
 
-				var visibility = Util.getFieldByKey(result, instanceId, 'instanceId');
+				if (result && Lang.isObject(result)) {
+					var name = instance.get('name');
 
-				instance.set('visible', visibility && visibility.visible === true);
+					visibility = Util.getFieldByKey(result, name, 'name');
+				}
+
+				return visibility;
+			},
+
+			processVisibilityEvaluation: function(result) {
+				var instance = this;
+
+				instance.getRoot().eachField(
+					function(field) {
+						var visibility = field.processVisibility(result);
+
+						if (visibility) {
+							field.set('visible', visibility.visible);
+						}
+					}
+				);
 			},
 
 			_afterValueChanged: function() {
@@ -49,35 +66,52 @@ AUI.add(
 
 				var evaluator = instance.get('evaluator');
 
+				instance.showLoadingFeedback();
+
 				evaluator.evaluate();
 			},
 
 			_afterVisibilityEvaluationEnded: function(event) {
 				var instance = this;
 
-				var result = event.result;
-
 				instance.hideFeedback();
 
-				if (result && Lang.isObject(result)) {
-					instance.getRoot().eachField(
-						function(field) {
-							field.processVisibility(result);
-						}
-					);
-				}
-			},
-
-			_afterVisibilityEvaluationStarted: function() {
-				var instance = this;
-
-				instance.showLoadingFeedback();
+				instance.processVisibilityEvaluation(event.result);
 			},
 
 			_afterVisibleChange: function() {
 				var instance = this;
 
+				var value = instance.getValue();
+
 				instance.render();
+
+				instance.setValue(value);
+			},
+
+			_valueVisible: function() {
+				var instance = this;
+
+				var form = instance.getRoot();
+
+				var visible = true;
+
+				if (form) {
+					var evaluation = form.get('evaluation');
+
+					if (evaluation) {
+						var visibility = instance.processVisibility(evaluation);
+
+						if (visibility) {
+							visible = visibility.visible;
+						}
+					}
+					else {
+						visible = instance.get('visibilityExpression') !== 'false';
+					}
+				}
+
+				return visible;
 			}
 		};
 

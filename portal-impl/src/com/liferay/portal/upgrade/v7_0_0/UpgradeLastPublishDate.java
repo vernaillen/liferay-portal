@@ -30,10 +30,7 @@ public class UpgradeLastPublishDate extends BaseUpgradeLastPublishDate {
 		upgradeLayoutsAdmin();
 		upgradeMessageBoards();
 		upgradeMobileDeviceRules();
-		upgradeRatings();
-		upgradeRolesAdmin();
 		upgradeSiteAdmin();
-		upgradeUsersAdmin();
 	}
 
 	protected void upgradeAssetCategoriesAdmin() throws Exception {
@@ -113,6 +110,10 @@ public class UpgradeLastPublishDate extends BaseUpgradeLastPublishDate {
 
 		updateLastPublishDates("19", "MBMessage");
 
+		runSQL("alter table MBThread add lastPublishDate DATE null");
+
+		updateLastPublishDates("19", "MBThread");
+
 		runSQL("alter table MBThreadFlag add lastPublishDate DATE null");
 
 		updateLastPublishDates("19", "MBThreadFlag");
@@ -137,44 +138,10 @@ public class UpgradeLastPublishDate extends BaseUpgradeLastPublishDate {
 		updateLastPublishDates("178", "MDRRuleGroupInstance");
 	}
 
-	protected void upgradeRatings() throws Exception {
-		runSQL("alter table RatingsEntry add lastPublishDate DATE null");
-
-		updateLastPublishDates("108", "RatingsEntry");
-	}
-
-	protected void upgradeRolesAdmin() throws Exception {
-		runSQL("alter table PasswordPolicy add lastPublishDate DATE null");
-
-		updateLastPublishDates("128", "PasswordPolicy");
-
-		runSQL("alter table Role_ add lastPublishDate DATE null");
-
-		updateLastPublishDates("128", "Role_");
-	}
-
 	protected void upgradeSiteAdmin() throws Exception {
 		runSQL("alter table Team add lastPublishDate DATE null");
 
 		updateLastPublishDates(PortletKeys.SITE_ADMIN, "Team");
-	}
-
-	protected void upgradeUsersAdmin() throws Exception {
-		runSQL("alter table Address add lastPublishDate DATE null");
-
-		updateLastPublishDates(PortletKeys.USERS_ADMIN, "Address");
-
-		runSQL("alter table EmailAddress add lastPublishDate DATE null");
-
-		updateLastPublishDates(PortletKeys.USERS_ADMIN, "EmailAddress");
-
-		runSQL("alter table Phone add lastPublishDate DATE null");
-
-		updateLastPublishDates(PortletKeys.USERS_ADMIN, "Phone");
-
-		runSQL("alter table User_ add lastPublishDate DATE null");
-
-		updateLastPublishDates(PortletKeys.USERS_ADMIN, "User_");
 	}
 
 }

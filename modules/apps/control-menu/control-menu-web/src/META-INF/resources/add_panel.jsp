@@ -45,10 +45,18 @@
 
 					boolean stateMaximized = ParamUtil.getBoolean(request, "stateMaximized");
 
-					boolean hasAddContentAndApplicationsPermission = !stateMaximized && layout.isTypePortlet() && !layout.isLayoutPrototypeLinkActive() && (hasLayoutUpdatePermission || (layoutTypePortlet.isCustomizable() && layoutTypePortlet.isCustomizedView() && hasLayoutCustomizePermission));
+					LayoutTypeController layoutTypeController = layoutTypePortlet.getLayoutTypeController();
 
-					if (hasAddContentAndApplicationsPermission) {
-						tabs1Names = ArrayUtil.append(tabs1Names, "content,applications");
+					boolean hasAddApplicationsPermission = !stateMaximized && layout.isTypePortlet() && !layout.isLayoutPrototypeLinkActive() && !layoutTypeController.isFullPageDisplayable() && (hasLayoutUpdatePermission || (layoutTypePortlet.isCustomizable() && layoutTypePortlet.isCustomizedView() && hasLayoutCustomizePermission));
+
+					boolean hasAddContentPermission = hasAddApplicationsPermission && !group.isLayoutPrototype();
+
+					if (hasAddContentPermission) {
+						tabs1Names = ArrayUtil.append(tabs1Names, "content");
+					}
+
+					if (hasAddApplicationsPermission) {
+						tabs1Names = ArrayUtil.append(tabs1Names, "applications");
 					}
 
 					if (hasLayoutAddPermission) {
@@ -70,11 +78,13 @@
 						type="pills"
 						value="<%= selectedTab %>"
 					>
-						<c:if test="<%= hasAddContentAndApplicationsPermission %>">
+						<c:if test="<%= hasAddContentPermission %>">
 							<liferay-ui:section>
 								<liferay-util:include page="/add_content.jsp" servletContext="<%= application %>" />
 							</liferay-ui:section>
+						</c:if>
 
+						<c:if test="<%= hasAddApplicationsPermission %>">
 							<liferay-ui:section>
 								<liferay-util:include page="/add_application.jsp" servletContext="<%= application %>" />
 							</liferay-ui:section>
@@ -89,7 +99,7 @@
 							<liferay-ui:section>
 
 								<%
-								PortletURL newPageURL = PortletProviderUtil.getPortletURL(request, Layout.class.getName(), PortletProvider.Action.EDIT);
+								PortletURL newPageURL = PortletProviderUtil.getPortletURL(request, groupDisplayContextHelper.getLiveGroup(), Layout.class.getName(), PortletProvider.Action.EDIT);
 
 								newPageURL.setParameter("tabs1", layout.isPrivateLayout() ? "private-pages" : "public-pages");
 								newPageURL.setParameter("groupId", String.valueOf(groupDisplayContextHelper.getLiveGroupId()));
@@ -97,10 +107,7 @@
 								newPageURL.setParameter("treeId", "layoutsTree");
 								newPageURL.setParameter("viewLayout", Boolean.TRUE.toString());
 
-								String newPageURLString = HttpUtil.setParameter(newPageURL.toString(), "controlPanelCategory", "current_site");
-
-								newPageURLString = HttpUtil.setParameter(newPageURLString, "doAsGroupId", String.valueOf(groupDisplayContextHelper.getLiveGroupId()));
-								newPageURLString = HttpUtil.setParameter(newPageURLString, "refererPlid", String.valueOf(selPlid));
+								String newPageURLString = HttpUtil.setParameter(newPageURL.toString(), "refererPlid", String.valueOf(selPlid));
 								%>
 
 								<aui:button-row>

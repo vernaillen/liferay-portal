@@ -42,6 +42,7 @@ import com.liferay.portal.test.rule.PersistenceTestRule;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -58,8 +59,9 @@ import java.util.Set;
  * @generated
  */
 public class ReleasePersistenceTest {
+	@ClassRule
 	@Rule
-	public final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
+	public static final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
 			PersistenceTestRule.INSTANCE,
 			new TransactionalTestRule(Propagation.REQUIRED));
 
@@ -124,7 +126,7 @@ public class ReleasePersistenceTest {
 
 		newRelease.setServletContextName(RandomTestUtil.randomString());
 
-		newRelease.setVersion(RandomTestUtil.randomString());
+		newRelease.setSchemaVersion(RandomTestUtil.randomString());
 
 		newRelease.setBuildNumber(RandomTestUtil.nextInt());
 
@@ -152,8 +154,8 @@ public class ReleasePersistenceTest {
 			Time.getShortTimestamp(newRelease.getModifiedDate()));
 		Assert.assertEquals(existingRelease.getServletContextName(),
 			newRelease.getServletContextName());
-		Assert.assertEquals(existingRelease.getVersion(),
-			newRelease.getVersion());
+		Assert.assertEquals(existingRelease.getSchemaVersion(),
+			newRelease.getSchemaVersion());
 		Assert.assertEquals(existingRelease.getBuildNumber(),
 			newRelease.getBuildNumber());
 		Assert.assertEquals(Time.getShortTimestamp(
@@ -200,9 +202,9 @@ public class ReleasePersistenceTest {
 	protected OrderByComparator<Release> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create("Release_", "mvccVersion",
 			true, "releaseId", true, "createDate", true, "modifiedDate", true,
-			"servletContextName", true, "version", true, "buildNumber", true,
-			"buildDate", true, "verified", true, "state", true, "testString",
-			true);
+			"servletContextName", true, "schemaVersion", true, "buildNumber",
+			true, "buildDate", true, "verified", true, "state", true,
+			"testString", true);
 	}
 
 	@Test
@@ -309,11 +311,9 @@ public class ReleasePersistenceTest {
 
 		ActionableDynamicQuery actionableDynamicQuery = ReleaseLocalServiceUtil.getActionableDynamicQuery();
 
-		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod() {
+		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<Release>() {
 				@Override
-				public void performAction(Object object) {
-					Release release = (Release)object;
-
+				public void performAction(Release release) {
 					Assert.assertNotNull(release);
 
 					count.increment();
@@ -424,7 +424,7 @@ public class ReleasePersistenceTest {
 
 		release.setServletContextName(RandomTestUtil.randomString());
 
-		release.setVersion(RandomTestUtil.randomString());
+		release.setSchemaVersion(RandomTestUtil.randomString());
 
 		release.setBuildNumber(RandomTestUtil.nextInt());
 

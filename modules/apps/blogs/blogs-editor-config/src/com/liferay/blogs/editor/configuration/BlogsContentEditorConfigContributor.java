@@ -23,6 +23,7 @@ import com.liferay.item.selector.criteria.URLItemSelectorReturnType;
 import com.liferay.item.selector.criteria.UploadableFileReturnType;
 import com.liferay.item.selector.criteria.image.criterion.ImageItemSelectorCriterion;
 import com.liferay.item.selector.criteria.upload.criterion.UploadItemSelectorCriterion;
+import com.liferay.item.selector.criteria.url.criterion.URLItemSelectorCriterion;
 import com.liferay.portal.kernel.editor.configuration.BaseEditorConfigContributor;
 import com.liferay.portal.kernel.editor.configuration.EditorConfigContributor;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -105,6 +106,17 @@ public class BlogsContentEditorConfigContributor
 		imageItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
 			blogsContentEditorDesiredItemSelectorReturnTypes);
 
+		ItemSelectorCriterion urlItemSelectorCriterion =
+			new URLItemSelectorCriterion();
+
+		List<ItemSelectorReturnType> urlDesiredItemSelectorReturnTypes =
+			new ArrayList<>();
+
+		urlDesiredItemSelectorReturnTypes.add(new URLItemSelectorReturnType());
+
+		urlItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
+			urlDesiredItemSelectorReturnTypes);
+
 		PortletURL uploadURL = requestBackedPortletURLFactory.createActionURL(
 			PortletKeys.BLOGS);
 
@@ -114,7 +126,7 @@ public class BlogsContentEditorConfigContributor
 		ItemSelectorCriterion uploadItemSelectorCriterion =
 			new UploadItemSelectorCriterion(
 				uploadURL.toString(),
-				LanguageUtil.get(themeDisplay.getLocale(), "blogs"));
+				LanguageUtil.get(themeDisplay.getLocale(), "blog-images"));
 
 		List<ItemSelectorReturnType> uploadDesiredItemSelectorReturnTypes =
 			new ArrayList<>();
@@ -128,7 +140,7 @@ public class BlogsContentEditorConfigContributor
 		PortletURL itemSelectorURL = _itemSelector.getItemSelectorURL(
 			requestBackedPortletURLFactory, eventName,
 			blogsItemSelectorCriterion, imageItemSelectorCriterion,
-			uploadItemSelectorCriterion);
+			urlItemSelectorCriterion, uploadItemSelectorCriterion);
 
 		jsonObject.put(
 			"filebrowserImageBrowseLinkUrl", itemSelectorURL.toString());

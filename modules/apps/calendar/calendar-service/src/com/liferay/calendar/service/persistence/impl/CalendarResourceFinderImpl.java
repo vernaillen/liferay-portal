@@ -31,7 +31,6 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.permission.InlineSQLHelperUtil;
-import com.liferay.portal.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.util.dao.orm.CustomSQLUtil;
 
 import java.util.Iterator;
@@ -43,8 +42,7 @@ import java.util.Map;
  * @author Fabio Pezzutto
  */
 public class CalendarResourceFinderImpl
-	extends BasePersistenceImpl<CalendarResource>
-	implements CalendarResourceFinder {
+	extends CalendarResourceFinderBaseImpl implements CalendarResourceFinder {
 
 	public static final String COUNT_BY_C_G_C_C_N_D_A =
 		CalendarResourceFinder.class.getName() + ".countByC_G_C_C_N_D_A";
@@ -287,7 +285,7 @@ public class CalendarResourceFinderImpl
 			sql = CustomSQLUtil.replaceKeywords(
 				sql, "lower(name)", StringPool.LIKE, false, names);
 			sql = CustomSQLUtil.replaceKeywords(
-				sql, "description", StringPool.LIKE, false, descriptions);
+				sql, "description", StringPool.LIKE, true, descriptions);
 			sql = CustomSQLUtil.replaceAndOperator(sql, andOperator);
 
 			SQLQuery q = session.createSynchronizedSQLQuery(sql);
@@ -368,7 +366,7 @@ public class CalendarResourceFinderImpl
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(
-					sb, "CalendarResource.", orderByComparator);
+					sb, "CalendarResource.", orderByComparator, true);
 			}
 
 			sql = StringUtil.replace(sql, "[$ORDER_BY$]", sb.toString());

@@ -14,11 +14,15 @@
 
 package com.liferay.dynamic.data.mapping.type.text;
 
+import com.liferay.dynamic.data.mapping.model.DDMFormField;
+import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.registry.BaseDDMFormFieldRenderer;
 import com.liferay.dynamic.data.mapping.registry.DDMFormFieldRenderer;
+import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
+import com.liferay.portal.kernel.template.Template;
 import com.liferay.portal.kernel.template.TemplateConstants;
 import com.liferay.portal.kernel.template.TemplateResource;
-import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.StringPool;
 
 import java.util.Map;
 
@@ -30,8 +34,8 @@ import org.osgi.service.component.annotations.Deactivate;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true, property = {"templatePath=/META-INF/resources/text.soy"},
-	service = {TextDDMFormFieldRenderer.class, DDMFormFieldRenderer.class}
+	immediate = true, property = "ddm.form.field.type.name=text",
+	service = DDMFormFieldRenderer.class
 )
 public class TextDDMFormFieldRenderer extends BaseDDMFormFieldRenderer {
 
@@ -52,14 +56,32 @@ public class TextDDMFormFieldRenderer extends BaseDDMFormFieldRenderer {
 
 	@Activate
 	protected void activate(Map<String, Object> properties) {
-		String templatePath = MapUtil.getString(properties, "templatePath");
-
-		_templateResource = getTemplateResource(templatePath);
+		_templateResource = getTemplateResource("/META-INF/resources/text.soy");
 	}
 
 	@Deactivate
 	protected void deactivate() {
 		_templateResource = null;
+	}
+
+	@Override
+	protected void populateOptionalContext(
+		Template template, DDMFormField ddmFormField,
+		DDMFormFieldRenderingContext ddmFormFieldRenderingContext) {
+
+		template.put("displayStyle", ddmFormField.getProperty("displayStyle"));
+
+		String placeholderString = StringPool.BLANK;
+
+		LocalizedValue placeholder = (LocalizedValue)ddmFormField.getProperty(
+			"placeholder");
+
+		if (placeholder != null) {
+			placeholderString = placeholder.getString(
+				ddmFormFieldRenderingContext.getLocale());
+		}
+
+		template.put("placeholder", placeholderString);
 	}
 
 	private TemplateResource _templateResource;

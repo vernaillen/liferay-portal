@@ -32,10 +32,13 @@ import com.liferay.dynamic.data.mapping.model.DDMStructureVersion;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.dynamic.data.mapping.model.DDMTemplateConstants;
 import com.liferay.dynamic.data.mapping.service.base.DDMStructureLocalServiceBaseImpl;
+import com.liferay.dynamic.data.mapping.service.permission.DDMStructurePermission;
 import com.liferay.dynamic.data.mapping.storage.StorageType;
 import com.liferay.dynamic.data.mapping.util.DDMUtil;
 import com.liferay.dynamic.data.mapping.util.DDMXMLUtil;
 import com.liferay.dynamic.data.mapping.util.impl.DDMFormTemplateSynchonizer;
+import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException;
+import com.liferay.dynamic.data.mapping.validator.DDMFormValidator;
 import com.liferay.portal.LocaleException;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -60,6 +63,7 @@ import com.liferay.portal.model.User;
 import com.liferay.portal.security.auth.CompanyThreadLocal;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.permission.ModelPermissions;
+import com.liferay.portal.spring.extender.service.ServiceReference;
 import com.liferay.portal.util.PortalUtil;
 
 import java.util.ArrayList;
@@ -166,7 +170,7 @@ public class DDMStructureLocalServiceImpl
 			user, structure, DDMStructureConstants.VERSION_DEFAULT,
 			serviceContext);
 
-		// Structure Layout
+		// Structure layout
 
 		ddmStructureLayoutLocalService.addStructureLayout(
 			userId, groupId, structureVersion.getStructureVersionId(),
@@ -370,11 +374,14 @@ public class DDMStructureLocalServiceImpl
 			boolean addGuestPermissions)
 		throws PortalException {
 
+		String resourceName =
+			DDMStructurePermission.getStructureModelResourceName(
+				structure.getClassNameId());
+
 		resourceLocalService.addResources(
 			structure.getCompanyId(), structure.getGroupId(),
-			structure.getUserId(), DDMStructure.class.getName(),
-			structure.getStructureId(), false, addGroupPermissions,
-			addGuestPermissions);
+			structure.getUserId(), resourceName, structure.getStructureId(),
+			false, addGroupPermissions, addGuestPermissions);
 	}
 
 	/**
@@ -389,10 +396,14 @@ public class DDMStructureLocalServiceImpl
 			DDMStructure structure, ModelPermissions modelPermissions)
 		throws PortalException {
 
+		String resourceName =
+			DDMStructurePermission.getStructureModelResourceName(
+				structure.getClassNameId());
+
 		resourceLocalService.addModelResources(
 			structure.getCompanyId(), structure.getGroupId(),
-			structure.getUserId(), DDMStructure.class.getName(),
-			structure.getStructureId(), modelPermissions);
+			structure.getUserId(), resourceName, structure.getStructureId(),
+			modelPermissions);
 	}
 
 	/**
@@ -458,14 +469,6 @@ public class DDMStructureLocalServiceImpl
 	@SystemEvent(type = SystemEventConstants.TYPE_DELETE)
 	public void deleteStructure(DDMStructure structure) throws PortalException {
 		if (!GroupThreadLocal.isDeleteInProcess()) {
-			if (ddmStructureLinkPersistence.countByStructureId(
-					structure.getStructureId()) > 0) {
-
-				throw new RequiredStructureException.
-					MustNotDeleteStructureReferencedByStructureLinks(
-						structure.getStructureId());
-			}
-
 			if (ddmStructurePersistence.countByParentStructureId(
 					structure.getStructureId()) > 0) {
 
@@ -491,7 +494,12 @@ public class DDMStructureLocalServiceImpl
 
 		ddmStructurePersistence.remove(structure);
 
-		// Structure Versions
+		// Structure links
+
+		ddmStructureLinkPersistence.removeByStructureId(
+			structure.getStructureId());
+
+		// Structure versions
 
 		List<DDMStructureVersion> structureVersions =
 			ddmStructureVersionLocalService.getStructureVersions(
@@ -1123,10 +1131,11 @@ public class DDMStructureLocalServiceImpl
 	@Override
 	public List<DDMStructure> search(
 		long companyId, long[] groupIds, long classNameId, String keywords,
-		int start, int end, OrderByComparator<DDMStructure> orderByComparator) {
+		int status, int start, int end,
+		OrderByComparator<DDMStructure> orderByComparator) {
 
 		return ddmStructureFinder.findByKeywords(
-			companyId, groupIds, classNameId, keywords, start, end,
+			companyId, groupIds, classNameId, keywords, status, start, end,
 			orderByComparator);
 	}
 
@@ -1165,12 +1174,13 @@ public class DDMStructureLocalServiceImpl
 	@Override
 	public List<DDMStructure> search(
 		long companyId, long[] groupIds, long classNameId, String name,
-		String description, String storageType, int type, boolean andOperator,
-		int start, int end, OrderByComparator<DDMStructure> orderByComparator) {
+		String description, String storageType, int type, int status,
+		boolean andOperator, int start, int end,
+		OrderByComparator<DDMStructure> orderByComparator) {
 
-		return ddmStructureFinder.findByC_G_C_N_D_S_T(
+		return ddmStructureFinder.findByC_G_C_N_D_S_T_S(
 			companyId, groupIds, classNameId, name, description, storageType,
-			type, andOperator, start, end, orderByComparator);
+			type, status, andOperator, start, end, orderByComparator);
 	}
 
 	/**
@@ -1187,10 +1197,11 @@ public class DDMStructureLocalServiceImpl
 	 */
 	@Override
 	public int searchCount(
-		long companyId, long[] groupIds, long classNameId, String keywords) {
+		long companyId, long[] groupIds, long classNameId, String keywords,
+		int status) {
 
 		return ddmStructureFinder.countByKeywords(
-			companyId, groupIds, classNameId, keywords);
+			companyId, groupIds, classNameId, keywords, status);
 	}
 
 	/**
@@ -1213,11 +1224,12 @@ public class DDMStructureLocalServiceImpl
 	@Override
 	public int searchCount(
 		long companyId, long[] groupIds, long classNameId, String name,
-		String description, String storageType, int type, boolean andOperator) {
+		String description, String storageType, int type, int status,
+		boolean andOperator) {
 
-		return ddmStructureFinder.countByC_G_C_N_D_S_T(
+		return ddmStructureFinder.countByC_G_C_N_D_S_T_S(
 			companyId, groupIds, classNameId, name, description, storageType,
-			type, andOperator);
+			type, status, andOperator);
 	}
 
 	@Override
@@ -1429,7 +1441,7 @@ public class DDMStructureLocalServiceImpl
 
 		int status = GetterUtil.getInteger(
 			serviceContext.getAttribute("status"),
-			WorkflowConstants.STATUS_DRAFT);
+			WorkflowConstants.STATUS_APPROVED);
 
 		structureVersion.setStatus(status);
 
@@ -1503,23 +1515,27 @@ public class DDMStructureLocalServiceImpl
 		structure.setDescriptionMap(descriptionMap);
 		structure.setDefinition(DDMFormJSONSerializerUtil.serialize(ddmForm));
 
-		ddmStructurePersistence.update(structure);
-
-		// Structure templates
-
-		syncStructureTemplatesFields(structure);
-
 		// Structure version
 
 		DDMStructureVersion structureVersion = addStructureVersion(
 			user, structure, version, serviceContext);
 
-		// Structure Layout
+		// Structure layout
 
 		ddmStructureLayoutLocalService.addStructureLayout(
 			structureVersion.getUserId(), structureVersion.getGroupId(),
 			structureVersion.getStructureVersionId(), ddmFormLayout,
 			serviceContext);
+
+		if (!structureVersion.isApproved()) {
+			return structure;
+		}
+
+		ddmStructurePersistence.update(structure);
+
+		// Structure templates
+
+		syncStructureTemplatesFields(structure);
 
 		// Indexer
 
@@ -1648,6 +1664,10 @@ public class DDMStructureLocalServiceImpl
 			});
 	}
 
+	protected void validate(DDMForm ddmForm) throws PortalException {
+		ddmFormValidator.validate(ddmForm);
+	}
+
 	protected void validate(DDMForm parentDDMForm, DDMForm ddmForm)
 		throws PortalException {
 
@@ -1691,9 +1711,14 @@ public class DDMStructureLocalServiceImpl
 		try {
 			validate(nameMap, ddmForm.getDefaultLocale());
 
+			validate(ddmForm);
+
 			if (parentDDMForm != null) {
 				validate(parentDDMForm, ddmForm);
 			}
+		}
+		catch (DDMFormValidationException ddmfve) {
+			throw ddmfve;
 		}
 		catch (LocaleException le) {
 			throw le;
@@ -1737,5 +1762,8 @@ public class DDMStructureLocalServiceImpl
 			throw le;
 		}
 	}
+
+	@ServiceReference(type = DDMFormValidator.class)
+	protected DDMFormValidator ddmFormValidator;
 
 }

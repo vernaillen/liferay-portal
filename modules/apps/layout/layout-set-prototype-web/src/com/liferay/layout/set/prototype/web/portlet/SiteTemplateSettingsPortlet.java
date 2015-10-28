@@ -15,10 +15,12 @@
 package com.liferay.layout.set.prototype.web.portlet;
 
 import com.liferay.layout.set.prototype.web.constants.LayoutSetPrototypePortletKeys;
+import com.liferay.portal.service.LayoutSetPrototypeService;
 
 import javax.portlet.Portlet;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Eudaldo Alonso
@@ -27,8 +29,6 @@ import org.osgi.service.component.annotations.Component;
 	immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
-		"com.liferay.portlet.control-panel-entry-category=site_administration.configuration",
-		"com.liferay.portlet.control-panel-entry-weight=1.0",
 		"com.liferay.portlet.css-class-wrapper=portlet-users-admin",
 		"com.liferay.portlet.icon=/icons/site_settings.png",
 		"com.liferay.portlet.preferences-owned-by-group=true",
@@ -49,4 +49,12 @@ import org.osgi.service.component.annotations.Component;
 	service = {Portlet.class}
 )
 public class SiteTemplateSettingsPortlet extends LayoutSetPrototypePortlet {
+
+	@Reference(unbind = "-")
+	protected void setLayoutSetPrototypeService(
+		LayoutSetPrototypeService layoutSetPrototypeService) {
+
+		this.layoutSetPrototypeService = layoutSetPrototypeService;
+	}
+
 }

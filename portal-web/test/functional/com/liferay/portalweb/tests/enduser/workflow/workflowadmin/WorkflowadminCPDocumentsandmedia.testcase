@@ -19,7 +19,7 @@
 		<execute macro="DMDocumentType#tearDownCP" />
 	</tear-down>
 
-	<command name="AddDocumentsAndMediaNoWorkflowCP" priority="4">
+	<command name="AddDocumentsAndMediaNoWorkflowCP" priority="3">
 		<var name="dmDocumentDescription" value="DM Document Description" />
 		<var name="dmDocumentTitle" value="DM Document Title" />
 
@@ -103,7 +103,7 @@
 		</execute>
 	</command>
 
-	<command name="ApproveInDMFolderNoWorkflowWithHomeFolderSingleApproverWorkflowCP" priority="4">
+	<command name="ApproveInDMFolderNoWorkflowWithHomeFolderSingleApproverWorkflowCP" priority="3">
 		<execute macro="Page#gotoContentCP">
 			<var name="portletName" value="Documents and Media" />
 		</execute>
@@ -346,6 +346,10 @@
 			<var name="dmFolderName" value="DM Folder Name" />
 			<var name="workflowDefinition" value="Single Approver (Version 1)" />
 			<var name="workflowRestriction" value="Default Workflow" />
+		</execute>
+
+		<execute macro="Page#gotoContentCP">
+			<var name="portletName" value="Documents and Media" />
 		</execute>
 
 		<execute macro="DMDocument#addCP">
@@ -634,7 +638,7 @@
 		</execute>
 	</command>
 
-	<command name="RejectInDMFolderNoWorkflowWithHomeFolderSingleApproverWorkflowCP" priority="4">
+	<command name="RejectInDMFolderNoWorkflowWithHomeFolderSingleApproverWorkflowCP" priority="3">
 		<execute macro="Page#gotoContentCP">
 			<var name="portletName" value="Documents and Media" />
 		</execute>
@@ -736,7 +740,7 @@
 		</execute>
 	</command>
 
-	<command name="RejectInDMFolderSingleApproverTypeSpecificWorkflowCP" priority="4">
+	<command name="RejectInDMFolderSingleApproverTypeSpecificWorkflowCP" priority="3">
 		<execute macro="Page#gotoContentCP">
 			<var name="portletName" value="Documents and Media" />
 		</execute>
@@ -873,7 +877,7 @@
 		</execute>
 	</command>
 
-	<command name="RejectInDMFolderSingleApproverWorkflowWithNoHomeFolderWorkflowCP" priority="4">
+	<command name="RejectInDMFolderSingleApproverWorkflowWithNoHomeFolderWorkflowCP" priority="3">
 		<execute macro="Page#gotoContentCP">
 			<var name="portletName" value="Documents and Media" />
 		</execute>
@@ -887,6 +891,10 @@
 			<var name="dmFolderName" value="DM Folder Name" />
 			<var name="workflowDefinition" value="Single Approver (Version 1)" />
 			<var name="workflowRestriction" value="Default Workflow" />
+		</execute>
+
+		<execute macro="Page#gotoContentCP">
+			<var name="portletName" value="Documents and Media" />
 		</execute>
 
 		<execute macro="DMDocument#addCP">
@@ -981,7 +989,7 @@
 		</execute>
 	</command>
 
-	<command name="RejectInDMFolderWithParentFolderSingleApproverWorkflowCP" priority="4">
+	<command name="RejectInDMFolderWithParentFolderSingleApproverWorkflowCP" priority="3">
 		<execute macro="Page#gotoContentCP">
 			<var name="portletName" value="Documents and Media" />
 		</execute>

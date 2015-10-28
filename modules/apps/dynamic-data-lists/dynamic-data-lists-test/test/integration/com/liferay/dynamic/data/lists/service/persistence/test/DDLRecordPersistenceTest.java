@@ -45,6 +45,7 @@ import com.liferay.portal.test.rule.PersistenceTestRule;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -64,8 +65,9 @@ import java.util.Set;
  */
 @RunWith(Arquillian.class)
 public class DDLRecordPersistenceTest {
+	@ClassRule
 	@Rule
-	public final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
+	public static final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
 			PersistenceTestRule.INSTANCE,
 			new TransactionalTestRule(Propagation.REQUIRED));
 
@@ -374,11 +376,9 @@ public class DDLRecordPersistenceTest {
 
 		ActionableDynamicQuery actionableDynamicQuery = DDLRecordLocalServiceUtil.getActionableDynamicQuery();
 
-		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod() {
+		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<DDLRecord>() {
 				@Override
-				public void performAction(Object object) {
-					DDLRecord ddlRecord = (DDLRecord)object;
-
+				public void performAction(DDLRecord ddlRecord) {
 					Assert.assertNotNull(ddlRecord);
 
 					count.increment();
@@ -473,9 +473,9 @@ public class DDLRecordPersistenceTest {
 		Assert.assertTrue(Validator.equals(existingDDLRecord.getUuid(),
 				ReflectionTestUtil.invoke(existingDDLRecord, "getOriginalUuid",
 					new Class<?>[0])));
-		Assert.assertEquals(existingDDLRecord.getGroupId(),
-			ReflectionTestUtil.invoke(existingDDLRecord, "getOriginalGroupId",
-				new Class<?>[0]));
+		Assert.assertEquals(Long.valueOf(existingDDLRecord.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(existingDDLRecord,
+				"getOriginalGroupId", new Class<?>[0]));
 	}
 
 	protected DDLRecord addDDLRecord() throws Exception {

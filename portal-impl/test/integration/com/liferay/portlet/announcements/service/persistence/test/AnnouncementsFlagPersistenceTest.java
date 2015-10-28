@@ -41,6 +41,7 @@ import com.liferay.portlet.announcements.service.persistence.AnnouncementsFlagUt
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -57,8 +58,9 @@ import java.util.Set;
  * @generated
  */
 public class AnnouncementsFlagPersistenceTest {
+	@ClassRule
 	@Rule
-	public final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
+	public static final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
 			PersistenceTestRule.INSTANCE,
 			new TransactionalTestRule(Propagation.REQUIRED));
 
@@ -289,11 +291,9 @@ public class AnnouncementsFlagPersistenceTest {
 
 		ActionableDynamicQuery actionableDynamicQuery = AnnouncementsFlagLocalServiceUtil.getActionableDynamicQuery();
 
-		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod() {
+		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<AnnouncementsFlag>() {
 				@Override
-				public void performAction(Object object) {
-					AnnouncementsFlag announcementsFlag = (AnnouncementsFlag)object;
-
+				public void performAction(AnnouncementsFlag announcementsFlag) {
 					Assert.assertNotNull(announcementsFlag);
 
 					count.increment();
@@ -385,14 +385,15 @@ public class AnnouncementsFlagPersistenceTest {
 
 		AnnouncementsFlag existingAnnouncementsFlag = _persistence.findByPrimaryKey(newAnnouncementsFlag.getPrimaryKey());
 
-		Assert.assertEquals(existingAnnouncementsFlag.getUserId(),
-			ReflectionTestUtil.invoke(existingAnnouncementsFlag,
+		Assert.assertEquals(Long.valueOf(existingAnnouncementsFlag.getUserId()),
+			ReflectionTestUtil.<Long>invoke(existingAnnouncementsFlag,
 				"getOriginalUserId", new Class<?>[0]));
-		Assert.assertEquals(existingAnnouncementsFlag.getEntryId(),
-			ReflectionTestUtil.invoke(existingAnnouncementsFlag,
+		Assert.assertEquals(Long.valueOf(existingAnnouncementsFlag.getEntryId()),
+			ReflectionTestUtil.<Long>invoke(existingAnnouncementsFlag,
 				"getOriginalEntryId", new Class<?>[0]));
-		Assert.assertEquals(existingAnnouncementsFlag.getValue(),
-			ReflectionTestUtil.invoke(existingAnnouncementsFlag,
+		Assert.assertEquals(Integer.valueOf(
+				existingAnnouncementsFlag.getValue()),
+			ReflectionTestUtil.<Integer>invoke(existingAnnouncementsFlag,
 				"getOriginalValue", new Class<?>[0]));
 	}
 

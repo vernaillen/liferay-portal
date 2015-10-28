@@ -8,7 +8,7 @@
 			</not>
 			<then>
 				<execute function="Type" locator1="NavBar#BASIC_SEARCH_FIELD" value1="${siteName}" />
-				<execute function="AssertClick" locator1="NavBar#BASIC_SEARCH_BUTTON" value1="Search" />
+				<execute function="Click" locator1="Icon#BASIC_SEARCH" />
 				<execute function="Click" locator1="Sites#SITE_TABLE_ACTIONS" />
 				<execute function="AssertClick" locator1="MenuItem#SITE_ADMINISTRATION" value1="Site Administration" />
 			</then>
@@ -65,9 +65,15 @@
 			</not>
 			<then>
 				<execute function="Type" locator1="NavBar#BASIC_SEARCH_FIELD" value1="${siteName}" />
-				<execute function="AssertClick" locator1="NavBar#BASIC_SEARCH_BUTTON" value1="Search" />
-				<execute function="Click" locator1="Sites#SITE_TABLE_ACTIONS" />
+				<execute function="Click" locator1="Icon#BASIC_SEARCH" />
+
+				<var name="key_listEntry" value="${siteName}" />
+				<execute function="ClickNoError" locator1="Icon#LIST_VERTICAL_ELLIPSIS" />
 				<execute function="AssertClick" locator1="MenuItem#SITE_ADMINISTRATION" value1="Site Administration" />
+
+				<execute macro="ProductMenu#gotoSitesPages">
+					<var name="portlet" value="Site Pages" />
+				</execute>
 			</then>
 		</if>
 
@@ -116,9 +122,31 @@
 		<execute function="AssertTextEquals" locator1="SitePages#PAGE_TREE_PAGE_LINK" value1="${sitePageName}" />
 	</command>
 
+	<command name="addFromMyProfile">
+		<execute function="AssertClick" locator1="SitePages#TOOLBAR_ADD_PAGE" value1="Add Page" />
+
+		<execute function="Type#typeClickAt" locator1="TextInput#NAME" value1="${pageName}" />
+
+		<if>
+			<isset var="pageType" />
+			<then>
+				<execute macro="SitePage#selectSitePageTypeRadioCP">
+					<var name="componentName" value="${componentName}" />
+					<var name="pageTypeDescription" value="${pageTypeDescription}" />
+					<var name="pageTypeURL" value="${pageTypeURL}" />
+					<var name="sitePageType" value="${pageType}" />
+				</execute>
+			</then>
+		</if>
+
+		<execute function="AssertClick" locator1="Button#ADD_PAGE" value1="Add Page" />
+
+		<execute function="AssertTextEquals" locator1="Message#SUCCESS" value1="Your request completed successfully." />
+	</command>
+
 	<command name="addJavaScript">
 		<execute function="AssertClick" locator1="SitePages#JAVASCRIPT_NAVIGATION" value1="JavaScript" />
-		<execute function="AssertTextEquals" locator1="SitePages#JAVASCRIPT_LABEL" value1="Paste JavaScript code that will be executed at the bottom of every page." />
+		<execute function="AssertTextEquals" locator1="SitePages#JAVASCRIPT_LABEL" value1="Paste JavaScript code that is executed at the bottom of every page." />
 		<execute function="Type" locator1="SitePages#JAVASCRIPT_TEXTAREA" value1="${javaScript}" />
 		<execute function="AssertClick" locator1="Button#SAVE" value1="Save" />
 		<execute function="AssertTextEquals" locator1="Message#SUCCESS" value1="Your request completed successfully." />
@@ -145,12 +173,12 @@
 
 	<command name="addSitePageTypeEmbeddedCP">
 		<execute function="Type" locator1="SitePagesEditPage#PAGE_TYPE_EMBEDDED_URL_FIELD" value1="${pageTypeURL}" />
-		<execute function="Type" locator1="SitePagesEditPage#PAGE_TYPE_EMBEDDED_DESCRIPTION_FIELD" value1="${pageTypeDescription}" />
+		<execute function="AssertTextEquals" locator1="SitePagesEditPage#PAGE_TYPE_EMBEDDED_DESCRIPTION_FIELD" value1="Show content from another website." />
 	</command>
 
 	<command name="addSitePageTypeLinkToURLCP">
 		<execute function="Type" locator1="SitePagesEditPage#PAGE_TYPE_LINK_TO_URL_URL_FIELD" value1="${pageTypeURL}" />
-		<execute function="Type" locator1="SitePagesEditPage#PAGE_TYPE_LINK_TO_URL_DESCRIPTION_FIELD" value1="${pageTypeDescription}" />
+		<execute function="AssertTextEquals" locator1="SitePagesEditPage#PAGE_TYPE_LINK_TO_URL_DESCRIPTION_FIELD" value1="Link to another website." />
 	</command>
 
 	<command name="addSitePageTypePanelCP">
@@ -445,11 +473,14 @@
 					</execute>
 				</then>
 			</elseif>
-			<else>
-				<execute macro="SitePage#addSitePageTypePanelCP">
-					<var name="componentName" value="${componentName}" />
-				</execute>
-			</else>
+			<elseif>
+				<equals arg1="${sitePageType}" arg2="Panel" />
+				<then>
+					<execute macro="SitePage#addSitePageTypePanelCP">
+						<var name="componentName" value="${componentName}" />
+					</execute>
+				</then>
+			</elseif>
 		</if>
 	</command>
 
@@ -463,7 +494,7 @@
 		<var name="key_siteName" value="Liferay" />
 
 		<execute function="Type" locator1="NavBar#BASIC_SEARCH_FIELD" value1="Liferay" />
-		<execute function="AssertClick" locator1="NavBar#BASIC_SEARCH_BUTTON" value1="Search" />
+		<execute function="Click" locator1="Icon#BASIC_SEARCH" />
 		<execute function="Click" locator1="Sites#SITE_TABLE_ACTIONS" />
 		<execute function="AssertClick" locator1="MenuItem#SITE_ADMINISTRATION" value1="Site Administration" />
 		<execute function="AssertClick" locator1="SitePages#NAVIGATION_PRIVATE_PAGES" value1="Private Pages" />
@@ -558,16 +589,18 @@
 
 		<execute function="Click" locator1="Home#PAGE_NAVIGATION_BAR" />
 
+		<var name="key_pageName" value="${pageName}" />
+
 		<if>
 			<equals arg1="${siteTemplate}" arg2="Community" />
 			<then>
-				<execute function="AssertTextEquals" locator1="Home#PAGE_TEMPLATE_1" value1="Home" />
+				<execute function="AssertTextEquals" locator1="Home#PAGE_TEMPLATE_1" value1="${pageName}" />
 				<execute function="AssertTextEquals" locator1="Home#PAGE_TEMPLATE_2" value1="Wiki" />
 			</then>
 			<elseif>
 				<equals arg1="${siteTemplate}" arg2="Intranet" />
 				<then>
-					<execute function="AssertTextEquals" locator1="Home#PAGE_TEMPLATE_1" value1="Home" />
+					<execute function="AssertTextEquals" locator1="Home#PAGE_TEMPLATE_1" value1="${pageName}" />
 					<execute function="AssertTextEquals" locator1="Home#PAGE_TEMPLATE_2" value1="Documents and Media" />
 				</then>
 			</elseif>
@@ -575,7 +608,7 @@
 				<equals arg1="${siteTemplate}" arg2="Zoe Healthcare Theme" />
 				<then>
 					<execute function="AssertElementPresent" locator1="Home#SITE_NAME_LOGO" />
-					<execute function="AssertElementPresent" locator1="Home#PAGE_TEMPLATE_1" value1="HOME" />
+					<execute function="AssertElementPresent" locator1="Home#PAGE_TEMPLATE_1" value1="${pageName}" />
 					<execute function="AssertElementPresent" locator1="Home#PAGE_TEMPLATE_2" value1="ABOUT" />
 					<execute function="AssertElementPresent" locator1="Home#PAGE_TEMPLATE_3" value1="CLINIC" />
 					<execute function="AssertElementPresent" locator1="Home#PAGE_TEMPLATE_4" value1="SERVICES" />
@@ -622,6 +655,14 @@
 	</command>
 
 	<command name="viewNoDeletePagesAssociatedWithSiteTemplateCP">
+		<if>
+			<equals arg1="${iframe}" arg2="true" />
+			<then>
+
+				<execute function="SelectFrame" locator1="IFrame#MANAGE_SITE_PAGES" />
+			</then>
+		</if>
+
 		<var name="key_sitePageName" value="${sitePageName}" />
 
 		<if>
@@ -640,14 +681,16 @@
 		<execute function="AssertElementNotPresent" locator1="SitePages#TOOLBAR_ADD_CHILD_PAGE" value1="Add Child Page" />
 		<execute function="AssertElementNotPresent" locator1="SitePages#TOOLBAR_DELETE" value1="Delete" />
 		<execute function="AssertTextEquals" locator1="Message#ERROR_3" value1="This page cannot be deleted and cannot have child pages because it is associated to a site template." />
+
+		<execute function="SelectFrameTop" />
 	</command>
 
 	<command name="viewOnlyAddOptionViaSiteAdminCP">
 		<execute function="Click#clickAtSidebarClickAtWaitForScript" locator1="Icon#ADD" value1="Add" />
 
-		<execute function="AssertElementNotPresent" locator1="DockbarAddpanelpage#NAVIGATION_CONTENT" />
-		<execute function="AssertElementNotPresent" locator1="DockbarAddpanelpage#NAVIGATION_APPLICATIONS" />
-		<execute function="AssertElementPresent" locator1="DockbarAddpanelpage#NAVIGATION_PAGE" />
+		<execute function="AssertElementNotPresent" locator1="NavPill#CONTENT" />
+		<execute function="AssertElementNotPresent" locator1="NavPill#APPLICATIONS" />
+		<execute function="AssertElementPresent" locator1="NavPill#PAGE" />
 
 		<execute function="Refresh" />
 	</command>

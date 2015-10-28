@@ -18,12 +18,18 @@ import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluationResult;
 import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormFieldEvaluationResult;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
+import com.liferay.dynamic.data.mapping.model.DDMFormFieldValidation;
+import com.liferay.dynamic.data.mapping.model.LocalizedValue;
+import com.liferay.dynamic.data.mapping.model.UnlocalizedValue;
 import com.liferay.dynamic.data.mapping.model.Value;
 import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.portal.expression.Expression;
 import com.liferay.portal.expression.ExpressionFactory;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.ArrayList;
@@ -42,7 +48,13 @@ public class DDMFormEvaluatorHelper {
 		DDMForm ddmForm, DDMFormValues ddmFormValues, Locale locale) {
 
 		_ddmFormFieldsMap = ddmForm.getDDMFormFieldsMap(true);
+
+		if (ddmFormValues == null) {
+			ddmFormValues = createEmptyDDMFormValues(ddmForm);
+		}
+
 		_rootDDMFormFieldValues = ddmFormValues.getDDMFormFieldValues();
+
 		_locale = locale;
 	}
 
@@ -58,6 +70,30 @@ public class DDMFormEvaluatorHelper {
 			ddmFormFieldEvaluationResults);
 
 		return ddmFormEvaluationResult;
+	}
+
+	protected DDMFormValues createEmptyDDMFormValues(DDMForm ddmForm) {
+		DDMFormValues ddmFormValues = new DDMFormValues(ddmForm);
+
+		for (DDMFormField ddmFormField : ddmForm.getDDMFormFields()) {
+			DDMFormFieldValue ddmFormFieldValue = new DDMFormFieldValue();
+
+			ddmFormFieldValue.setName(ddmFormField.getName());
+
+			Value value = new UnlocalizedValue(StringPool.BLANK);
+
+			if (ddmFormField.isLocalizable()) {
+				value = new LocalizedValue(_locale);
+
+				value.addString(_locale, StringPool.BLANK);
+			}
+
+			ddmFormFieldValue.setValue(value);
+
+			ddmFormValues.addDDMFormFieldValue(ddmFormFieldValue);
+		}
+
+		return ddmFormValues;
 	}
 
 	protected boolean evaluateBooleanExpression(
@@ -107,14 +143,30 @@ public class DDMFormEvaluatorHelper {
 			new DDMFormFieldEvaluationResult(
 				ddmFormFieldValue.getName(), ddmFormFieldValue.getInstanceId());
 
-		boolean valid = evaluateBooleanExpression(
-			ddmFormField.getValidationExpression(), ancestorDDMFormFieldValues);
+		if (ddmFormField.isRequired() &&
+			isDDMFormFieldValueEmpty(ddmFormFieldValue)) {
 
-		ddmFormFieldEvaluationResult.setValid(valid);
+			ddmFormFieldEvaluationResult.setErrorMessage(
+				LanguageUtil.get(_locale, "this-field-is-required"));
 
-		if (!valid) {
-			ddmFormFieldEvaluationResult.setValidationMessage(
-				ddmFormField.getValidationMessage());
+			ddmFormFieldEvaluationResult.setValid(false);
+		}
+		else if (!isDDMFormFieldValueEmpty(ddmFormFieldValue)) {
+			DDMFormFieldValidation ddmFormFieldValidation =
+				ddmFormField.getDDMFormFieldValidation();
+
+			String validationExpression = getValidationExpression(
+				ddmFormFieldValidation);
+
+			boolean valid = evaluateBooleanExpression(
+				validationExpression, ancestorDDMFormFieldValues);
+
+			ddmFormFieldEvaluationResult.setValid(valid);
+
+			if (!valid) {
+				ddmFormFieldEvaluationResult.setErrorMessage(
+					ddmFormFieldValidation.getErrorMessage());
+			}
 		}
 
 		boolean visible = evaluateBooleanExpression(
@@ -150,6 +202,39 @@ public class DDMFormEvaluatorHelper {
 		}
 
 		return ddmFormFieldEvaluationResults;
+	}
+
+	protected String getValidationExpression(
+		DDMFormFieldValidation ddmFormFieldValidation) {
+
+		if (ddmFormFieldValidation == null) {
+			return null;
+		}
+
+		return ddmFormFieldValidation.getExpression();
+	}
+
+	protected boolean isDDMFormFieldValueEmpty(
+		DDMFormFieldValue ddmFormFieldValue) {
+
+		Value value = ddmFormFieldValue.getValue();
+
+		String valueString = value.getString(_locale);
+
+		DDMFormField ddmFormField = ddmFormFieldValue.getDDMFormField();
+
+		String dataType = ddmFormField.getDataType();
+
+		if (Validator.isNull(valueString)) {
+			return true;
+		}
+		else if (Validator.equals(dataType, "boolean") &&
+				 Validator.equals(valueString, "false")) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	protected void setExpressionFactory(ExpressionFactory expressionFactory) {
@@ -190,11 +275,11 @@ public class DDMFormEvaluatorHelper {
 
 		if (variableType.equals("boolean")) {
 			expression.setBooleanVariableValue(
-				variableName, Boolean.valueOf(variableValue));
+				variableName, GetterUtil.getBoolean(variableValue));
 		}
 		else if (variableType.equals("integer")) {
 			expression.setIntegerVariableValue(
-				variableName, Integer.valueOf(variableValue));
+				variableName, GetterUtil.getInteger(variableValue));
 		}
 		else if (variableType.equals("string")) {
 			expression.setStringVariableValue(variableName, variableValue);

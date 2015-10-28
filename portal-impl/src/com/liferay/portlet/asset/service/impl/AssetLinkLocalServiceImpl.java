@@ -14,16 +14,31 @@
 
 package com.liferay.portlet.asset.service.impl;
 
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.Criterion;
+import com.liferay.portal.kernel.dao.orm.Disjunction;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.Property;
+import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.model.User;
+import com.liferay.portal.model.adapter.ModelAdapterUtil;
 import com.liferay.portlet.asset.NoSuchLinkException;
 import com.liferay.portlet.asset.model.AssetEntry;
 import com.liferay.portlet.asset.model.AssetLink;
 import com.liferay.portlet.asset.model.AssetLinkConstants;
+import com.liferay.portlet.asset.model.adapter.StagedAssetLink;
 import com.liferay.portlet.asset.service.base.AssetLinkLocalServiceBaseImpl;
+import com.liferay.portlet.exportimport.lar.PortletDataContext;
+import com.liferay.portlet.exportimport.lar.StagedModelDataHandlerUtil;
+import com.liferay.portlet.exportimport.lar.StagedModelType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -232,6 +247,87 @@ public class AssetLinkLocalServiceImpl extends AssetLinkLocalServiceBaseImpl {
 		}
 
 		return assetLinks;
+	}
+
+	@Override
+	public ExportActionableDynamicQuery getExportActionbleDynamicQuery(
+		final PortletDataContext portletDataContext) {
+
+		final ExportActionableDynamicQuery exportActionableDynamicQuery =
+			new ExportActionableDynamicQuery();
+
+		exportActionableDynamicQuery.setAddCriteriaMethod(
+			new ActionableDynamicQuery.AddCriteriaMethod() {
+
+				@Override
+				public void addCriteria(DynamicQuery dynamicQuery) {
+					Criterion createDateCriterion =
+						portletDataContext.getDateRangeCriteria("createDate");
+
+					if (createDateCriterion != null) {
+						dynamicQuery.add(createDateCriterion);
+					}
+
+					DynamicQuery assetEntryDynamicQuery =
+						DynamicQueryFactoryUtil.forClass(
+							AssetEntry.class, "assetEntry", getClassLoader());
+
+					assetEntryDynamicQuery.setProjection(
+						ProjectionFactoryUtil.alias(
+							ProjectionFactoryUtil.property(
+								"assetEntry.entryId"),
+							"assetEntry.assetEntryId"));
+
+					Property groupIdProperty = PropertyFactoryUtil.forName(
+						"groupId");
+
+					Criterion groupIdCriterion = groupIdProperty.eq(
+						portletDataContext.getScopeGroupId());
+
+					assetEntryDynamicQuery.add(groupIdCriterion);
+
+					Disjunction disjunction =
+						RestrictionsFactoryUtil.disjunction();
+
+					Property entryId1Property = PropertyFactoryUtil.forName(
+						"entryId1");
+					Property entryId2Property = PropertyFactoryUtil.forName(
+						"entryId2");
+
+					disjunction.add(
+						entryId1Property.in(assetEntryDynamicQuery));
+					disjunction.add(
+						entryId2Property.in(assetEntryDynamicQuery));
+
+					dynamicQuery.add(disjunction);
+				}
+
+			});
+		exportActionableDynamicQuery.setBaseLocalService(this);
+		exportActionableDynamicQuery.setClass(AssetLink.class);
+		exportActionableDynamicQuery.setClassLoader(getClassLoader());
+		exportActionableDynamicQuery.setCompanyId(
+			portletDataContext.getCompanyId());
+		exportActionableDynamicQuery.setPerformActionMethod(
+			new ActionableDynamicQuery.PerformActionMethod<AssetLink>() {
+
+				@Override
+				public void performAction(AssetLink assetLink)
+					throws PortalException {
+
+					StagedAssetLink stagedAssetLink = ModelAdapterUtil.adapt(
+						assetLink, AssetLink.class, StagedAssetLink.class);
+
+					StagedModelDataHandlerUtil.exportStagedModel(
+						portletDataContext, stagedAssetLink);
+				}
+
+			});
+		exportActionableDynamicQuery.setPrimaryKeyPropertyName("linkId");
+		exportActionableDynamicQuery.setStagedModelType(
+			new StagedModelType(StagedModelType.class));
+
+		return exportActionableDynamicQuery;
 	}
 
 	/**

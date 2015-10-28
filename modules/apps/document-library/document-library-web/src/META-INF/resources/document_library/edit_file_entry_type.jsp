@@ -54,7 +54,9 @@ String scopeAvailableFields = ParamUtil.getString(request, "scopeAvailableFields
 	/>
 </liferay-util:buffer>
 
-<portlet:actionURL name="/document_library/edit_file_entry_type" var="editFileEntryTypeURL" />
+<portlet:actionURL name="/document_library/edit_file_entry_type" var="editFileEntryTypeURL">
+	<portlet:param name="mvcRenderCommandName" value="/document_library/edit_file_entry_type" />
+</portlet:actionURL>
 
 <aui:form action="<%= editFileEntryTypeURL %>" method="post" name="fm">
 	<aui:input name="<%= Constants.CMD %>" type="hidden" value="<%= (fileEntryType == null) ? Constants.ADD : Constants.UPDATE %>" />
@@ -138,7 +140,7 @@ String scopeAvailableFields = ParamUtil.getString(request, "scopeAvailableFields
 			/>
 		</liferay-ui:panel>
 
-		<c:if test="<%= (fileEntryType == null) %>">
+		<c:if test="<%= fileEntryType == null %>">
 			<aui:field-wrapper label="permissions">
 				<liferay-ui:input-permissions
 					modelName="<%= DLFileEntryType.class.getName() %>"

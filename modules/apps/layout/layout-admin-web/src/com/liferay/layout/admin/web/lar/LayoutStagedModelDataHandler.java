@@ -14,7 +14,8 @@
 
 package com.liferay.layout.admin.web.lar;
 
-import com.liferay.counter.service.CounterLocalServiceUtil;
+import com.liferay.counter.service.CounterLocalService;
+import com.liferay.exportimport.lar.BaseStagedModelDataHandler;
 import com.liferay.portal.NoSuchLayoutException;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -50,20 +51,19 @@ import com.liferay.portal.model.LayoutTypePortlet;
 import com.liferay.portal.model.LayoutTypePortletConstants;
 import com.liferay.portal.model.adapter.StagedTheme;
 import com.liferay.portal.model.adapter.impl.StagedThemeImpl;
-import com.liferay.portal.service.GroupLocalServiceUtil;
-import com.liferay.portal.service.ImageLocalServiceUtil;
-import com.liferay.portal.service.LayoutFriendlyURLLocalServiceUtil;
-import com.liferay.portal.service.LayoutLocalServiceUtil;
-import com.liferay.portal.service.LayoutPrototypeLocalServiceUtil;
-import com.liferay.portal.service.LayoutSetLocalServiceUtil;
-import com.liferay.portal.service.LayoutTemplateLocalServiceUtil;
-import com.liferay.portal.service.PortletLocalServiceUtil;
-import com.liferay.portal.service.ResourceLocalServiceUtil;
+import com.liferay.portal.service.GroupLocalService;
+import com.liferay.portal.service.ImageLocalService;
+import com.liferay.portal.service.LayoutFriendlyURLLocalService;
+import com.liferay.portal.service.LayoutLocalService;
+import com.liferay.portal.service.LayoutPrototypeLocalService;
+import com.liferay.portal.service.LayoutSetLocalService;
+import com.liferay.portal.service.LayoutTemplateLocalService;
+import com.liferay.portal.service.PortletLocalService;
+import com.liferay.portal.service.ResourceLocalService;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextThreadLocal;
 import com.liferay.portal.service.impl.LayoutLocalServiceHelper;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.portlet.exportimport.lar.BaseStagedModelDataHandler;
 import com.liferay.portlet.exportimport.lar.ExportImportPathUtil;
 import com.liferay.portlet.exportimport.lar.PortletDataContext;
 import com.liferay.portlet.exportimport.lar.PortletDataException;
@@ -97,7 +97,7 @@ public class LayoutStagedModelDataHandler
 
 	@Override
 	public void deleteStagedModel(Layout layout) {
-		LayoutLocalServiceUtil.deleteLayout(layout);
+		_layoutLocalService.deleteLayout(layout);
 	}
 
 	@Override
@@ -110,7 +110,7 @@ public class LayoutStagedModelDataHandler
 
 		boolean privateLayout = extraDataJSONObject.getBoolean("privateLayout");
 
-		Layout layout = LayoutLocalServiceUtil.fetchLayoutByUuidAndGroupId(
+		Layout layout = _layoutLocalService.fetchLayoutByUuidAndGroupId(
 			uuid, groupId, privateLayout);
 
 		if (layout != null) {
@@ -122,7 +122,7 @@ public class LayoutStagedModelDataHandler
 	public List<Layout> fetchStagedModelsByUuidAndCompanyId(
 		String uuid, long companyId) {
 
-		return LayoutLocalServiceUtil.getLayoutsByUuidAndCompanyId(
+		return _layoutLocalService.getLayoutsByUuidAndCompanyId(
 			uuid, companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
 			new StagedModelModifiedDateComparator<Layout>());
 	}
@@ -247,6 +247,27 @@ public class LayoutStagedModelDataHandler
 		return portletIds;
 	}
 
+	protected void deleteMissingLayoutFriendlyURLs(
+		PortletDataContext portletDataContext, Layout layout) {
+
+		Map<Long, Long> layoutFriendlyURLIds =
+			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
+				LayoutFriendlyURL.class);
+
+		List<LayoutFriendlyURL> layoutFriendlyURLs =
+			_layoutFriendlyURLLocalService.getLayoutFriendlyURLs(
+				layout.getPlid());
+
+		for (LayoutFriendlyURL layoutFriendlyURL : layoutFriendlyURLs) {
+			if (!layoutFriendlyURLIds.containsValue(
+					layoutFriendlyURL.getLayoutFriendlyURLId())) {
+
+				_layoutFriendlyURLLocalService.deleteLayoutFriendlyURL(
+					layoutFriendlyURL);
+			}
+		}
+	}
+
 	@Override
 	protected void doExportStagedModel(
 			PortletDataContext portletDataContext, Layout layout)
@@ -263,7 +284,7 @@ public class LayoutStagedModelDataHandler
 		long parentLayoutId = layout.getParentLayoutId();
 
 		if (parentLayoutId != LayoutConstants.DEFAULT_PARENT_LAYOUT_ID) {
-			Layout parentLayout = LayoutLocalServiceUtil.fetchLayout(
+			Layout parentLayout = _layoutLocalService.fetchLayout(
 				layout.getGroupId(), layout.isPrivateLayout(), parentLayoutId);
 
 			if (parentLayout != null) {
@@ -277,7 +298,7 @@ public class LayoutStagedModelDataHandler
 		}
 
 		List<LayoutFriendlyURL> layoutFriendlyURLs =
-			LayoutFriendlyURLLocalServiceUtil.getLayoutFriendlyURLs(
+			_layoutFriendlyURLLocalService.getLayoutFriendlyURLs(
 				layout.getPlid());
 
 		for (LayoutFriendlyURL layoutFriendlyURL : layoutFriendlyURLs) {
@@ -327,10 +348,10 @@ public class LayoutStagedModelDataHandler
 
 		if (action.equals(Constants.DELETE)) {
 			Layout deletingLayout =
-				LayoutLocalServiceUtil.fetchLayoutByUuidAndGroupId(
+				_layoutLocalService.fetchLayoutByUuidAndGroupId(
 					layoutUuid, groupId, privateLayout);
 
-			LayoutLocalServiceUtil.deleteLayout(
+			_layoutLocalService.deleteLayout(
 				deletingLayout, false,
 				ServiceContextThreadLocal.getServiceContext());
 
@@ -354,7 +375,7 @@ public class LayoutStagedModelDataHandler
 		if (layoutsImportMode.equals(
 				PortletDataHandlerKeys.LAYOUTS_IMPORT_MODE_ADD_AS_NEW)) {
 
-			layoutId = LayoutLocalServiceUtil.getNextLayoutId(
+			layoutId = _layoutLocalService.getNextLayoutId(
 				groupId, privateLayout);
 			friendlyURL = StringPool.SLASH + layoutId;
 		}
@@ -366,7 +387,7 @@ public class LayoutStagedModelDataHandler
 
 			String localizedName = layout.getName(locale);
 
-			List<Layout> previousLayouts = LayoutLocalServiceUtil.getLayouts(
+			List<Layout> previousLayouts = _layoutLocalService.getLayouts(
 				groupId, privateLayout);
 
 			for (Layout curLayout : previousLayouts) {
@@ -380,7 +401,7 @@ public class LayoutStagedModelDataHandler
 			}
 
 			if (existingLayout == null) {
-				layoutId = LayoutLocalServiceUtil.getNextLayoutId(
+				layoutId = _layoutLocalService.getNextLayoutId(
 					groupId, privateLayout);
 
 				friendlyURL = getFriendlyURL(friendlyURL, layoutId);
@@ -390,7 +411,7 @@ public class LayoutStagedModelDataHandler
 					PortletDataHandlerKeys.
 						LAYOUTS_IMPORT_MODE_CREATED_FROM_PROTOTYPE)) {
 
-			existingLayout = LayoutLocalServiceUtil.fetchLayoutByUuidAndGroupId(
+			existingLayout = _layoutLocalService.fetchLayoutByUuidAndGroupId(
 				layout.getUuid(), groupId, privateLayout);
 
 			if (SitesUtil.isLayoutModifiedSinceLastMerge(existingLayout)) {
@@ -400,13 +421,12 @@ public class LayoutStagedModelDataHandler
 			}
 
 			LayoutFriendlyURL layoutFriendlyURL =
-				LayoutFriendlyURLLocalServiceUtil.fetchFirstLayoutFriendlyURL(
+				_layoutFriendlyURLLocalService.fetchFirstLayoutFriendlyURL(
 					groupId, privateLayout, friendlyURL);
 
 			if ((layoutFriendlyURL != null) && (existingLayout == null)) {
 				Layout mergeFailFriendlyURLLayout =
-					LayoutLocalServiceUtil.getLayout(
-						layoutFriendlyURL.getPlid());
+					_layoutLocalService.getLayout(layoutFriendlyURL.getPlid());
 
 				SitesUtil.addMergeFailFriendlyURLLayout(
 					mergeFailFriendlyURLLayout);
@@ -434,17 +454,16 @@ public class LayoutStagedModelDataHandler
 			// The default behavior of import mode is
 			// PortletDataHandlerKeys.LAYOUTS_IMPORT_MODE_MERGE_BY_LAYOUT_UUID
 
-			existingLayout = LayoutLocalServiceUtil.fetchLayoutByUuidAndGroupId(
+			existingLayout = _layoutLocalService.fetchLayoutByUuidAndGroupId(
 				layout.getUuid(), groupId, privateLayout);
 
 			if (existingLayout == null) {
-				existingLayout =
-					LayoutLocalServiceUtil.fetchLayoutByFriendlyURL(
-						groupId, privateLayout, friendlyURL);
+				existingLayout = _layoutLocalService.fetchLayoutByFriendlyURL(
+					groupId, privateLayout, friendlyURL);
 			}
 
 			if (existingLayout == null) {
-				layoutId = LayoutLocalServiceUtil.getNextLayoutId(
+				layoutId = _layoutLocalService.getNextLayoutId(
 					groupId, privateLayout);
 
 				friendlyURL = getFriendlyURL(friendlyURL, layoutId);
@@ -474,9 +493,9 @@ public class LayoutStagedModelDataHandler
 		}
 
 		if (existingLayout == null) {
-			long plid = CounterLocalServiceUtil.increment();
+			long plid = _counterLocalService.increment();
 
-			importedLayout = LayoutLocalServiceUtil.createLayout(plid);
+			importedLayout = _layoutLocalService.createLayout(plid);
 
 			if (layoutsImportMode.equals(
 					PortletDataHandlerKeys.
@@ -484,7 +503,7 @@ public class LayoutStagedModelDataHandler
 
 				importedLayout.setSourcePrototypeLayoutUuid(layout.getUuid());
 
-				layoutId = LayoutLocalServiceUtil.getNextLayoutId(
+				layoutId = _layoutLocalService.getNextLayoutId(
 					groupId, privateLayout);
 
 				friendlyURL = getFriendlyURL(friendlyURL, layoutId);
@@ -510,7 +529,7 @@ public class LayoutStagedModelDataHandler
 				portletDataContext.getCompanyId(), groupId, userId, layout,
 				importedLayout, privateLayout);
 
-			LayoutSet layoutSet = LayoutSetLocalServiceUtil.getLayoutSet(
+			LayoutSet layoutSet = _layoutSetLocalService.getLayoutSet(
 				groupId, privateLayout);
 
 			importedLayout.setLayoutSet(layoutSet);
@@ -599,7 +618,7 @@ public class LayoutStagedModelDataHandler
 				portletDataContext, importedLayout, layoutElement);
 		}
 		else if (importedLayout.getIconImageId() > 0) {
-			ImageLocalServiceUtil.deleteImage(importedLayout.getIconImageId());
+			_imageLocalService.deleteImage(importedLayout.getIconImageId());
 		}
 
 		if (existingLayout == null) {
@@ -625,9 +644,9 @@ public class LayoutStagedModelDataHandler
 
 		importTheme(portletDataContext, layout, importedLayout);
 
-		LayoutLocalServiceUtil.updateLayout(importedLayout);
+		_layoutLocalService.updateLayout(importedLayout);
 
-		LayoutSetLocalServiceUtil.updatePageCount(groupId, privateLayout);
+		_layoutSetLocalService.updatePageCount(groupId, privateLayout);
 
 		Map<Long, Long> layoutPlids =
 			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
@@ -639,7 +658,7 @@ public class LayoutStagedModelDataHandler
 
 		importAssets(portletDataContext, layout, importedLayout);
 
-		importLayoutFriendlyURLs(portletDataContext, layout);
+		importLayoutFriendlyURLs(portletDataContext, layout, importedLayout);
 
 		portletDataContext.importClassedModel(layout, importedLayout);
 	}
@@ -649,7 +668,7 @@ public class LayoutStagedModelDataHandler
 			Element layoutElement)
 		throws Exception {
 
-		Image image = ImageLocalServiceUtil.getImage(layout.getIconImageId());
+		Image image = _imageLocalService.getImage(layout.getIconImageId());
 
 		if (image != null) {
 			String iconPath = ExportImportPathUtil.getModelPath(
@@ -679,7 +698,7 @@ public class LayoutStagedModelDataHandler
 
 		if (linkToLayoutId > 0) {
 			try {
-				Layout linkedToLayout = LayoutLocalServiceUtil.getLayout(
+				Layout linkedToLayout = _layoutLocalService.getLayout(
 					portletDataContext.getScopeGroupId(),
 					layout.isPrivateLayout(), linkToLayoutId);
 
@@ -765,7 +784,7 @@ public class LayoutStagedModelDataHandler
 
 		// Try to fetch the existing layout from the importing group
 
-		Layout layout = LayoutLocalServiceUtil.fetchLayoutByUuidAndGroupId(
+		Layout layout = _layoutLocalService.fetchLayoutByUuidAndGroupId(
 			uuid, groupId, privateLayout);
 
 		if (layout != null) {
@@ -776,12 +795,12 @@ public class LayoutStagedModelDataHandler
 
 			// Try to fetch the existing layout from the parent sites
 
-			Group originalGroup = GroupLocalServiceUtil.getGroup(groupId);
+			Group originalGroup = _groupLocalService.getGroup(groupId);
 
 			Group group = originalGroup.getParentGroup();
 
 			while (group != null) {
-				layout = LayoutLocalServiceUtil.fetchLayoutByUuidAndGroupId(
+				layout = _layoutLocalService.fetchLayoutByUuidAndGroupId(
 					uuid, group.getGroupId(), privateLayout);
 
 				if (layout != null) {
@@ -888,7 +907,7 @@ public class LayoutStagedModelDataHandler
 
 		for (int i = 1;; i++) {
 			Layout duplicateFriendlyURLLayout =
-				LayoutLocalServiceUtil.fetchLayoutByFriendlyURL(
+				_layoutLocalService.fetchLayoutByFriendlyURL(
 					portletDataContext.getGroupId(),
 					portletDataContext.isPrivateLayout(), friendlyURL);
 
@@ -917,12 +936,13 @@ public class LayoutStagedModelDataHandler
 		String[] assetTagNames = portletDataContext.getAssetTagNames(
 			Layout.class, layout.getPlid());
 
-		LayoutLocalServiceUtil.updateAsset(
+		_layoutLocalService.updateAsset(
 			userId, importedLayout, assetCategoryIds, assetTagNames);
 	}
 
 	protected void importLayoutFriendlyURLs(
-			PortletDataContext portletDataContext, Layout layout)
+			PortletDataContext portletDataContext, Layout layout,
+			Layout importedLayout)
 		throws Exception {
 
 		List<Element> layoutFriendlyURLElements =
@@ -940,6 +960,8 @@ public class LayoutStagedModelDataHandler
 			StagedModelDataHandlerUtil.importStagedModel(
 				portletDataContext, layoutFriendlyURL);
 		}
+
+		deleteMissingLayoutFriendlyURLs(portletDataContext, importedLayout);
 	}
 
 	protected void importLayoutIconImage(
@@ -954,12 +976,12 @@ public class LayoutStagedModelDataHandler
 
 		if (ArrayUtil.isNotEmpty(iconBytes)) {
 			if (importedLayout.getIconImageId() == 0) {
-				long iconImageId = CounterLocalServiceUtil.increment();
+				long iconImageId = _counterLocalService.increment();
 
 				importedLayout.setIconImageId(iconImageId);
 			}
 
-			ImageLocalServiceUtil.updateImage(
+			_imageLocalService.updateImage(
 				importedLayout.getIconImageId(), iconBytes);
 		}
 	}
@@ -1092,7 +1114,7 @@ public class LayoutStagedModelDataHandler
 			addGuestPermissions = true;
 		}
 
-		ResourceLocalServiceUtil.addResources(
+		_resourceLocalService.addResources(
 			companyId, groupId, userId, Layout.class.getName(),
 			importedLayout.getPlid(), false, addGroupPermissions,
 			addGuestPermissions);
@@ -1146,7 +1168,7 @@ public class LayoutStagedModelDataHandler
 			}
 
 			LayoutTemplate newLayoutTemplate =
-				LayoutTemplateLocalServiceUtil.getLayoutTemplate(
+				_layoutTemplateLocalService.getLayoutTemplate(
 					layoutTemplateId, false, null);
 
 			String[] newPortletIds = new String[0];
@@ -1228,7 +1250,7 @@ public class LayoutStagedModelDataHandler
 
 		if (Validator.isNotNull(layoutPrototypeUuid)) {
 			LayoutPrototype layoutPrototype =
-				LayoutPrototypeLocalServiceUtil.
+				_layoutPrototypeLocalService.
 					getLayoutPrototypeByUuidAndCompanyId(
 						layoutPrototypeUuid, layout.getCompanyId());
 
@@ -1241,10 +1263,76 @@ public class LayoutStagedModelDataHandler
 	}
 
 	@Reference(unbind = "-")
+	protected void setCounterLocalService(
+		CounterLocalService counterLocalService) {
+
+		_counterLocalService = counterLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setGroupLocalService(GroupLocalService groupLocalService) {
+		_groupLocalService = groupLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setImageLocalService(ImageLocalService imageLocalService) {
+		_imageLocalService = imageLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setLayoutFriendlyURLLocalService(
+		LayoutFriendlyURLLocalService layoutFriendlyURLLocalService) {
+
+		_layoutFriendlyURLLocalService = layoutFriendlyURLLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setLayoutLocalService(
+		LayoutLocalService layoutLocalService) {
+
+		_layoutLocalService = layoutLocalService;
+	}
+
+	@Reference(unbind = "-")
 	protected void setLayoutLocalServiceHelper(
 		LayoutLocalServiceHelper layoutLocalServiceHelper) {
 
 		_layoutLocalServiceHelper = layoutLocalServiceHelper;
+	}
+
+	@Reference(unbind = "-")
+	protected void setLayoutPrototypeLocalService(
+		LayoutPrototypeLocalService layoutPrototypeLocalService) {
+
+		_layoutPrototypeLocalService = layoutPrototypeLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setLayoutSetLocalService(
+		LayoutSetLocalService layoutSetLocalService) {
+
+		_layoutSetLocalService = layoutSetLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setLayoutTemplateLocalService(
+		LayoutTemplateLocalService layoutTemplateLocalService) {
+
+		_layoutTemplateLocalService = layoutTemplateLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setPortletLocalService(
+		PortletLocalService portletLocalService) {
+
+		_portletLocalService = portletLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setResourceLocalService(
+		ResourceLocalService resourceLocalService) {
+
+		_resourceLocalService = resourceLocalService;
 	}
 
 	protected void updateTypeSettings(Layout importedLayout, Layout layout)
@@ -1267,7 +1355,7 @@ public class LayoutStagedModelDataHandler
 			importedPortletIds.removeAll(layoutTypePortlet.getPortletIds());
 
 			if (!importedPortletIds.isEmpty()) {
-				PortletLocalServiceUtil.deletePortlets(
+				_portletLocalService.deletePortlets(
 					importedLayout.getCompanyId(),
 					importedPortletIds.toArray(
 						new String[importedPortletIds.size()]),
@@ -1288,6 +1376,16 @@ public class LayoutStagedModelDataHandler
 	private static final Log _log = LogFactoryUtil.getLog(
 		LayoutStagedModelDataHandler.class);
 
+	private CounterLocalService _counterLocalService;
+	private GroupLocalService _groupLocalService;
+	private ImageLocalService _imageLocalService;
+	private LayoutFriendlyURLLocalService _layoutFriendlyURLLocalService;
+	private LayoutLocalService _layoutLocalService;
 	private LayoutLocalServiceHelper _layoutLocalServiceHelper;
+	private LayoutPrototypeLocalService _layoutPrototypeLocalService;
+	private LayoutSetLocalService _layoutSetLocalService;
+	private LayoutTemplateLocalService _layoutTemplateLocalService;
+	private PortletLocalService _portletLocalService;
+	private ResourceLocalService _resourceLocalService;
 
 }

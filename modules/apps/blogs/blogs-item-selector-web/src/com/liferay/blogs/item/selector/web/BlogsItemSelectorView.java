@@ -21,14 +21,15 @@ import com.liferay.item.selector.ItemSelectorView;
 import com.liferay.item.selector.criteria.FileEntryItemSelectorReturnType;
 import com.liferay.item.selector.criteria.URLItemSelectorReturnType;
 import com.liferay.item.selector.criteria.UploadableFileReturnType;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.theme.ThemeDisplay;
 
 import java.io.IOException;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.portlet.PortletURL;
 
@@ -67,10 +68,7 @@ public class BlogsItemSelectorView
 
 	@Override
 	public String getTitle(Locale locale) {
-		ResourceBundle resourceBundle = ResourceBundle.getBundle(
-			"content/Language", locale);
-
-		return resourceBundle.getString("blog-images");
+		return LanguageUtil.get(locale, "blog-images");
 	}
 
 	@Override
@@ -79,17 +77,22 @@ public class BlogsItemSelectorView
 	}
 
 	@Override
+	public boolean isVisible(ThemeDisplay themeDisplay) {
+		return true;
+	}
+
+	@Override
 	public void renderHTML(
 			ServletRequest request, ServletResponse response,
 			BlogsItemSelectorCriterion blogsItemSelectorCriterion,
-			PortletURL portletURL, String itemSelectedEventName)
+			PortletURL portletURL, String itemSelectedEventName, boolean search)
 		throws IOException, ServletException {
 
 		BlogsItemSelectorViewDisplayContext
 			blogsItemSelectorViewDisplayContext =
 				new BlogsItemSelectorViewDisplayContext(
 					blogsItemSelectorCriterion, this, itemSelectedEventName,
-					portletURL);
+					search, portletURL);
 
 		request.setAttribute(
 			BLOGS_ITEM_SELECTOR_VIEW_DISPLAY_CONTEXT,

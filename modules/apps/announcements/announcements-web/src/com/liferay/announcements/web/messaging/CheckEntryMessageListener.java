@@ -18,40 +18,53 @@ import com.liferay.announcements.web.constants.AnnouncementsPortletKeys;
 import com.liferay.portal.kernel.messaging.BaseSchedulerEntryMessageListener;
 import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
-import com.liferay.portal.kernel.scheduler.SchedulerEntry;
+import com.liferay.portal.kernel.scheduler.SchedulerEngineHelper;
 import com.liferay.portal.kernel.scheduler.TimeUnit;
-import com.liferay.portal.kernel.scheduler.TriggerType;
+import com.liferay.portal.kernel.scheduler.TriggerFactory;
+import com.liferay.portal.kernel.scheduler.TriggerFactoryUtil;
 import com.liferay.portal.model.Portlet;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.portlet.announcements.service.AnnouncementsEntryLocalServiceUtil;
+import com.liferay.portlet.announcements.service.AnnouncementsEntryLocalService;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Raymond Augé
  * @author Tina Tian
  */
-@Component(
-	immediate = true,
-	property = {"javax.portlet.name=" + AnnouncementsPortletKeys.ANNOUNCEMENTS},
-	service = SchedulerEntry.class
-)
+@Component(immediate = true, service = CheckEntryMessageListener.class)
 public class CheckEntryMessageListener
 	extends BaseSchedulerEntryMessageListener {
 
 	@Activate
 	protected void activate() {
-		schedulerEntry.setTimeUnit(TimeUnit.MINUTE);
-		schedulerEntry.setTriggerType(TriggerType.SIMPLE);
-		schedulerEntry.setTriggerValue(
-			PropsValues.ANNOUNCEMENTS_ENTRY_CHECK_INTERVAL);
+		schedulerEntryImpl.setTrigger(
+			TriggerFactoryUtil.createTrigger(
+				getEventListenerClass(), getEventListenerClass(),
+				PropsValues.ANNOUNCEMENTS_ENTRY_CHECK_INTERVAL,
+				TimeUnit.MINUTE));
+
+		_schedulerEngineHelper.register(this, schedulerEntryImpl);
+	}
+
+	@Deactivate
+	protected void deactivate() {
+		_schedulerEngineHelper.unregister(this);
 	}
 
 	@Override
 	protected void doReceive(Message message) throws Exception {
-		AnnouncementsEntryLocalServiceUtil.checkEntries();
+		_announcementsEntryLocalService.checkEntries();
+	}
+
+	@Reference(unbind = "-")
+	protected void setAnnouncementsEntryLocalService(
+		AnnouncementsEntryLocalService announcementsEntryLocalService) {
+
+		_announcementsEntryLocalService = announcementsEntryLocalService;
 	}
 
 	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
@@ -64,5 +77,19 @@ public class CheckEntryMessageListener
 	)
 	protected void setPortlet(Portlet portlet) {
 	}
+
+	@Reference(unbind = "-")
+	protected void setSchedulerEngineHelper(
+		SchedulerEngineHelper schedulerEngineHelper) {
+
+		_schedulerEngineHelper = schedulerEngineHelper;
+	}
+
+	@Reference(unbind = "-")
+	protected void setTriggerFactory(TriggerFactory triggerFactory) {
+	}
+
+	private AnnouncementsEntryLocalService _announcementsEntryLocalService;
+	private SchedulerEngineHelper _schedulerEngineHelper;
 
 }

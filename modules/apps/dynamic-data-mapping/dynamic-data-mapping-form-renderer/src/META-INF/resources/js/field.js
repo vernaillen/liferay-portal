@@ -9,6 +9,10 @@ AUI.add(
 		var FieldTypes = Renderer.FieldTypes;
 		var Util = Renderer.Util;
 
+		var TPL_DIV = '<div></div>';
+
+		var TPL_FORM_FIELD_CONTAINER = '<div class="lfr-ddm-form-field-container"></div>';
+
 		var Field = A.Component.create(
 			{
 				ATTRS: {
@@ -17,8 +21,17 @@ AUI.add(
 						valueFn: '_valueContainer'
 					},
 
+					dataType: {
+						getter: '_getDataType',
+						value: 'string'
+					},
+
 					fieldNamespace: {
 						value: ''
+					},
+
+					indexType: {
+						value: 'keyword'
 					},
 
 					instanceId: {
@@ -44,7 +57,7 @@ AUI.add(
 					},
 
 					parent: {
-						valueFn: '_valueParent'
+						setter: '_setParent'
 					},
 
 					portletNamespace: {
@@ -70,7 +83,7 @@ AUI.add(
 					},
 
 					tip: {
-						value: {}
+						value: ''
 					},
 
 					type: {
@@ -101,33 +114,44 @@ AUI.add(
 
 						instance._eventHandlers = [
 							instance.after('localizableChange', instance._afterLocalizableChange),
-							instance.after('parentChange', instance._afterParentChange),
 							instance.after('valueChange', instance._afterValueChange)
 						];
-
-						var parent = instance.get('parent');
-
-						instance.addTarget(parent);
-
-						var container = instance.get('container');
-
-						if (!container.inDoc()) {
-							instance._uiSetParent(parent);
-						}
-
-						instance.render();
 					},
 
 					destructor: function() {
 						var instance = this;
 
+						var container = instance.get('container');
+
+						if (container && container.inDoc()) {
+							container.remove(true);
+						}
+
 						var parent = instance.get('parent');
 
-						parent.removeChild(instance);
-
-						instance.get('container').remove(true);
+						if (parent) {
+							parent.removeChild(instance);
+						}
 
 						(new A.EventHandle(instance._eventHandlers)).detach();
+					},
+
+					fetchContainer: function() {
+						var instance = this;
+
+						var instanceId = instance.get('instanceId');
+
+						var container = instance._getContainerByInstanceId(instanceId);
+
+						if (!container) {
+							var name = instance.get('name');
+
+							var repeatedIndex = instance.get('repeatedIndex');
+
+							container = instance._getContainerByNameAndIndex(name, repeatedIndex);
+						}
+
+						return container;
 					},
 
 					focus: function() {
@@ -136,6 +160,24 @@ AUI.add(
 						instance.get('container').scrollIntoView();
 
 						instance.getInputNode().focus();
+					},
+
+					getChildElementsHTML: function() {
+						var instance = this;
+
+						return instance.get('fields').map(
+							function(field) {
+								var fragment = A.Node.create(TPL_DIV);
+
+								var container = field._createContainer();
+
+								container.html(field.getTemplate());
+
+								container.appendTo(fragment);
+
+								return fragment.html();
+							}
+						).join('');
 					},
 
 					getInputNode: function() {
@@ -156,7 +198,6 @@ AUI.add(
 						var instance = this;
 
 						var label = instance.get('label');
-
 						var locale = instance.get('locale');
 
 						if (Lang.isObject(label) && locale in label) {
@@ -236,7 +277,7 @@ AUI.add(
 						return A.merge(
 							context,
 							{
-								childElementsHTML: '',
+								childElementsHTML: instance.getChildElementsHTML(),
 								label: instance.getLabel(),
 								name: instance.getQualifiedName(),
 								value: value || '',
@@ -269,12 +310,26 @@ AUI.add(
 						return Lang.String.unescapeHTML(inputNode.val());
 					},
 
-					render: function() {
+					render: function(target) {
 						var instance = this;
 
 						var container = instance.get('container');
 
+						var parent = instance.get('parent');
+
+						if (target && !parent) {
+							container.appendTo(target);
+						}
+
 						container.html(instance.getTemplate());
+
+						instance.eachField(
+							function(field) {
+								field.updateContainer();
+							}
+						);
+
+						instance.fire('render');
 
 						return instance;
 					},
@@ -303,24 +358,16 @@ AUI.add(
 						return fieldJSON;
 					},
 
+					updateContainer: function() {
+						var instance = this;
+
+						instance.set('container', instance._valueContainer());
+					},
+
 					_afterLocalizableChange: function() {
 						var instance = this;
 
 						instance.set('value', instance._getDefaultValue());
-					},
-
-					_afterParentChange: function(event) {
-						var instance = this;
-
-						instance.addTarget(event.newVal);
-
-						var prevParent = event.prevVal;
-
-						prevParent.removeChild(instance);
-
-						instance.removeTarget(prevParent);
-
-						instance._uiSetParent(event.newVal);
 					},
 
 					_afterValueChange: function() {
@@ -332,31 +379,63 @@ AUI.add(
 					_createContainer: function() {
 						var instance = this;
 
-						return A.Node.create('<div class="lfr-ddm-form-field-container"></div>');
+						var container = A.Node.create(TPL_FORM_FIELD_CONTAINER);
+
+						container.html(instance.getTemplate());
+
+						return container;
 					},
 
 					_getContainerByInstanceId: function(instanceId) {
 						var instance = this;
 
-						return instance.getRoot().filterNodes(
-							function(qualifiedName) {
-								var nodeInstanceId = Util.getInstanceIdFromQualifiedName(qualifiedName);
+						var container;
 
-								return instanceId === nodeInstanceId;
-							}
-						).item(0);
+						var root = instance.getRoot();
+
+						if (root) {
+							container = root.filterNodes(
+								function(qualifiedName) {
+									var nodeInstanceId = Util.getInstanceIdFromQualifiedName(qualifiedName);
+
+									return instanceId === nodeInstanceId;
+								}
+							).item(0);
+						}
+
+						return container;
 					},
 
 					_getContainerByNameAndIndex: function(name, repeatedIndex) {
 						var instance = this;
 
-						return instance.getRoot().filterNodes(
-							function(qualifiedName) {
-								var nodeFieldName = Util.getFieldNameFromQualifiedName(qualifiedName);
+						var container;
 
-								return name === nodeFieldName;
-							}
-						).item(repeatedIndex);
+						var root = instance.getRoot();
+
+						if (root) {
+							container = instance.getRoot().filterNodes(
+								function(qualifiedName) {
+									var nodeFieldName = Util.getFieldNameFromQualifiedName(qualifiedName);
+
+									return name === nodeFieldName;
+								}
+							).item(repeatedIndex);
+						}
+
+						return container;
+					},
+
+					_getDataType: function(dataType) {
+						var instance = this;
+
+						var validation = instance.get('validation');
+
+						if (validation) {
+							dataType = Util.getDataTypeFromValidation(dataType, validation);
+						}
+
+						return dataType;
 					},
 
 					_getDefaultValue: function() {
@@ -373,28 +452,24 @@ AUI.add(
 						return value;
 					},
 
-					_uiSetParent: function(parent) {
+					_setParent: function(val) {
 						var instance = this;
 
-						var container = instance.get('container');
+						var fields = val.get('fields');
 
-						container.appendTo(parent.get('container'));
+						var name = instance.get('name');
+
+						if (fields && !val.getField(name)) {
+							fields.push(instance);
+						}
+
+						instance.addTarget(val);
 					},
 
 					_valueContainer: function() {
 						var instance = this;
 
-						var instanceId = instance.get('instanceId');
-
-						var container = instance._getContainerByInstanceId(instanceId);
-
-						if (!container) {
-							var name = instance.get('name');
-
-							var repeatedIndex = instance.get('repeatedIndex');
-
-							container = instance._getContainerByNameAndIndex(name, repeatedIndex);
-						}
+						var container = instance.fetchContainer();
 
 						if (!container) {
 							container = instance._createContainer();
@@ -407,16 +482,6 @@ AUI.add(
 						var instance = this;
 
 						return Util.generateInstanceId(8);
-					},
-
-					_valueParent: function() {
-						var instance = this;
-
-						return new Renderer.Form(
-							{
-								fields: [instance]
-							}
-						);
 					}
 				}
 			}

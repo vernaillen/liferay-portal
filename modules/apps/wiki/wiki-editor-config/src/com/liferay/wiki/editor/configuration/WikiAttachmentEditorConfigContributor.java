@@ -17,7 +17,7 @@ package com.liferay.wiki.editor.configuration;
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.item.selector.ItemSelectorCriterion;
 import com.liferay.item.selector.ItemSelectorReturnType;
-import com.liferay.item.selector.criteria.URLItemSelectorReturnType;
+import com.liferay.item.selector.criteria.FileEntryItemSelectorReturnType;
 import com.liferay.item.selector.criteria.UploadableFileReturnType;
 import com.liferay.item.selector.criteria.upload.criterion.UploadItemSelectorCriterion;
 import com.liferay.portal.kernel.editor.configuration.BaseEditorConfigContributor;
@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.portlet.ActionRequest;
 import javax.portlet.PortletURL;
 
 import org.osgi.service.component.annotations.Component;
@@ -91,7 +92,8 @@ public class WikiAttachmentEditorConfigContributor
 			new ArrayList<>();
 
 		desiredItemSelectorReturnTypes.add(new UploadableFileReturnType());
-		desiredItemSelectorReturnTypes.add(new URLItemSelectorReturnType());
+		desiredItemSelectorReturnTypes.add(
+			new FileEntryItemSelectorReturnType());
 
 		attachmentItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
 			desiredItemSelectorReturnTypes);
@@ -99,14 +101,15 @@ public class WikiAttachmentEditorConfigContributor
 		PortletURL uploadURL = requestBackedPortletURLFactory.createActionURL(
 			WikiPortletKeys.WIKI);
 
-		uploadURL.setParameter("struts_action", "/wiki/upload_page_attachment");
+		uploadURL.setParameter(
+			ActionRequest.ACTION_NAME, "/wiki/upload_page_attachment");
 		uploadURL.setParameter(
 			"resourcePrimKey", String.valueOf(wikiPageResourcePrimKey));
 
 		ItemSelectorCriterion uploadItemSelectorCriterion =
 			new UploadItemSelectorCriterion(
 				uploadURL.toString(),
-				LanguageUtil.get(themeDisplay.getLocale(), "wiki"));
+				LanguageUtil.get(themeDisplay.getLocale(), "page-attachments"));
 
 		List<ItemSelectorReturnType> uploadDesiredItemSelectorReturnTypes =
 			new ArrayList<>();

@@ -286,13 +286,13 @@ public abstract class LayoutSetPrototypeLocalServiceBaseImpl
 
 					long modelAdditionCount = super.performCount();
 
-					manifestSummary.addModelAdditionCount(stagedModelType.toString(),
+					manifestSummary.addModelAdditionCount(stagedModelType,
 						modelAdditionCount);
 
 					long modelDeletionCount = ExportImportHelperUtil.getModelDeletionCount(portletDataContext,
 							stagedModelType);
 
-					manifestSummary.addModelDeletionCount(stagedModelType.toString(),
+					manifestSummary.addModelDeletionCount(stagedModelType,
 						modelDeletionCount);
 
 					return modelAdditionCount;
@@ -311,14 +311,12 @@ public abstract class LayoutSetPrototypeLocalServiceBaseImpl
 
 		exportActionableDynamicQuery.setCompanyId(portletDataContext.getCompanyId());
 
-		exportActionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod() {
+		exportActionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<LayoutSetPrototype>() {
 				@Override
-				public void performAction(Object object)
+				public void performAction(LayoutSetPrototype layoutSetPrototype)
 					throws PortalException {
-					LayoutSetPrototype stagedModel = (LayoutSetPrototype)object;
-
 					StagedModelDataHandlerUtil.exportStagedModel(portletDataContext,
-						stagedModel);
+						layoutSetPrototype);
 				}
 			});
 		exportActionableDynamicQuery.setStagedModelType(new StagedModelType(

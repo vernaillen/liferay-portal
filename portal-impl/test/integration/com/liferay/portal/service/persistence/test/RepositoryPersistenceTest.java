@@ -42,6 +42,7 @@ import com.liferay.portal.test.rule.PersistenceTestRule;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -58,8 +59,9 @@ import java.util.Set;
  * @generated
  */
 public class RepositoryPersistenceTest {
+	@ClassRule
 	@Rule
-	public final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
+	public static final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
 			PersistenceTestRule.INSTANCE,
 			new TransactionalTestRule(Propagation.REQUIRED));
 
@@ -368,11 +370,9 @@ public class RepositoryPersistenceTest {
 
 		ActionableDynamicQuery actionableDynamicQuery = RepositoryLocalServiceUtil.getActionableDynamicQuery();
 
-		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod() {
+		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<Repository>() {
 				@Override
-				public void performAction(Object object) {
-					Repository repository = (Repository)object;
-
+				public void performAction(Repository repository) {
 					Assert.assertNotNull(repository);
 
 					count.increment();
@@ -469,13 +469,13 @@ public class RepositoryPersistenceTest {
 		Assert.assertTrue(Validator.equals(existingRepository.getUuid(),
 				ReflectionTestUtil.invoke(existingRepository,
 					"getOriginalUuid", new Class<?>[0])));
-		Assert.assertEquals(existingRepository.getGroupId(),
-			ReflectionTestUtil.invoke(existingRepository, "getOriginalGroupId",
-				new Class<?>[0]));
+		Assert.assertEquals(Long.valueOf(existingRepository.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(existingRepository,
+				"getOriginalGroupId", new Class<?>[0]));
 
-		Assert.assertEquals(existingRepository.getGroupId(),
-			ReflectionTestUtil.invoke(existingRepository, "getOriginalGroupId",
-				new Class<?>[0]));
+		Assert.assertEquals(Long.valueOf(existingRepository.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(existingRepository,
+				"getOriginalGroupId", new Class<?>[0]));
 		Assert.assertTrue(Validator.equals(existingRepository.getName(),
 				ReflectionTestUtil.invoke(existingRepository,
 					"getOriginalName", new Class<?>[0])));

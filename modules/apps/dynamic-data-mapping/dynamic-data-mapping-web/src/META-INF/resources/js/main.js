@@ -40,6 +40,9 @@ AUI.add(
 					localizationMap: {
 						validator: isObject,
 						value: {}
+					},
+					name: {
+						validator: A.Lang.isString
 					}
 				},
 
@@ -613,6 +616,8 @@ AUI.add(
 				var instance = this;
 
 				if (isString(str)) {
+					str = str.trim();
+
 					for (var i = 0; i < str.length; i++) {
 						var item = str[i];
 
@@ -621,7 +626,7 @@ AUI.add(
 						}
 					}
 
-					str = str.replace(/\s/g, '_');
+					str = Liferay.Util.camelize(str, STR_SPACE);
 				}
 
 				return str;
@@ -652,7 +657,7 @@ AUI.add(
 			},
 
 			validateFieldName: function(fieldName) {
-				return (/^[\w]+$/).test(fieldName);
+				return (/^[\w]+$/).test(fieldName) && !Lang.String.contains(fieldName, '_');
 			}
 		};
 

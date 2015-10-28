@@ -106,7 +106,7 @@ AUI.add(
 					_bindUI: function() {
 						var instance = this;
 
-						instance._captionNode = AUI.$('.entry-cover-image-caption');
+						instance._captionNode = instance.one('.cover-image-caption');
 
 						var eventHandles = [
 							Liferay.on('coverImageDeleted', instance._removeCaption, instance),
@@ -236,7 +236,9 @@ AUI.add(
 
 						var captionNode = instance._captionNode;
 
-						captionNode.addClass(CSS_INVISIBLE);
+						if (captionNode) {
+							captionNode.addClass(CSS_INVISIBLE);
+						}
 
 						window[instance.ns('coverImageCaptionEditor')].setHTML(STR_BLANK);
 					},
@@ -275,6 +277,8 @@ AUI.add(
 										'cmd': constants.ADD,
 										'content': content,
 										'coverImageCaption': coverImageCaption,
+										'coverImageFileEntryCropRegion': instance.one('#coverImageFileEntryCropRegion').val(),
+										'coverImageFileEntryId': instance.one('#coverImageFileEntryId').val(),
 										'displayDateAmPm': instance.one('#displayDateAmPm').val(),
 										'displayDateDay': instance.one('#displayDateDay').val(),
 										'displayDateHour': instance.one('#displayDateHour').val(),
@@ -406,7 +410,11 @@ AUI.add(
 					_showCaption: function() {
 						var instance = this;
 
-						instance._captionNode.removeClass(CSS_INVISIBLE);
+						var captionNode = instance._captionNode;
+
+						if (captionNode) {
+							captionNode.removeClass(CSS_INVISIBLE);
+						}
 					},
 
 					_switchView: function() {

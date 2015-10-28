@@ -41,6 +41,7 @@ import com.liferay.portal.test.rule.PersistenceTestRule;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -57,8 +58,9 @@ import java.util.Set;
  * @generated
  */
 public class PortletPreferencesPersistenceTest {
+	@ClassRule
 	@Rule
-	public final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
+	public static final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
 			PersistenceTestRule.INSTANCE,
 			new TransactionalTestRule(Propagation.REQUIRED));
 
@@ -354,11 +356,9 @@ public class PortletPreferencesPersistenceTest {
 
 		ActionableDynamicQuery actionableDynamicQuery = PortletPreferencesLocalServiceUtil.getActionableDynamicQuery();
 
-		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod() {
+		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<PortletPreferences>() {
 				@Override
-				public void performAction(Object object) {
-					PortletPreferences portletPreferences = (PortletPreferences)object;
-
+				public void performAction(PortletPreferences portletPreferences) {
 					Assert.assertNotNull(portletPreferences);
 
 					count.increment();
@@ -453,14 +453,16 @@ public class PortletPreferencesPersistenceTest {
 
 		PortletPreferences existingPortletPreferences = _persistence.findByPrimaryKey(newPortletPreferences.getPrimaryKey());
 
-		Assert.assertEquals(existingPortletPreferences.getOwnerId(),
-			ReflectionTestUtil.invoke(existingPortletPreferences,
+		Assert.assertEquals(Long.valueOf(
+				existingPortletPreferences.getOwnerId()),
+			ReflectionTestUtil.<Long>invoke(existingPortletPreferences,
 				"getOriginalOwnerId", new Class<?>[0]));
-		Assert.assertEquals(existingPortletPreferences.getOwnerType(),
-			ReflectionTestUtil.invoke(existingPortletPreferences,
+		Assert.assertEquals(Integer.valueOf(
+				existingPortletPreferences.getOwnerType()),
+			ReflectionTestUtil.<Integer>invoke(existingPortletPreferences,
 				"getOriginalOwnerType", new Class<?>[0]));
-		Assert.assertEquals(existingPortletPreferences.getPlid(),
-			ReflectionTestUtil.invoke(existingPortletPreferences,
+		Assert.assertEquals(Long.valueOf(existingPortletPreferences.getPlid()),
+			ReflectionTestUtil.<Long>invoke(existingPortletPreferences,
 				"getOriginalPlid", new Class<?>[0]));
 		Assert.assertTrue(Validator.equals(
 				existingPortletPreferences.getPortletId(),

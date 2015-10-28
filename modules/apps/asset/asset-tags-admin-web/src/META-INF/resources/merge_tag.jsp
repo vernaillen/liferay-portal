@@ -38,18 +38,18 @@ for (long mergeTagId : mergeTagIds) {
 
 	mergeTagNames.add(tag.getName());
 }
-%>
 
-<liferay-ui:header
-	backURL="<%= redirect %>"
-	title="merge-tags"
-/>
+portletDisplay.setShowBackIcon(true);
+portletDisplay.setURLBack(redirect);
+
+renderResponse.setTitle(LanguageUtil.get(request, "merge-tags"));
+%>
 
 <portlet:actionURL name="mergeTag" var="mergeURL">
 	<portlet:param name="mvcPath" value="/merge_tag.jsp" />
 </portlet:actionURL>
 
-<aui:form action="<%= mergeURL %>" method="post" name="fm" onSubmit="event.preventDefault();">
+<aui:form action="<%= mergeURL %>" cssClass="container-fluid-1280" method="post" name="fm" onSubmit="event.preventDefault();">
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 	<aui:input name="groupId" type="hidden" value="<%= scopeGroupId %>" />
 
@@ -85,9 +85,9 @@ for (long mergeTagId : mergeTagIds) {
 	</div>
 
 	<aui:button-row>
-		<aui:button type="submit" value="merge" />
+		<aui:button cssClass="btn-lg" type="submit" value="merge" />
 
-		<aui:button href="<%= redirect %>" type="cancel" />
+		<aui:button cssClass="btn-lg" href="<%= redirect %>" type="cancel" />
 	</aui:button-row>
 </aui:form>
 
@@ -125,6 +125,14 @@ for (long mergeTagId : mergeTagIds) {
 		function(event) {
 			var mergeTagNames = $('#<portlet:namespace />mergeTagNames').val();
 
+			var mergeTagNamesArray = mergeTagNames.split(',');
+
+			if(mergeTagNamesArray.length < 2) {
+				alert('<liferay-ui:message arguments="2" key="please-choose-at-least-x-tags" />');
+
+				return;
+			}
+
 			var mergeText = '<liferay-ui:message key="are-you-sure-you-want-to-merge-x-into-x" />';
 
 			var targetTag = $('#<portlet:namespace />targetTagName');
@@ -133,7 +141,7 @@ for (long mergeTagId : mergeTagIds) {
 
 			tag = String(tag.html()).trim();
 
-			mergeText = _.sub(mergeText, mergeTagNames.split(','), tag);
+			mergeText = _.sub(mergeText, mergeTagNamesArray, tag);
 
 			if (confirm(mergeText)) {
 				submitForm(form, form.attr('action'));

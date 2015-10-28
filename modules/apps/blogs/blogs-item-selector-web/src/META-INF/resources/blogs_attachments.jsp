@@ -23,16 +23,20 @@ BlogsItemSelectorCriterion blogsItemSelectorCriterion = blogsItemSelectorViewDis
 
 SearchContainer searchContainer = new SearchContainer(renderRequest, null, null, "curBlogsAttachments", SearchContainer.DEFAULT_DELTA, blogsItemSelectorViewDisplayContext.getPortletURL(request, liferayPortletResponse), null, LanguageUtil.get(resourceBundle, "there-are-no-blog-attachments"));
 
+String orderByCol = ParamUtil.getString(request, "orderByCol", "title");
+String orderByType = ParamUtil.getString(request, "orderByType", "asc");
+
+OrderByComparator<?> orderByComparator = DLUtil.getRepositoryModelOrderByComparator(orderByCol, orderByType);
+
+searchContainer.setOrderByComparator(orderByComparator);
+
 Folder folder = blogsItemSelectorViewDisplayContext.fetchAttachmentsFolder(themeDisplay.getUserId(), scopeGroupId);
 
 int total = 0;
 List<FileEntry> results = new ArrayList<FileEntry>();
 
 if (folder != null) {
-	String keywords = ParamUtil.getString(request, "keywords");
-	String selectedTab = ParamUtil.getString(request, "selectedTab");
-
-	if (Validator.isNotNull(keywords) && selectedTab.equals(blogsItemSelectorViewDisplayContext.getTitle(locale))) {
+	if (blogsItemSelectorViewDisplayContext.isSearch()) {
 		SearchContext searchContext = SearchContextFactory.getInstance(request);
 
 		searchContext.setEnd(searchContainer.getEnd());

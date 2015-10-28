@@ -17,60 +17,51 @@
 <%@ include file="/init.jsp" %>
 
 <%
-long folderId = GetterUtil.getLong((String)liferayPortletRequest.getAttribute("view.jsp-folderId"));
-
 String keywords = ParamUtil.getString(request, "keywords");
 
 boolean advancedSearch = ParamUtil.getBoolean(liferayPortletRequest, ArticleDisplayTerms.ADVANCED_SEARCH);
 
 boolean search = Validator.isNotNull(keywords) || advancedSearch;
-
-PortletURL portletURL = liferayPortletResponse.createRenderURL();
-
-portletURL.setParameter("folderId", String.valueOf(folderId));
 %>
 
-<aui:form action="<%= portletURL.toString() %>" method="post" name="fm1">
-	<aui:nav-bar>
-		<aui:nav collapsible="<%= true %>" cssClass="nav-display-style-buttons navbar-nav" icon="th-list" id="displayStyleButtons">
+<liferay-frontend:management-bar
+	checkBoxContainerId="entriesContainer"
+	includeCheckBox="<%= !user.isDefaultUser() && journalDisplayContext.isShowEditActions() %>"
+>
+	<liferay-frontend:management-bar-buttons>
+		<aui:a cssClass="btn infoPanelToggler" href="javascript:;" iconCssClass="icon-info-sign" />
 
-			<c:if test="<%= !search %>">
-				<liferay-util:include page="/display_style_buttons.jsp" servletContext="<%= application %>" />
-			</c:if>
-		</aui:nav>
+		<c:if test="<%= !search %>">
+			<liferay-util:include page="/display_style_buttons.jsp" servletContext="<%= application %>" />
+		</c:if>
+	</liferay-frontend:management-bar-buttons>
 
-		<aui:nav cssClass="navbar-nav" id="toolbarContainer">
-			<aui:nav-item cssClass="hide" dropdown="<%= true %>" id="actionsButtonContainer" label="actions">
+	<liferay-frontend:management-bar-filters>
+		<liferay-util:include page="/sort_button.jsp" servletContext="<%= application %>" />
+	</liferay-frontend:management-bar-filters>
 
-				<%
-				String taglibURL = "javascript:Liferay.fire('" + renderResponse.getNamespace() + "editEntry', {action: 'expireEntries'}); void(0);";
-				%>
+	<liferay-frontend:management-bar-action-buttons>
+		<aui:a cssClass="btn infoPanelToggler" href="javascript:;" iconCssClass="icon-info-sign" />
 
-				<aui:nav-item href="<%= taglibURL %>" iconCssClass="icon-time" label="expire" />
+		<%
+		String taglibURL = "javascript:" + renderResponse.getNamespace() + "deleteEntries();";
+		%>
 
-				<%
-				taglibURL = "javascript:Liferay.fire('" + renderResponse.getNamespace() + "editEntry', {action: 'moveEntries'}); void(0);";
-				%>
+		<aui:a cssClass="btn" href="<%= taglibURL %>" iconCssClass='<%= TrashUtil.isTrashEnabled(scopeGroupId) ? "icon-trash" : "icon-remove" %>' />
 
-				<aui:nav-item href="<%= taglibURL %>" iconCssClass="icon-move" label="move" />
+		<%
+		taglibURL = "javascript:Liferay.fire('" + renderResponse.getNamespace() + "editEntry', {action: 'expireEntries'}); void(0);";
+		%>
 
-				<%
-				taglibURL = "javascript:" + renderResponse.getNamespace() + "deleteEntries();";
-				%>
+		<aui:a cssClass="btn" href="<%= taglibURL %>" iconCssClass="icon-time" />
 
-				<aui:nav-item cssClass="item-remove" href="<%= taglibURL %>" iconCssClass='<%= TrashUtil.isTrashEnabled(scopeGroupId) ? "icon-trash" : "icon-remove" %>' label='<%= TrashUtil.isTrashEnabled(scopeGroupId) ? "move-to-the-recycle-bin" : "delete" %>' />
-			</aui:nav-item>
+		<%
+		taglibURL = "javascript:Liferay.fire('" + renderResponse.getNamespace() + "editEntry', {action: 'moveEntries'}); void(0);";
+		%>
 
-			<c:if test="<%= !search %>">
-				<liferay-util:include page="/sort_button.jsp" servletContext="<%= application %>" />
-			</c:if>
-		</aui:nav>
-
-		<aui:nav-bar-search>
-			<liferay-util:include page="/article_search.jsp" servletContext="<%= application %>" />
-		</aui:nav-bar-search>
-	</aui:nav-bar>
-</aui:form>
+		<aui:a cssClass="btn" href="<%= taglibURL %>" iconCssClass="icon-move" />
+	</liferay-frontend:management-bar-action-buttons>
+</liferay-frontend:management-bar>
 
 <aui:script>
 	function <portlet:namespace />deleteEntries() {

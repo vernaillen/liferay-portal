@@ -76,17 +76,32 @@ public class DDMFormFactory {
 
 		DDMFormField ddmFormField = new DDMFormField(name, type);
 
+		Map<String, Object> properties = ddmFormFactoryHelper.getProperties();
+
+		for (Map.Entry<String, Object> entry : properties.entrySet()) {
+			String key = entry.getKey();
+			Object value = entry.getValue();
+
+			if (ddmFormFactoryHelper.isLocalizableValue((String)value)) {
+				value = ddmFormFactoryHelper.getPropertyValue(value);
+			}
+
+			ddmFormField.setProperty(key, value);
+		}
+
 		ddmFormField.setDataType(
 			ddmFormFactoryHelper.getDDMFormFieldDataType());
+		ddmFormField.setDDMFormFieldOptions(
+			ddmFormFactoryHelper.getDDMFormFieldOptions());
+		ddmFormField.setDDMFormFieldValidation(
+			ddmFormFactoryHelper.getDDMFormFieldValidation());
 		ddmFormField.setLabel(ddmFormFactoryHelper.getDDMFormFieldLabel());
 		ddmFormField.setLocalizable(
 			ddmFormFactoryHelper.isDDMFormFieldLocalizable(method));
-		ddmFormField.setDDMFormFieldOptions(
-			ddmFormFactoryHelper.getDDMFormFieldOptions());
-		ddmFormField.setValidationExpression(
-			ddmFormFactoryHelper.getDDMFormFieldValidationExpression());
-		ddmFormField.setValidationMessage(
-			ddmFormFactoryHelper.getDDMFormFieldValidationMessage());
+		ddmFormField.setPredefinedValue(
+			ddmFormFactoryHelper.getDDMFormFieldPredefinedValue());
+		ddmFormField.setRequired(ddmFormFactoryHelper.isDDMFormFieldRequired());
+		ddmFormField.setTip(ddmFormFactoryHelper.getDDMFormFieldTip());
 		ddmFormField.setVisibilityExpression(
 			ddmFormFactoryHelper.getDDMFormFieldVisibilityExpression());
 

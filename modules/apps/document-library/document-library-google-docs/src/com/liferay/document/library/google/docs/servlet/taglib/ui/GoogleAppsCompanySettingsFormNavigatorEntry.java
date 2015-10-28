@@ -14,12 +14,12 @@
 
 package com.liferay.document.library.google.docs.servlet.taglib.ui;
 
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.servlet.taglib.ui.BaseJSPFormNavigatorEntry;
 import com.liferay.portal.kernel.servlet.taglib.ui.FormNavigatorConstants;
 import com.liferay.portal.kernel.servlet.taglib.ui.FormNavigatorEntry;
 
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.servlet.ServletContext;
 
@@ -52,10 +52,7 @@ public class GoogleAppsCompanySettingsFormNavigatorEntry
 
 	@Override
 	public String getLabel(Locale locale) {
-		ResourceBundle resourceBundle = ResourceBundle.getBundle(
-			"content.Language", locale);
-
-		return resourceBundle.getString("google-apps");
+		return LanguageUtil.get(locale, "google-apps");
 	}
 
 	@Override

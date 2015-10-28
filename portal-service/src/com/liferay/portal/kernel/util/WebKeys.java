@@ -158,6 +158,8 @@ public interface WebKeys {
 
 	public static final String PORTLET_DECORATE = "PORTLET_DECORATE";
 
+	public static final String PORTLET_DISPLAY_TEMPLATE = "PORTLET_DISPLAY_TEMPLATE";
+
 	public static final String PORTLET_ID = "PORTLET_ID";
 
 	public static final String PORTLET_PREFERENCES_MAP = "PORTLET_PREFERENCES_MAP";
@@ -204,6 +206,8 @@ public interface WebKeys {
 
 	public static final String SEARCH_CONTAINER_RESULT_ROW_ENTRY = "SEARCH_CONTAINER_RESULT_ROW_ENTRY";
 
+	public static final String SEARCH_ENTRY_HREF = "SEARCH_ENTRY_HREF";
+
 	public static final String SEARCH_SEARCH_RESULTS = "SEARCH_SEARCH_RESULTS";
 
 	public static final String SERVLET_CONTEXT_INCLUDE_FILTER_PATH = "SERVLET_CONTEXT_INCLUDE_FILTER_PATH";
@@ -215,6 +219,8 @@ public interface WebKeys {
 	public static final String SERVLET_PATH = "SERVLET_PATH";
 
 	public static final String SETTINGS_SCOPE = "SETTINGS_SCOPE";
+
+	public static final String SINGLE_PAGE_APPLICATION_CLEAR_CACHE = "SINGLE_PAGE_APPLICATION_CLEAR_CACHE";
 
 	public static final String SINGLE_PAGE_APPLICATION_LAST_PORTLET_ID = "SINGLE_PAGE_APPLICATION_LAST_PORTLET_ID";
 

@@ -63,6 +63,7 @@ import javax.portlet.PortletRequest;
 import javax.portlet.PortletURL;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Provides general configuration methods for the portal, providing access to
@@ -258,10 +259,6 @@ public class ThemeDisplay
 
 	public Contact getContact() {
 		return _contact;
-	}
-
-	public String getControlPanelCategory() {
-		return _controlPanelCategory;
 	}
 
 	/**
@@ -488,10 +485,6 @@ public class ThemeDisplay
 		return _pathContext;
 	}
 
-	public String getPathEditors() {
-		return _pathEditors;
-	}
-
 	public String getPathFlash() {
 		return _pathFlash;
 	}
@@ -706,6 +699,16 @@ public class ThemeDisplay
 	}
 
 	/**
+	 * Returns the currently served HTTP servlet response.
+	 *
+	 * @return the currently served HTTP servlet response
+	 */
+	@JSON(include = false)
+	public HttpServletResponse getResponse() {
+		return _response;
+	}
+
+	/**
 	 * Returns the scoped or sub-scoped active group (e.g. site).
 	 *
 	 * @return the scoped or sub-scoped active group
@@ -887,8 +890,12 @@ public class ThemeDisplay
 		return _unfilteredLayouts;
 	}
 
+	/**
+	 * @deprecated As of 7.0.0, with no direct replacement
+	 */
+	@Deprecated
 	public String getURLAddContent() {
-		return _urlAddContent;
+		return StringPool.BLANK;
 	}
 
 	public String getURLControlPanel() {
@@ -961,10 +968,6 @@ public class ThemeDisplay
 
 	public String getURLSignOut() {
 		return _urlSignOut;
-	}
-
-	public String getURLSiteAdministration() {
-		return _urlSiteAdministration;
 	}
 
 	@JSON(include = false)
@@ -1076,12 +1079,20 @@ public class ThemeDisplay
 		return _secure;
 	}
 
+	/**
+	 * @deprecated As of 7.0.0, with no direct replacement
+	 */
+	@Deprecated
 	public boolean isShowAddContentIcon() {
-		return _showAddContentIcon;
+		return false;
 	}
 
+	/**
+	 * @deprecated As of 7.0.0, with no direct replacement
+	 */
+	@Deprecated
 	public boolean isShowAddContentIconPermission() {
-		return _showAddContentIconPermission;
+		return false;
 	}
 
 	public boolean isShowControlPanelIcon() {
@@ -1264,10 +1275,6 @@ public class ThemeDisplay
 
 	public void setContact(Contact contact) {
 		_contact = contact;
-	}
-
-	public void setControlPanelCategory(String controlPanelCategory) {
-		_controlPanelCategory = controlPanelCategory;
 	}
 
 	public void setDevice(Device device) {
@@ -1453,10 +1460,6 @@ public class ThemeDisplay
 		_pathContext = pathContext;
 	}
 
-	public void setPathEditors(String pathEditors) {
-		_pathEditors = pathEditors;
-	}
-
 	public void setPathFlash(String pathFlash) {
 		_pathFlash = pathFlash;
 	}
@@ -1563,6 +1566,10 @@ public class ThemeDisplay
 		_request = request;
 	}
 
+	public void setResponse(HttpServletResponse response) {
+		_response = response;
+	}
+
 	public void setScopeGroupId(long scopeGroupId) {
 		_scopeGroupId = scopeGroupId;
 
@@ -1592,14 +1599,19 @@ public class ThemeDisplay
 		_sessionId = sessionId;
 	}
 
+	/**
+	 * @deprecated As of 7.0.0, with no direct replacement
+	 */
+	@Deprecated
 	public void setShowAddContentIcon(boolean showAddContentIcon) {
-		_showAddContentIcon = showAddContentIcon;
 	}
 
+	/**
+	 * @deprecated As of 7.0.0, with no direct replacement
+	 */
+	@Deprecated
 	public void setShowAddContentIconPermission(
 		boolean showAddContentIconPermission) {
-
-		_showAddContentIconPermission = showAddContentIconPermission;
 	}
 
 	public void setShowControlPanelIcon(boolean showControlPanelIcon) {
@@ -1737,8 +1749,11 @@ public class ThemeDisplay
 		_unfilteredLayouts = unfilteredLayouts;
 	}
 
+	/**
+	 * @deprecated As of 7.0.0, with no direct replacement
+	 */
+	@Deprecated
 	public void setURLAddContent(String urlAddContent) {
-		_urlAddContent = urlAddContent;
 	}
 
 	public void setURLControlPanel(String urlControlPanel) {
@@ -1789,10 +1804,6 @@ public class ThemeDisplay
 		_urlSignOut = urlSignOut;
 	}
 
-	public void setURLSiteAdministration(String urlSiteAdministration) {
-		_urlSiteAdministration = urlSiteAdministration;
-	}
-
 	/**
 	 * @deprecated As of 7.0.0, with no direct replacement
 	 */
@@ -1834,7 +1845,6 @@ public class ThemeDisplay
 	private int _companyLogoHeight;
 	private int _companyLogoWidth;
 	private Contact _contact;
-	private String _controlPanelCategory = StringPool.BLANK;
 	private User _defaultUser;
 	private Device _device;
 	private long _doAsGroupId = 0;
@@ -1865,7 +1875,6 @@ public class ThemeDisplay
 	private String _pathCms = StringPool.BLANK;
 	private String _pathColorSchemeImages = StringPool.BLANK;
 	private String _pathContext = StringPool.BLANK;
-	private String _pathEditors = StringPool.BLANK;
 	private String _pathFlash = StringPool.BLANK;
 	private String _pathFriendlyURLPrivateGroup = StringPool.BLANK;
 	private String _pathFriendlyURLPrivateUser = StringPool.BLANK;
@@ -1891,14 +1900,13 @@ public class ThemeDisplay
 	private long _refererGroupId;
 	private long _refererPlid;
 	private transient HttpServletRequest _request;
+	private transient HttpServletResponse _response;
 	private Group _scopeGroup;
 	private long _scopeGroupId;
 	private boolean _secure;
 	private String _serverName;
 	private int _serverPort;
 	private String _sessionId = StringPool.BLANK;
-	private boolean _showAddContentIcon;
-	private boolean _showAddContentIconPermission;
 	private boolean _showControlPanelIcon;
 	private boolean _showHomeIcon;
 	private boolean _showLayoutTemplatesIcon;
@@ -1930,7 +1938,6 @@ public class ThemeDisplay
 	private String _tilesTitle = StringPool.BLANK;
 	private TimeZone _timeZone;
 	private List<Layout> _unfilteredLayouts;
-	private String _urlAddContent = StringPool.BLANK;
 	private String _urlControlPanel = StringPool.BLANK;
 	private String _urlCurrent = StringPool.BLANK;
 	private String _urlHome = StringPool.BLANK;
@@ -1941,7 +1948,6 @@ public class ThemeDisplay
 	private transient PortletURL _urlPublishToLive = null;
 	private String _urlSignIn = StringPool.BLANK;
 	private String _urlSignOut = StringPool.BLANK;
-	private String _urlSiteAdministration = StringPool.BLANK;
 	private transient PortletURL _urlUpdateManager = null;
 	private User _user;
 	private boolean _widget;

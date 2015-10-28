@@ -17,38 +17,45 @@ package com.liferay.trash.web.messaging;
 import com.liferay.portal.kernel.messaging.BaseSchedulerEntryMessageListener;
 import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
-import com.liferay.portal.kernel.scheduler.SchedulerEntry;
+import com.liferay.portal.kernel.scheduler.SchedulerEngineHelper;
 import com.liferay.portal.kernel.scheduler.TimeUnit;
-import com.liferay.portal.kernel.scheduler.TriggerType;
+import com.liferay.portal.kernel.scheduler.TriggerFactory;
+import com.liferay.portal.kernel.scheduler.TriggerFactoryUtil;
 import com.liferay.portal.model.Portlet;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.portlet.trash.service.TrashEntryLocalServiceUtil;
+import com.liferay.portlet.trash.service.TrashEntryLocalService;
 import com.liferay.trash.web.constants.TrashPortletKeys;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Eudaldo Alonso
  */
-@Component(
-	property = {"javax.portlet.name=" + TrashPortletKeys.TRASH},
-	service = SchedulerEntry.class
-)
+@Component(immediate = true, service = CheckEntryMessageListener.class)
 public class CheckEntryMessageListener
 	extends BaseSchedulerEntryMessageListener {
 
 	@Activate
 	protected void activate() {
-		schedulerEntry.setTimeUnit(TimeUnit.MINUTE);
-		schedulerEntry.setTriggerType(TriggerType.SIMPLE);
-		schedulerEntry.setTriggerValue(PropsValues.TRASH_ENTRY_CHECK_INTERVAL);
+		schedulerEntryImpl.setTrigger(
+			TriggerFactoryUtil.createTrigger(
+				getEventListenerClass(), getEventListenerClass(),
+				PropsValues.TRASH_ENTRY_CHECK_INTERVAL, TimeUnit.MINUTE));
+
+		_schedulerEngineHelper.register(this, schedulerEntryImpl);
+	}
+
+	@Deactivate
+	protected void deactivate() {
+		_schedulerEngineHelper.unregister(this);
 	}
 
 	@Override
 	protected void doReceive(Message message) throws Exception {
-		TrashEntryLocalServiceUtil.checkEntries();
+		_trashEntryLocalService.checkEntries();
 	}
 
 	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
@@ -59,5 +66,26 @@ public class CheckEntryMessageListener
 	@Reference(target = "(javax.portlet.name=" + TrashPortletKeys.TRASH + ")")
 	protected void setPortlet(Portlet portlet) {
 	}
+
+	@Reference(unbind = "-")
+	protected void setSchedulerEngineHelper(
+		SchedulerEngineHelper schedulerEngineHelper) {
+
+		_schedulerEngineHelper = schedulerEngineHelper;
+	}
+
+	@Reference(unbind = "-")
+	protected void setTrashEntryLocalService(
+		TrashEntryLocalService trashEntryLocalService) {
+
+		_trashEntryLocalService = trashEntryLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setTriggerFactory(TriggerFactory triggerFactory) {
+	}
+
+	private SchedulerEngineHelper _schedulerEngineHelper;
+	private TrashEntryLocalService _trashEntryLocalService;
 
 }

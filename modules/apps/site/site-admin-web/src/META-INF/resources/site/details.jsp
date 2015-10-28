@@ -153,7 +153,7 @@ else if (group != null) {
 		<aui:input name="active" value="<%= true %>" />
 	</c:if>
 
-	<c:if test="<%= ((parentGroupId != GroupConstants.DEFAULT_PARENT_GROUP_ID) && PropsValues.SITES_SHOW_INHERIT_CONTENT_SCOPE_FROM_PARENT_SITE) %>">
+	<c:if test="<%= (parentGroupId != GroupConstants.DEFAULT_PARENT_GROUP_ID) && PropsValues.SITES_SHOW_INHERIT_CONTENT_SCOPE_FROM_PARENT_SITE %>">
 
 		<%
 		boolean disabled = false;
@@ -513,7 +513,6 @@ boolean hasUnlinkLayoutSetPrototypePermission = PortalPermissionUtil.contains(pe
 		>
 			<portlet:renderURL var="rowURL">
 				<portlet:param name="mvcPath" value="/edit_site.jsp" />
-				<portlet:param name="redirect" value="<%= currentURL %>" />
 				<portlet:param name="groupId" value="<%= String.valueOf(curGroup.getGroupId()) %>" />
 			</portlet:renderURL>
 

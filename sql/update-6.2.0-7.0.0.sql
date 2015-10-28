@@ -14,6 +14,18 @@ alter table BlogsEntry add coverImageFileEntryId LONG;
 alter table BlogsEntry add coverImageURL STRING null;
 alter table BlogsEntry add smallImageFileEntryId LONG;
 
+alter table Contact_ drop column aimSn;
+alter table Contact_ drop column icqSn;
+alter table Contact_ drop column msnSn;
+alter table Contact_ drop column mySpaceSn;
+alter table Contact_ drop column ymSn;
+
+drop table CyrusUser;
+
+drop table CyrusVirtual;
+
+drop index IX_C803899D on DDMStructureLink;
+
 alter table DLFileEntryMetadata drop column fileEntryTypeId;
 
 drop index IX_F8E90438 on DLFileEntryMetadata;
@@ -81,4 +93,5 @@ alter table Subscription add groupId LONG;
 
 alter table Team add uuid_ VARCHAR(75);
 
+alter table UserNotificationEvent add deliveryType INTEGER;
 alter table UserNotificationEvent add actionRequired BOOLEAN;

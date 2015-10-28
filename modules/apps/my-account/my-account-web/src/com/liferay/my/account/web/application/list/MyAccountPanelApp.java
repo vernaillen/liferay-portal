@@ -18,15 +18,7 @@ import com.liferay.application.list.BaseControlPanelEntryPanelApp;
 import com.liferay.application.list.PanelApp;
 import com.liferay.application.list.constants.PanelCategoryKeys;
 import com.liferay.my.account.web.constants.MyAccountPortletKeys;
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.model.User;
-import com.liferay.portal.service.PortletLocalService;
-import com.liferay.portal.util.PortalUtil;
-
-import javax.servlet.http.HttpServletRequest;
+import com.liferay.portal.model.Portlet;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -37,7 +29,7 @@ import org.osgi.service.component.annotations.Reference;
 @Component(
 	immediate = true,
 	property = {
-		"panel.category.key=" + PanelCategoryKeys.MY_SPACE_PRODUCTIVITY_CENTER,
+		"panel.category.key=" + PanelCategoryKeys.USER_MY_ACCOUNT,
 		"service.ranking:Integer=100"
 	},
 	service = PanelApp.class
@@ -49,30 +41,12 @@ public class MyAccountPanelApp extends BaseControlPanelEntryPanelApp {
 		return MyAccountPortletKeys.MY_ACCOUNT;
 	}
 
-	@Override
-	protected Group getGroup(HttpServletRequest request) {
-		Group group = null;
-
-		try {
-			User user = PortalUtil.getUser(request);
-
-			return user.getGroup();
-		}
-		catch (PortalException pe) {
-			_log.error(pe, pe);
-		}
-
-		return group;
+	@Reference(
+		target = "(javax.portlet.name=" + MyAccountPortletKeys.MY_ACCOUNT + ")",
+		unbind = "-"
+	)
+	public void setPortlet(Portlet portlet) {
+		super.setPortlet(portlet);
 	}
-
-	@Reference(unbind = "-")
-	protected void setPortletLocalService(
-		PortletLocalService portletLocalService) {
-
-		this.portletLocalService = portletLocalService;
-	}
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		MyAccountPanelApp.class);
 
 }

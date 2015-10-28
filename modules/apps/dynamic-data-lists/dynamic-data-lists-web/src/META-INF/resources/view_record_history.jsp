@@ -27,19 +27,31 @@ DDMStructure ddmStructure = recordSet.getDDMStructure();
 
 long formDDMTemplateId = ParamUtil.getLong(request, "formDDMTemplateId");
 
+if (Validator.isNull(redirect)) {
+	PortletURL redirectURL = renderResponse.createRenderURL();
+
+	redirectURL.setParameter("mvcPath", "/edit_record.jsp");
+	redirectURL.setParameter("recordSetId", String.valueOf(recordSet.getRecordSetId()));
+	redirectURL.setParameter("formDDMTemplateId", String.valueOf(formDDMTemplateId));
+
+	redirect = redirectURL.toString();
+}
+
 PortletURL portletURL = renderResponse.createRenderURL();
 
 portletURL.setParameter("mvcPath", "/view_record_history.jsp");
 portletURL.setParameter("redirect", redirect);
 portletURL.setParameter("recordId", String.valueOf(record.getRecordId()));
+
+if (ddlDisplayContext.isAdminPortlet()) {
+	portletDisplay.setShowBackIcon(true);
+	portletDisplay.setURLBack(redirect);
+
+	renderResponse.setTitle(LanguageUtil.format(request, "x-history", ddmStructure.getName(locale), false));
+}
 %>
 
-<liferay-ui:header
-	backURL="<%= redirect %>"
-	title='<%= LanguageUtil.format(request, "x-history", ddmStructure.getName(locale), false) %>'
-/>
-
-<aui:form action="<%= portletURL.toString() %>" method="post" name="fm">
+<aui:form action="<%= portletURL.toString() %>" cssClass="container-fluid-1280" method="post" name="fm">
 
 	<%
 	SearchContainer searchContainer = new SearchContainer(renderRequest, portletURL, new ArrayList(), null);
@@ -105,5 +117,5 @@ portletURL.setParameter("recordId", String.valueOf(record.getRecordId()));
 	}
 	%>
 
-	<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />
+	<liferay-ui:search-iterator markupView="lexicon" searchContainer="<%= searchContainer %>" />
 </aui:form>

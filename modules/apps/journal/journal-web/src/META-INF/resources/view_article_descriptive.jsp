@@ -21,7 +21,7 @@ ResultRow row = (ResultRow)request.getAttribute(WebKeys.SEARCH_CONTAINER_RESULT_
 
 JournalArticle article = (JournalArticle)row.getObject();
 
-PortletURL rowURL = (PortletURL)request.getAttribute("view_entries.jsp-rowURL");
+String href = (String)request.getAttribute(WebKeys.SEARCH_ENTRY_HREF);
 
 JournalArticle latestApprovedArticleVersion = null;
 
@@ -43,7 +43,7 @@ String articleImageURL = article.getArticleImageURL(themeDisplay);
 %>
 
 <liferay-ui:app-view-entry
-	actionJsp="/article_action.jsp"
+	actionJsp='<%= journalDisplayContext.isShowEditActions() ? "/article_action.jsp" : null %>'
 	actionJspServletContext="<%= application %>"
 	assetCategoryClassName="<%= JournalArticle.class.getName() %>"
 	assetCategoryClassPK="<%= article.getResourcePrimKey() %>"
@@ -52,13 +52,14 @@ String articleImageURL = article.getArticleImageURL(themeDisplay);
 	author="<%= article.getUserName() %>"
 	classTypeName="<%= HtmlUtil.escape(ddmStructure.getName(locale)) %>"
 	createDate="<%= createDate %>"
-	description="<%= HtmlUtil.escape(article.getDescription(locale)) %>"
+	description="<%= article.getDescription(locale) %>"
 	displayDate="<%= article.getDisplayDate() %>"
 	displayStyle="descriptive"
 	expirationDate="<%= article.getExpirationDate() %>"
 	groupId="<%= article.getGroupId() %>"
 	latestApprovedVersion="<%= (latestApprovedArticleVersion != null) ? String.valueOf(latestApprovedArticleVersion.getVersion()) : null %>"
 	latestApprovedVersionAuthor="<%= (latestApprovedArticleVersion != null) ? String.valueOf(latestApprovedArticleVersion.getUserName()) : null %>"
+	markupView="lexicon"
 	modifiedDate="<%= article.getModifiedDate() %>"
 	reviewDate="<%= article.getReviewDate() %>"
 	rowCheckerId="<%= HtmlUtil.escape(article.getArticleId()) %>"
@@ -68,8 +69,7 @@ String articleImageURL = article.getArticleImageURL(themeDisplay);
 	thumbnailDivStyle="height: 146px; width: 146px;"
 	thumbnailSrc='<%= Validator.isNotNull(articleImageURL) ? articleImageURL : themeDisplay.getPathThemeImages() + "/file_system/large/article.png" %>'
 	thumbnailStyle="max-height: 128px; max-width: 128px;"
-	title="<%= HtmlUtil.escape(article.getTitle(locale)) %>"
-	url="<%= rowURL != null ? rowURL.toString() : null %>"
+	title="<%= article.getTitle(locale) %>"
+	url="<%= href %>"
 	version="<%= String.valueOf(article.getVersion()) %>"
-	view="lexicon"
 />

@@ -25,7 +25,12 @@
 </tr>
 <tr>
 	<td>CONTENT_ADD_BUTTON</td>
-	<td>//button[contains(@class,'alloy-editor') and contains(@class,'add')]</td>
+	<td>//button[contains(@class,'ae-button') and contains(@class,'add')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>DESCRIPTION_FIELD</td>
+	<td>//div[contains(@id,'descriptionEditor') and contains(@aria-label,'Rich Text Editor')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -104,6 +109,17 @@
 <tr>
 	<td>TEXT_FORMATTING_TWITTER</td>
 	<td>//button[contains(@data-type,'button-twitter')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td></td>
+	<td></td>
+	<td></td>
+</tr>
+<!--TRACKBACK-->
+<tr>
+	<td>TRACKBACKS_TO_SEND</td>
+	<td>//input[contains(@id,'trackbacks')]</td>
 	<td></td>
 </tr>
 <tr>

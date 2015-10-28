@@ -21,17 +21,13 @@
 		<liferay-ui:message key="drag-portlets-below-to-nest-them" />
 	</div>
 
-	<aui:script use="aui-base">
-		var portletWrapper = A.one('#portlet-wrapper-<%= portletDisplay.getId() %>');
+	<aui:script sandbox="<%= true %>">
+		var portletWrapper = $('#p_p_id_<%= portletDisplay.getId() %>_');
 
-		if (portletWrapper) {
-			var message = portletWrapper.one('#<portlet:namespace />nested-portlets-msg');
+		var nestedPortlet = portletWrapper.find('.portlet-boundary, .portlet-borderless-container');
 
-			var nestedPortlet = portletWrapper.one('.portlet, .portlet-borderless-container');
-
-			if (!nestedPortlet) {
-				message.show();
-			}
+		if (!nestedPortlet.length) {
+			portletWrapper.find('#<portlet:namespace />nested-portlets-msg').first().removeClass('hide');
 		}
 	</aui:script>
 </c:if>
@@ -54,5 +50,5 @@ finally {
 %>
 
 <%!
-private static Log _log = LogFactoryUtil.getLog("portal-web.docroot.html.portlet.nested_portlets.view_jsp");
+private static Log _log = LogFactoryUtil.getLog("com_liferay_nested_portlets_web.view_jsp");
 %>

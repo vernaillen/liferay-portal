@@ -503,17 +503,17 @@ public class VerifyProperties extends VerifyProcess {
 
 		new String[] {
 			"auth.verifier.TunnelingServletAuthVerifier.hosts.allowed",
-			"auth.verifier.TunnelingServletAuthVerifier.hosts.allowed",
+			"auth.verifier.TunnelAuthVerifier.hosts.allowed",
 			"com.liferay.portal.security.auth.verifier"
 		},
 		new String[] {
 			"auth.verifier.TunnelingServletAuthVerifier.urls.excludes",
-			"auth.verifier.TunnelingServletAuthVerifier.urls.excludes",
+			"auth.verifier.TunnelAuthVerifier.urls.excludes",
 			"com.liferay.portal.security.auth.verifier"
 		},
 		new String[] {
 			"auth.verifier.TunnelingServletAuthVerifier.urls.includes",
-			"auth.verifier.TunnelingServletAuthVerifier.urls.includes",
+			"auth.verifier.TunnelAuthVerifier.urls.includes",
 			"com.liferay.portal.security.auth.verifier"
 		},
 
@@ -1273,6 +1273,10 @@ public class VerifyProperties extends VerifyProcess {
 			"ldap.import.user.password.enabled", "import.user.password.enabled",
 			"com.liferay.portal.ldap"
 		},
+		new String[] {
+			"ldap.import.user.sync.strategy", "import.user.sync.strategy",
+			"com.liferay.portal.ldap"
+		},
 		new String[] {"ldap.page.size", "page.size", "com.liferay.portal.ldap"},
 		new String[] {
 			"ldap.password.policy.enabled", "password.policy.enabled",
@@ -1778,14 +1782,14 @@ public class VerifyProperties extends VerifyProcess {
 	};
 
 	private static final String[] _OBSOLETE_PORTAL_KEYS = new String[] {
-		"amazon.access.key.id", "amazon.associate.tag",
-		"amazon.secret.access.key",
+		"aim.login", "aim.login", "amazon.access.key.id",
+		"amazon.associate.tag", "amazon.secret.access.key",
 		"asset.entry.increment.view.counter.enabled",
 		"asset.publisher.asset.entry.query.processors",
 		"asset.publisher.filter.unlistable.entries",
 		"asset.tag.permissions.enabled", "asset.tag.properties.default",
 		"asset.tag.properties.enabled", "auth.max.failures.limit",
-		"breadcrumb.display.style.options",
+		"blogs.image.small.max.size", "breadcrumb.display.style.options",
 		"buffered.increment.parallel.queue.size",
 		"buffered.increment.serial.queue.size", "cas.validate.url",
 		"cluster.executor.heartbeat.interval",
@@ -1798,8 +1802,9 @@ public class VerifyProperties extends VerifyProcess {
 		"commons.pool.enabled", "company.settings.form.configuration",
 		"company.settings.form.identification",
 		"company.settings.form.miscellaneous", "company.settings.form.social",
-		"convert.processes", "discussion.thread.view",
-		"dl.file.entry.read.count.enabled",
+		"control.panel.home.portlet.id", "convert.processes",
+		"discussion.thread.view", "dl.file.entry.read.count.enabled",
+		"dockbar.administrative.links.show.in.pop.up",
 		"dynamic.data.lists.record.set.force.autogenerate.key",
 		"dynamic.data.lists.template.language.parser[ftl]",
 		"dynamic.data.lists.template.language.parser[vm]",
@@ -1833,7 +1838,8 @@ public class VerifyProperties extends VerifyProcess {
 		"hibernate.cache.region.factory_class",
 		"hibernate.cache.use_minimal_puts", "hibernate.cache.use_query_cache",
 		"hibernate.cache.use_second_level_cache",
-		"hibernate.cache.use_structured_entries", "index.filter.search.limit",
+		"hibernate.cache.use_structured_entries", "icq.jar", "icq.login",
+		"icq.password", "index.filter.search.limit",
 		"invitation.email.max.recipients", "invitation.email.message.body",
 		"invitation.email.message.subject", "javax.persistence.validation.mode",
 		"jbi.workflow.url", "json.deserializer.strict.mode",
@@ -1863,11 +1869,12 @@ public class VerifyProperties extends VerifyProcess {
 		"lucene.store.jdbc.dialect.hsqldb", "lucene.store.jdbc.dialect.jtds",
 		"lucene.store.jdbc.dialect.microsoft",
 		"lucene.store.jdbc.dialect.mysql", "lucene.store.jdbc.dialect.oracle",
-		"lucene.store.jdbc.dialect.postgresql",
+		"lucene.store.jdbc.dialect.postgresql", "mail.hook.cyrus.add.user",
+		"mail.hook.cyrus.delete.user", "mail.hook.cyrus.home",
 		"memory.cluster.scheduler.lock.cache.enabled",
 		"message.boards.email.message.added.signature",
 		"message.boards.email.message.updated.signature",
-		"message.boards.thread.locking.enabled",
+		"message.boards.thread.locking.enabled", "msn.login", "msn.password",
 		"multicast.group.address[\"hibernate\"]",
 		"multicast.group.port[\"hibernate\"]",
 		"net.sf.ehcache.configurationResourceName",
@@ -1876,7 +1883,9 @@ public class VerifyProperties extends VerifyProcess {
 		"organizations.form.add.miscellaneous",
 		"organizations.form.update.identification",
 		"organizations.form.update.main",
-		"organizations.form.update.miscellaneous", "portal.ctx",
+		"organizations.form.update.miscellaneous",
+		"organizations.indexer.enabled", "portal.cache.manager.type.multi.vm",
+		"portal.cache.manager.type.single.vm", "portal.ctx",
 		"portal.security.manager.enable", "permissions.list.filter",
 		"permissions.thread.local.cache.max.size",
 		"permissions.user.check.algorithm", "persistence.provider",
@@ -1890,15 +1899,18 @@ public class VerifyProperties extends VerifyProcess {
 		"sites.form.update.advanced", "sites.form.update.main",
 		"sites.form.update.miscellaneous", "sites.form.update.seo",
 		"staging.lock.enabled", "table.mapper.cacheless.mapping.table.names",
-		"tck.url", "users.form.add.identification", "users.form.add.main",
-		"users.form.add.miscellaneous", "users.form.my.account.identification",
-		"users.form.my.account.main", "users.form.my.account.miscellaneous",
+		"tck.url", "user.groups.indexer.enabled",
+		"users.form.add.identification", "users.indexer.enabled",
+		"users.form.add.main", "users.form.add.miscellaneous",
+		"users.form.my.account.identification", "users.form.my.account.main",
+		"users.form.my.account.miscellaneous",
 		"users.form.update.identification", "users.form.update.main",
 		"users.form.update.miscellaneous", "vaadin.resources.path",
 		"vaadin.theme", "vaadin.widgetset", "webdav.storage.class",
 		"webdav.storage.show.edit.url", "webdav.storage.show.view.url",
 		"webdav.storage.tokens", "wiki.email.page.added.signature",
-		"wiki.email.page.updated.signature", "xss.allow"
+		"wiki.email.page.updated.signature", "xss.allow", "ym.login",
+		"ym.password"
 	};
 
 	private static final String[] _OBSOLETE_SYSTEM_KEYS = new String[] {

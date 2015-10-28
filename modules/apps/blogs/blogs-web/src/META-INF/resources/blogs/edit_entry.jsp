@@ -43,11 +43,16 @@ boolean allowTrackbacks = PropsValues.BLOGS_TRACKBACK_ENABLED && BeanParamUtil.g
 String coverImageCaption = BeanParamUtil.getString(entry, request, "coverImageCaption");
 long coverImageFileEntryId = BeanParamUtil.getLong(entry, request, "coverImageFileEntryId");
 long smallImageFileEntryId = BeanParamUtil.getLong(entry, request, "smallImageFileEntryId");
+
+portletDisplay.setShowBackIcon(true);
+portletDisplay.setURLBack(redirect);
+
+renderResponse.setTitle((entry != null) ? entry.getTitle() : LanguageUtil.get(request, "new-blog-entry"));
 %>
 
 <portlet:actionURL name="/blogs/edit_entry" var="editEntryURL" />
 
-<div class="edit-entry-container">
+<div class="container-fluid-1280">
 	<aui:form action="<%= editEntryURL %>" cssClass="edit-entry" enctype="multipart/form-data" method="post" name="fm" onSubmit="event.preventDefault();">
 		<aui:input name="<%= Constants.CMD %>" type="hidden" />
 		<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
@@ -76,6 +81,7 @@ long smallImageFileEntryId = BeanParamUtil.getLong(entry, request, "smallImageFi
 		</div>
 
 		<liferay-ui:error exception="<%= EntryContentException.class %>" message="please-enter-valid-content" />
+		<liferay-ui:error exception="<%= EntryCoverImageCropException.class %>" message="an-error-occurred-while-cropping-the-cover-image" />
 		<liferay-ui:error exception="<%= EntryDescriptionException.class %>" message="please-enter-a-valid-abstract" />
 		<liferay-ui:error exception="<%= EntryTitleException.class %>" message="please-enter-a-valid-title" />
 
@@ -106,12 +112,12 @@ long smallImageFileEntryId = BeanParamUtil.getLong(entry, request, "smallImageFi
 		String[] imageExtensions = PrefsPropsUtil.getStringArray(PropsKeys.BLOGS_IMAGE_EXTENSIONS, StringPool.COMMA);
 		%>
 
-		<div class="<%= (entry != null) ? "entry-body " : StringPool.BLANK %>">
+		<div class="<%= (entry != null) ? "entry-body " : StringPool.BLANK %> row">
 			<div id="<portlet:namespace />editSection">
-				<portlet:actionURL name="/blogs/upload_temp_image" var="uploadTempImageURL" />
+				<portlet:actionURL name="/blogs/upload_cover_image" var="uploadCoverImageURL" />
 
 				<div class="lfr-blogs-cover-image-selector">
-					<liferay-ui:image-selector draggableImage="vertical" fileEntryId="<%= coverImageFileEntryId %>" maxFileSize="<%= PrefsPropsUtil.getLong(PropsKeys.BLOGS_IMAGE_MAX_SIZE) %>" paramName="coverImageFileEntry" uploadURL="<%= uploadTempImageURL %>" validExtensions='<%= StringUtil.merge(imageExtensions, ", ") %>' />
+					<liferay-ui:image-selector draggableImage="vertical" fileEntryId="<%= coverImageFileEntryId %>" paramName="coverImageFileEntry" uploadURL="<%= uploadCoverImageURL %>" validExtensions='<%= StringUtil.merge(imageExtensions, ", ") %>' />
 				</div>
 
 				<aui:input name="coverImageCaption" type="hidden" />
@@ -122,26 +128,28 @@ long smallImageFileEntryId = BeanParamUtil.getLong(entry, request, "smallImageFi
 					</small>
 				</div>
 
-				<div class="entry-title">
-					<h2><liferay-ui:input-editor contents="<%= HtmlUtil.escape(title) %>" editorName="alloyeditor" name="titleEditor" placeholder="title" showSource="<%= false %>" /></h2>
+				<div class="col-md-8 col-md-offset-2">
+					<div class="entry-title">
+						<h1><liferay-ui:input-editor contents="<%= HtmlUtil.escape(title) %>" editorName="alloyeditor" name="titleEditor" placeholder="title" showSource="<%= false %>" /></h1>
+					</div>
+
+					<aui:input name="title" type="hidden" />
+
+					<div class="entry-subtitle">
+						<h4><liferay-ui:input-editor contents="<%= HtmlUtil.escape(subtitle) %>" editorName="alloyeditor" name="subtitleEditor" placeholder="subtitle" showSource="<%= false %>" /> </h4>
+					</div>
+
+					<aui:input name="subtitle" type="hidden" />
+
+					<div class="entry-content">
+						<liferay-ui:input-editor contents="<%= content %>" editorName='<%= PropsUtil.get("editor.wysiwyg.portal-web.docroot.html.portlet.blogs.edit_entry.jsp") %>' name="contentEditor" onChangeMethod="OnChangeEditor" placeholder="content" />
+					</div>
+
+					<aui:input name="content" type="hidden" />
 				</div>
-
-				<aui:input name="title" type="hidden" />
-
-				<div class="entry-subtitle">
-					<liferay-ui:input-editor contents="<%= HtmlUtil.escape(subtitle) %>" editorName="alloyeditor" name="subtitleEditor" placeholder="subtitle" showSource="<%= false %>" />
-				</div>
-
-				<aui:input name="subtitle" type="hidden" />
-
-				<div class="entry-content">
-					<liferay-ui:input-editor contents="<%= content %>" editorName='<%= PropsUtil.get("editor.wysiwyg.portal-web.docroot.html.portlet.blogs.edit_entry.jsp") %>' name="contentEditor" onChangeMethod="OnChangeEditor" placeholder="content" />
-				</div>
-
-				<aui:input name="content" type="hidden" />
 			</div>
 
-			<div class="hide" id="<portlet:namespace />settingsSection">
+			<div class="col-md-8 col-md-offset-2 hide" id="<portlet:namespace />settingsSection">
 				<div class="display-date-wrapper">
 					<h3><liferay-ui:message key="display-date" /></h3>
 
@@ -149,23 +157,18 @@ long smallImageFileEntryId = BeanParamUtil.getLong(entry, request, "smallImageFi
 				</div>
 
 				<div class="entry-abstract-wrapper">
-
-					<%
-					long smallImageMaxFileSize = PrefsPropsUtil.getLong(PropsKeys.BLOGS_IMAGE_SMALL_MAX_SIZE);
-					%>
-
 					<liferay-ui:error exception="<%= EntrySmallImageNameException.class %>">
 						<liferay-ui:message key="image-names-must-end-with-one-of-the-following-extensions" /> <%= StringUtil.merge(imageExtensions, ", ") %>.
 					</liferay-ui:error>
 
-					<liferay-ui:error exception="<%= EntrySmallImageSizeException.class %>">
-						<liferay-ui:message arguments="<%= TextFormatter.formatStorageSize(smallImageMaxFileSize, locale) %>" key="please-enter-a-small-image-with-a-valid-file-size-no-larger-than-x" translateArguments="<%= false %>" />
+					<liferay-ui:error exception="<%= EntrySmallImageScaleException.class %>">
+						<liferay-ui:message key="an-error-occurred-while-scaling-the-abstract-image" />
 					</liferay-ui:error>
 
 					<h3><liferay-ui:message key="abstract" /></h3>
 
 					<p class="explanation">
-						<liferay-ui:message arguments="<%= TextFormatter.formatStorageSize(PrefsPropsUtil.getLong(PropsKeys.BLOGS_IMAGE_SMALL_MAX_SIZE), locale) %>" key="an-abstract-is-a-brief-summary-of-a-blog-entry" />
+						<liferay-ui:message key="an-abstract-is-a-brief-summary-of-a-blog-entry" />
 					</p>
 
 					<div class="entry-abstract-options" id="<portlet:namespace />entryAbstractOptions">
@@ -178,7 +181,7 @@ long smallImageFileEntryId = BeanParamUtil.getLong(entry, request, "smallImageFi
 						<portlet:actionURL name="/blogs/upload_small_image" var="uploadSmallImageURL" />
 
 						<div class="lfr-blogs-small-image-selector">
-							<liferay-ui:image-selector fileEntryId="<%= smallImageFileEntryId %>" maxFileSize="<%= smallImageMaxFileSize %>" paramName="smallImageFileEntry" uploadURL="<%= uploadSmallImageURL %>" validExtensions='<%= StringUtil.merge(imageExtensions, ", ") %>' />
+							<liferay-ui:image-selector fileEntryId="<%= smallImageFileEntryId %>" paramName="smallImageFileEntry" uploadURL="<%= uploadSmallImageURL %>" validExtensions='<%= StringUtil.merge(imageExtensions, ", ") %>' />
 						</div>
 
 						<div class="entry-description">
@@ -295,7 +298,7 @@ long smallImageFileEntryId = BeanParamUtil.getLong(entry, request, "smallImageFi
 			</div>
 		</div>
 
-		<aui:fieldset cssClass="entry-footer">
+		<aui:fieldset cssClass="col-md-8 col-md-offset-2 entry-footer">
 
 			<%
 			boolean pending = false;

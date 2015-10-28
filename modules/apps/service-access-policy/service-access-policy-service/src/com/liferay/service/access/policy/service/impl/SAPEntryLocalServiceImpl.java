@@ -21,6 +21,8 @@ import com.liferay.portal.kernel.module.configuration.ConfigurationFactory;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.StringBundler;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.ResourceConstants;
@@ -45,6 +47,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author Brian Wing Shun Chan
@@ -55,13 +59,15 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 	@Override
 	public SAPEntry addSAPEntry(
 			long userId, String allowedServiceSignatures,
-			boolean defaultSAPEntry, String name, Map<Locale, String> titleMap,
-			ServiceContext serviceContext)
+			boolean defaultSAPEntry, boolean enabled, String name,
+			Map<Locale, String> titleMap, ServiceContext serviceContext)
 		throws PortalException {
 
 		// Service access policy entry
 
 		User user = userPersistence.findByPrimaryKey(userId);
+		allowedServiceSignatures = normalizeServiceSignatures(
+			allowedServiceSignatures);
 		name = StringUtil.trim(name);
 
 		validate(name, titleMap);
@@ -80,6 +86,7 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 		sapEntry.setUserName(user.getFullName());
 		sapEntry.setAllowedServiceSignatures(allowedServiceSignatures);
 		sapEntry.setDefaultSAPEntry(defaultSAPEntry);
+		sapEntry.setEnabled(enabled);
 		sapEntry.setName(name);
 		sapEntry.setTitleMap(titleMap);
 
@@ -95,19 +102,21 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 	}
 
 	@Override
-	public void checkDefaultSAPEntry(long companyId) throws PortalException {
+	public void checkSystemSAPEntries(long companyId) throws PortalException {
 		SAPConfiguration sapConfiguration =
 			configurationFactory.getConfiguration(
 				SAPConfiguration.class,
 				new CompanyServiceSettingsLocator(
 					companyId, SAPConstants.SERVICE_NAME));
 
-		SAPEntry applicationSAPEntry = sapEntryPersistence.fetchByC_N(
-			companyId, sapConfiguration.defaultApplicationSAPEntryName());
-		SAPEntry userSAPEntry = sapEntryPersistence.fetchByC_N(
-			companyId, sapConfiguration.defaultUserSAPEntryName());
+		SAPEntry systemDefaultSAPEntry = sapEntryPersistence.fetchByC_N(
+			companyId, sapConfiguration.systemDefaultSAPEntryName());
+		SAPEntry systemUserPasswordSAPEntry = sapEntryPersistence.fetchByC_N(
+			companyId, sapConfiguration.systemUserPasswordSAPEntryName());
 
-		if ((applicationSAPEntry != null) && (userSAPEntry != null)) {
+		if ((systemDefaultSAPEntry != null) &&
+			(systemUserPasswordSAPEntry != null)) {
+
 			return;
 		}
 
@@ -115,44 +124,43 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 		Role guestRole = roleLocalService.getRole(
 			companyId, RoleConstants.GUEST);
 
-		if (applicationSAPEntry == null) {
+		if (systemDefaultSAPEntry == null) {
 			Map<Locale, String> titleMap = new HashMap<>();
 
 			titleMap.put(
 				LocaleUtil.getDefault(),
-				sapConfiguration.defaultApplicationSAPEntryDescription());
+				sapConfiguration.systemDefaultSAPEntryDescription());
 
-			applicationSAPEntry = addSAPEntry(
+			systemDefaultSAPEntry = addSAPEntry(
 				defaultUserId,
-				sapConfiguration.
-					defaultApplicationSAPEntryServiceSignatures(),
-				true, sapConfiguration.defaultApplicationSAPEntryName(),
-				titleMap, new ServiceContext());
-
-			resourcePermissionLocalService.setResourcePermissions(
-				applicationSAPEntry.getCompanyId(), SAPEntry.class.getName(),
-				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(applicationSAPEntry.getSapEntryId()),
-				guestRole.getRoleId(), new String[] {ActionKeys.VIEW});
-		}
-
-		if (userSAPEntry == null) {
-			Map<Locale, String> titleMap = new HashMap<>();
-
-			titleMap.put(
-				LocaleUtil.getDefault(),
-				sapConfiguration.defaultUserSAPEntryDescription());
-
-			userSAPEntry = addSAPEntry(
-				defaultUserId,
-				sapConfiguration.defaultUserSAPEntryServiceSignatures(), true,
-				sapConfiguration.defaultUserSAPEntryName(), titleMap,
+				sapConfiguration.systemDefaultSAPEntryServiceSignatures(), true,
+				true, sapConfiguration.systemDefaultSAPEntryName(), titleMap,
 				new ServiceContext());
 
 			resourcePermissionLocalService.setResourcePermissions(
-				userSAPEntry.getCompanyId(), SAPEntry.class.getName(),
+				systemDefaultSAPEntry.getCompanyId(), SAPEntry.class.getName(),
 				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(userSAPEntry.getSapEntryId()),
+				String.valueOf(systemDefaultSAPEntry.getSapEntryId()),
+				guestRole.getRoleId(), new String[] {ActionKeys.VIEW});
+		}
+
+		if (systemUserPasswordSAPEntry == null) {
+			Map<Locale, String> titleMap = new HashMap<>();
+
+			titleMap.put(
+				LocaleUtil.getDefault(),
+				sapConfiguration.systemUserPasswordSAPEntryDescription());
+
+			systemUserPasswordSAPEntry = addSAPEntry(
+				defaultUserId,
+				sapConfiguration.systemUserPasswordSAPEntryServiceSignatures(),
+				false, true, sapConfiguration.systemUserPasswordSAPEntryName(),
+				titleMap, new ServiceContext());
+
+			resourcePermissionLocalService.setResourcePermissions(
+				systemUserPasswordSAPEntry.getCompanyId(),
+				SAPEntry.class.getName(), ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(systemUserPasswordSAPEntry.getSapEntryId()),
 				guestRole.getRoleId(), new String[] {ActionKeys.VIEW});
 		}
 	}
@@ -166,9 +174,7 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 
 	@Override
 	public SAPEntry deleteSAPEntry(SAPEntry sapEntry) throws PortalException {
-		if (sapEntry.isDefaultSAPEntry() &&
-			!CompanyThreadLocal.isDeleteInProcess()) {
-
+		if (sapEntry.isSystem() && !CompanyThreadLocal.isDeleteInProcess()) {
 			throw new RequiredSAPEntryException();
 		}
 
@@ -179,6 +185,13 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 			ResourceConstants.SCOPE_INDIVIDUAL, sapEntry.getSapEntryId());
 
 		return sapEntry;
+	}
+
+	@Override
+	public SAPEntry fetchSAPEntry(long companyId, String name)
+		throws PortalException {
+
+		return sapEntryPersistence.fetchByC_N(companyId, name);
 	}
 
 	@Override
@@ -201,6 +214,13 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 	}
 
 	@Override
+	public List<SAPEntry> getDefaultSAPEntries(
+		long companyId, boolean defaultSAPEntry) {
+
+		return sapEntryPersistence.findByC_D(companyId, defaultSAPEntry);
+	}
+
+	@Override
 	public SAPEntry getSAPEntry(long companyId, String name)
 		throws PortalException {
 
@@ -209,7 +229,8 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 
 	@Override
 	public SAPEntry updateSAPEntry(
-			long sapEntryId, String allowedServiceSignatures, String name,
+			long sapEntryId, String allowedServiceSignatures,
+			boolean defaultSAPEntry, boolean enabled, String name,
 			Map<Locale, String> titleMap, ServiceContext serviceContext)
 		throws PortalException {
 
@@ -224,7 +245,11 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 			throw new DuplicateSAPEntryNameException();
 		}
 
-		if (sapEntry.isDefaultSAPEntry()) {
+		allowedServiceSignatures = normalizeServiceSignatures(
+			allowedServiceSignatures);
+
+		if (sapEntry.isSystem()) {
+			defaultSAPEntry = sapEntry.getDefaultSAPEntry();
 			name = sapEntry.getName();
 		}
 
@@ -233,12 +258,63 @@ public class SAPEntryLocalServiceImpl extends SAPEntryLocalServiceBaseImpl {
 		validate(name, titleMap);
 
 		sapEntry.setAllowedServiceSignatures(allowedServiceSignatures);
+		sapEntry.setDefaultSAPEntry(defaultSAPEntry);
+		sapEntry.setEnabled(enabled);
 		sapEntry.setName(name);
 		sapEntry.setTitleMap(titleMap);
 
 		sapEntry = sapEntryPersistence.update(sapEntry, serviceContext);
 
 		return sapEntry;
+	}
+
+	protected String normalizeServiceSignatures(String serviceSignatures) {
+		String[] serviceSignaturesArray = serviceSignatures.split(
+			StringPool.NEW_LINE);
+
+		Set<String> sortedServiceSignatures = new TreeSet<>();
+
+		for (String serviceSignature : serviceSignaturesArray) {
+			String[] serviceSignatureArray = serviceSignature.split(
+				StringPool.POUND);
+
+			StringBundler sb = new StringBundler(
+				serviceSignatureArray.length * 2);
+
+			boolean empty = true;
+
+			for (int i = 0; i < serviceSignatureArray.length; i++) {
+				serviceSignatureArray[i] = StringUtil.trim(
+					serviceSignatureArray[i]);
+
+				if (serviceSignatureArray[i].length() > 0) {
+					empty = false;
+				}
+
+				sb.append(serviceSignatureArray[i]);
+				sb.append(StringPool.POUND);
+			}
+
+			if (!empty) {
+				sb.setIndex(sb.index() - 1);
+
+				sortedServiceSignatures.add(sb.toString());
+			}
+		}
+
+		StringBundler sb = new StringBundler(
+			sortedServiceSignatures.size() * 2);
+
+		for (String sortedServiceSignature : sortedServiceSignatures) {
+			sb.append(sortedServiceSignature);
+			sb.append(StringPool.NEW_LINE);
+		}
+
+		if (sb.index() > 0) {
+			sb.setIndex(sb.index() - 1);
+		}
+
+		return sb.toString();
 	}
 
 	protected void validate(String name, Map<Locale, String> titleMap)

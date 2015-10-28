@@ -14,21 +14,26 @@
 
 package com.liferay.dynamic.data.mapping.form.renderer.internal;
 
+import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluationResult;
+import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluator;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderer;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderingContext;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderingException;
 import com.liferay.dynamic.data.mapping.io.DDMFormFieldTypesJSONSerializerUtil;
 import com.liferay.dynamic.data.mapping.io.DDMFormJSONSerializerUtil;
+import com.liferay.dynamic.data.mapping.io.DDMFormLayoutJSONSerializerUtil;
 import com.liferay.dynamic.data.mapping.io.DDMFormValuesJSONSerializerUtil;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormLayout;
 import com.liferay.dynamic.data.mapping.registry.DDMFormFieldType;
-import com.liferay.dynamic.data.mapping.registry.DDMFormFieldTypeRegistryUtil;
+import com.liferay.dynamic.data.mapping.registry.DDMFormFieldTypeServicesTracker;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
-import com.liferay.portal.expression.ExpressionFactory;
+import com.liferay.dynamic.data.mapping.util.DDM;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.io.unsync.UnsyncStringWriter;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONSerializer;
 import com.liferay.portal.kernel.template.Template;
 import com.liferay.portal.kernel.template.TemplateConstants;
 import com.liferay.portal.kernel.template.TemplateException;
@@ -37,6 +42,7 @@ import com.liferay.portal.kernel.template.TemplateResource;
 import com.liferay.portal.kernel.template.URLTemplateResource;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Writer;
 
@@ -53,8 +59,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcellus Tavares
  */
 @Component(
-	immediate = true, property = {"templatePath=/META-INF/resources/form.soy"},
-	service = {DDMFormRenderer.class}
+	immediate = true, property = {"templatePath=/META-INF/resources/form.soy"}
 )
 public class DDMFormRendererImpl implements DDMFormRenderer {
 
@@ -81,7 +86,9 @@ public class DDMFormRendererImpl implements DDMFormRenderer {
 		throws DDMFormRenderingException {
 
 		try {
-			return doRender(ddmForm, ddmFormRenderingContext);
+			return doRender(
+				ddmForm, _ddm.getDefaultDDMFormLayout(ddmForm),
+				ddmFormRenderingContext);
 		}
 		catch (DDMFormRenderingException ddmfre) {
 			throw ddmfre;
@@ -106,54 +113,14 @@ public class DDMFormRendererImpl implements DDMFormRenderer {
 		Template template = TemplateManagerUtil.getTemplate(
 			TemplateConstants.LANG_TYPE_SOY, _templateResource, false);
 
-		String paginationMode = ddmFormLayout.getPaginationMode();
+		populateCommonContext(
+			template, ddmForm, ddmFormLayout, ddmFormRenderingContext);
 
-		if (paginationMode.equals("tabs")) {
-			template.put(TemplateConstants.NAMESPACE, "ddm.tabbed_form");
-		}
-		else {
-			template.put(TemplateConstants.NAMESPACE, "ddm.paginated_form");
-		}
+		String html = render(template, getTemplateNamespace(ddmFormLayout));
 
-		populateCommonContext(template, ddmForm, ddmFormRenderingContext);
+		String javaScript = render(template, "ddm.form_renderer_js");
 
-		List<Object> pages = getPages(
-			ddmForm, ddmFormLayout, ddmFormRenderingContext);
-
-		template.put("pages", pages);
-
-		return render(template);
-	}
-
-	protected String doRender(
-			DDMForm ddmForm, DDMFormRenderingContext ddmFormRenderingContext)
-		throws PortalException {
-
-		Template template = TemplateManagerUtil.getTemplate(
-			TemplateConstants.LANG_TYPE_SOY, _templateResource, false);
-
-		template.put(TemplateConstants.NAMESPACE, "ddm.simple_form");
-
-		populateCommonContext(template, ddmForm, ddmFormRenderingContext);
-
-		List<String> fields = getFields(ddmForm, ddmFormRenderingContext);
-
-		template.put("fields", fields);
-
-		return render(template);
-	}
-
-	protected List<String> getFields(
-			DDMForm ddmForm, DDMFormRenderingContext ddmFormRenderingContext)
-		throws DDMFormRenderingException {
-
-		Map<String, String> renderedDDMFormFieldsMap =
-			getRenderedDDMFormFieldsMap(ddmForm, ddmFormRenderingContext);
-
-		DDMFormTransformer ddmFormTransformer = new DDMFormTransformer(
-			ddmForm, renderedDDMFormFieldsMap);
-
-		return ddmFormTransformer.getFields();
+		return html.concat(javaScript);
 	}
 
 	protected List<Object> getPages(
@@ -179,10 +146,24 @@ public class DDMFormRendererImpl implements DDMFormRenderer {
 		DDMFormRendererHelper ddmFormRendererHelper = new DDMFormRendererHelper(
 			ddmForm, ddmFormRenderingContext);
 
-		ddmFormRendererHelper.setExpressionEvaluator(
-			new ExpressionEvaluator(_expressionFactory));
+		ddmFormRendererHelper.setDDMFormFieldTypeServicesTracker(
+			_ddmFormFieldTypeServicesTracker);
+		ddmFormRendererHelper.setDDMFormEvaluator(_ddmFormEvaluator);
 
 		return ddmFormRendererHelper.getRenderedDDMFormFieldsMap();
+	}
+
+	protected String getTemplateNamespace(DDMFormLayout ddmFormLayout) {
+		String paginationMode = ddmFormLayout.getPaginationMode();
+
+		if (Validator.equals(paginationMode, DDMFormLayout.SINGLE_PAGE_MODE)) {
+			return "ddm.simple_form";
+		}
+		else if (Validator.equals(paginationMode, DDMFormLayout.TABBED_MODE)) {
+			return "ddm.tabbed_form";
+		}
+
+		return "ddm.paginated_form";
 	}
 
 	protected TemplateResource getTemplateResource(String templatePath) {
@@ -196,7 +177,7 @@ public class DDMFormRendererImpl implements DDMFormRenderer {
 	}
 
 	protected void populateCommonContext(
-			Template template, DDMForm ddmForm,
+			Template template, DDMForm ddmForm, DDMFormLayout ddmFormLayout,
 			DDMFormRenderingContext ddmFormRenderingContext)
 		throws PortalException {
 
@@ -204,14 +185,33 @@ public class DDMFormRendererImpl implements DDMFormRenderer {
 		template.put(
 			"definition", DDMFormJSONSerializerUtil.serialize(ddmForm));
 
+		DDMFormEvaluationResult ddmFormEvaluationResult =
+			_ddmFormEvaluator.evaluate(
+				ddmForm, ddmFormRenderingContext.getDDMFormValues(),
+				ddmFormRenderingContext.getLocale());
+
+		JSONSerializer jsonSerializer = _jsonFactory.createJSONSerializer();
+
+		template.put(
+			"evaluation",
+			jsonSerializer.serializeDeep(ddmFormEvaluationResult));
+
 		List<DDMFormFieldType> ddmFormFieldTypes =
-			DDMFormFieldTypeRegistryUtil.getDDMFormFieldTypes();
+			_ddmFormFieldTypeServicesTracker.getDDMFormFieldTypes();
 
 		template.put(
 			"fieldTypes",
 			DDMFormFieldTypesJSONSerializerUtil.serialize(ddmFormFieldTypes));
 		template.put(
+			"layout", DDMFormLayoutJSONSerializerUtil.serialize(ddmFormLayout));
+
+		List<Object> pages = getPages(
+			ddmForm, ddmFormLayout, ddmFormRenderingContext);
+
+		template.put("pages", pages);
+		template.put(
 			"portletNamespace", ddmFormRenderingContext.getPortletNamespace());
+		template.put("templateNamespace", getTemplateNamespace(ddmFormLayout));
 
 		DDMFormValues ddmFormValues =
 			ddmFormRenderingContext.getDDMFormValues();
@@ -226,8 +226,12 @@ public class DDMFormRendererImpl implements DDMFormRenderer {
 		}
 	}
 
-	protected String render(Template template) throws TemplateException {
+	protected String render(Template template, String namespace)
+		throws TemplateException {
+
 		Writer writer = new UnsyncStringWriter();
+
+		template.put(TemplateConstants.NAMESPACE, namespace);
 
 		template.processTemplate(writer);
 
@@ -235,11 +239,31 @@ public class DDMFormRendererImpl implements DDMFormRenderer {
 	}
 
 	@Reference
-	protected void setExpressionFactory(ExpressionFactory expressionFactory) {
-		_expressionFactory = expressionFactory;
+	protected void setDDM(DDM ddm) {
+		_ddm = ddm;
 	}
 
-	private ExpressionFactory _expressionFactory;
+	@Reference
+	protected void setDDMFormEvaluator(DDMFormEvaluator ddmFormEvaluator) {
+		_ddmFormEvaluator = ddmFormEvaluator;
+	}
+
+	@Reference
+	protected void setDDMFormFieldTypeServicesTracker(
+		DDMFormFieldTypeServicesTracker ddmFormFieldTypeServicesTracker) {
+
+		_ddmFormFieldTypeServicesTracker = ddmFormFieldTypeServicesTracker;
+	}
+
+	@Reference
+	protected void setJSONFactory(JSONFactory jsonFactory) {
+		_jsonFactory = jsonFactory;
+	}
+
+	private DDM _ddm;
+	private DDMFormEvaluator _ddmFormEvaluator;
+	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
+	private JSONFactory _jsonFactory;
 	private TemplateResource _templateResource;
 
 }

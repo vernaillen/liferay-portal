@@ -23,10 +23,7 @@ taglib uri="http://liferay.com/tld/theme" prefix="liferay-theme" %><%@
 taglib uri="http://liferay.com/tld/ui" prefix="liferay-ui" %><%@
 taglib uri="http://liferay.com/tld/util" prefix="liferay-util" %>
 
-<%@ page import="com.liferay.portal.kernel.language.LanguageUtil" %><%@
-page import="com.liferay.portal.kernel.log.Log" %><%@
-page import="com.liferay.portal.kernel.log.LogFactoryUtil" %><%@
-page import="com.liferay.portal.kernel.portlet.LiferayPortletRequest" %><%@
+<%@ page import="com.liferay.portal.kernel.portlet.LiferayPortletRequest" %><%@
 page import="com.liferay.portal.kernel.portlet.LiferayPortletResponse" %><%@
 page import="com.liferay.portal.kernel.util.ParamUtil" %><%@
 page import="com.liferay.portal.kernel.util.StringPool" %><%@
@@ -34,7 +31,6 @@ page import="com.liferay.portal.kernel.util.StringUtil" %><%@
 page import="com.liferay.portal.kernel.workflow.WorkflowException" %><%@
 page import="com.liferay.portal.kernel.workflow.WorkflowInstance" %><%@
 page import="com.liferay.portal.kernel.workflow.WorkflowLog" %><%@
-page import="com.liferay.portal.util.PortalUtil" %><%@
 page import="com.liferay.portal.util.WebKeys" %><%@
 page import="com.liferay.portlet.PortletURLUtil" %><%@
 page import="com.liferay.portlet.asset.AssetRendererFactoryRegistryUtil" %><%@
@@ -43,10 +39,10 @@ page import="com.liferay.portlet.asset.model.AssetRenderer" %><%@
 page import="com.liferay.portlet.asset.model.AssetRendererFactory" %><%@
 page import="com.liferay.taglib.search.ResultRow" %><%@
 page import="com.liferay.workflow.instance.web.constants.WorkflowInstancePortletKeys" %><%@
-page import="com.liferay.workflow.instance.web.context.MyWorkflowInstanceEditDisplayContext" %><%@
-page import="com.liferay.workflow.instance.web.context.MyWorkflowInstanceViewDisplayContext" %><%@
-page import="com.liferay.workflow.instance.web.context.WorkflowInstanceEditDisplayContext" %><%@
-page import="com.liferay.workflow.instance.web.context.WorkflowInstanceViewDisplayContext" %>
+page import="com.liferay.workflow.instance.web.display.context.MyWorkflowInstanceEditDisplayContext" %><%@
+page import="com.liferay.workflow.instance.web.display.context.MyWorkflowInstanceViewDisplayContext" %><%@
+page import="com.liferay.workflow.instance.web.display.context.WorkflowInstanceEditDisplayContext" %><%@
+page import="com.liferay.workflow.instance.web.display.context.WorkflowInstanceViewDisplayContext" %>
 
 <%@ page import="javax.portlet.PortletURL" %>
 

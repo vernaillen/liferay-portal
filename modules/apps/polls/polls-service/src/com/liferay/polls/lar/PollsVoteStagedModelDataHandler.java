@@ -14,16 +14,16 @@
 
 package com.liferay.polls.lar;
 
+import com.liferay.exportimport.lar.BaseStagedModelDataHandler;
 import com.liferay.polls.exception.DuplicateVoteException;
 import com.liferay.polls.model.PollsChoice;
 import com.liferay.polls.model.PollsQuestion;
 import com.liferay.polls.model.PollsVote;
-import com.liferay.polls.service.PollsVoteLocalServiceUtil;
+import com.liferay.polls.service.PollsVoteLocalService;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.service.ServiceContext;
-import com.liferay.portlet.exportimport.lar.BaseStagedModelDataHandler;
 import com.liferay.portlet.exportimport.lar.ExportImportPathUtil;
 import com.liferay.portlet.exportimport.lar.PortletDataContext;
 import com.liferay.portlet.exportimport.lar.StagedModelDataHandler;
@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Shinn Lok
@@ -47,7 +48,7 @@ public class PollsVoteStagedModelDataHandler
 
 	@Override
 	public void deleteStagedModel(PollsVote vote) {
-		PollsVoteLocalServiceUtil.deletePollsVote(vote);
+		_pollsVoteLocalService.deletePollsVote(vote);
 	}
 
 	@Override
@@ -65,7 +66,7 @@ public class PollsVoteStagedModelDataHandler
 	public PollsVote fetchStagedModelByUuidAndGroupId(
 		String uuid, long groupId) {
 
-		return PollsVoteLocalServiceUtil.fetchPollsVoteByUuidAndGroupId(
+		return _pollsVoteLocalService.fetchPollsVoteByUuidAndGroupId(
 			uuid, groupId);
 	}
 
@@ -73,7 +74,7 @@ public class PollsVoteStagedModelDataHandler
 	public List<PollsVote> fetchStagedModelsByUuidAndCompanyId(
 		String uuid, long companyId) {
 
-		return PollsVoteLocalServiceUtil.getPollsVotesByUuidAndCompanyId(
+		return _pollsVoteLocalService.getPollsVotesByUuidAndCompanyId(
 			uuid, companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
 			new StagedModelModifiedDateComparator<PollsVote>());
 	}
@@ -147,11 +148,20 @@ public class PollsVoteStagedModelDataHandler
 		}
 
 		try {
-			PollsVoteLocalServiceUtil.addVote(
+			_pollsVoteLocalService.addVote(
 				vote.getUserId(), questionId, choiceId, serviceContext);
 		}
 		catch (DuplicateVoteException dve) {
 		}
 	}
+
+	@Reference(unbind = "-")
+	protected void setPollsVoteLocalService(
+		PollsVoteLocalService pollsVoteLocalService) {
+
+		_pollsVoteLocalService = pollsVoteLocalService;
+	}
+
+	private PollsVoteLocalService _pollsVoteLocalService;
 
 }

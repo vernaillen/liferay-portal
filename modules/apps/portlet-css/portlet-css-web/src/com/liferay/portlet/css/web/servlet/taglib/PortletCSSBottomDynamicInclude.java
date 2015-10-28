@@ -49,9 +49,7 @@ public class PortletCSSBottomDynamicInclude extends BaseDynamicInclude {
 			requestDispatcher.include(request, response);
 		}
 		catch (ServletException se) {
-			if (_log.isErrorEnabled()) {
-				_log.error("Unable to include JSP", se);
-			}
+			_log.error("Unable to include JSP " + _JSP_PATH, se);
 
 			throw new IOException("Unable to include " + _JSP_PATH, se);
 		}
@@ -67,8 +65,7 @@ public class PortletCSSBottomDynamicInclude extends BaseDynamicInclude {
 		_servletContext = servletContext;
 	}
 
-	private static final String _JSP_PATH =
-		"/META-INF/resources/definitions.jsp";
+	private static final String _JSP_PATH = "/definitions.jsp";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		PortletCSSBottomDynamicInclude.class);

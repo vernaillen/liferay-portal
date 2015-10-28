@@ -42,6 +42,7 @@ import com.liferay.portal.test.rule.PersistenceTestRule;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -61,8 +62,9 @@ import java.util.Set;
  */
 @RunWith(Arquillian.class)
 public class DDMStructureLinkPersistenceTest {
+	@ClassRule
 	@Rule
-	public final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
+	public static final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
 			PersistenceTestRule.INSTANCE,
 			new TransactionalTestRule(Propagation.REQUIRED));
 
@@ -303,11 +305,9 @@ public class DDMStructureLinkPersistenceTest {
 
 		ActionableDynamicQuery actionableDynamicQuery = DDMStructureLinkLocalServiceUtil.getActionableDynamicQuery();
 
-		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod() {
+		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<DDMStructureLink>() {
 				@Override
-				public void performAction(Object object) {
-					DDMStructureLink ddmStructureLink = (DDMStructureLink)object;
-
+				public void performAction(DDMStructureLink ddmStructureLink) {
 					Assert.assertNotNull(ddmStructureLink);
 
 					count.increment();
@@ -401,14 +401,16 @@ public class DDMStructureLinkPersistenceTest {
 
 		DDMStructureLink existingDDMStructureLink = _persistence.findByPrimaryKey(newDDMStructureLink.getPrimaryKey());
 
-		Assert.assertEquals(existingDDMStructureLink.getClassNameId(),
-			ReflectionTestUtil.invoke(existingDDMStructureLink,
+		Assert.assertEquals(Long.valueOf(
+				existingDDMStructureLink.getClassNameId()),
+			ReflectionTestUtil.<Long>invoke(existingDDMStructureLink,
 				"getOriginalClassNameId", new Class<?>[0]));
-		Assert.assertEquals(existingDDMStructureLink.getClassPK(),
-			ReflectionTestUtil.invoke(existingDDMStructureLink,
+		Assert.assertEquals(Long.valueOf(existingDDMStructureLink.getClassPK()),
+			ReflectionTestUtil.<Long>invoke(existingDDMStructureLink,
 				"getOriginalClassPK", new Class<?>[0]));
-		Assert.assertEquals(existingDDMStructureLink.getStructureId(),
-			ReflectionTestUtil.invoke(existingDDMStructureLink,
+		Assert.assertEquals(Long.valueOf(
+				existingDDMStructureLink.getStructureId()),
+			ReflectionTestUtil.<Long>invoke(existingDDMStructureLink,
 				"getOriginalStructureId", new Class<?>[0]));
 	}
 

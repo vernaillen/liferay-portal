@@ -64,16 +64,37 @@
 			</execute>
 		</task>
 
-		<var name="portletName" value="Web Content" />
-		<var name="portletTitle" value="Web Content" />
+		<var name="portlet" value="Web Content" />
 
-		<task macro-summary="Page#gotoContentCP">
-			<execute macro="Page#gotoContentCP">
-				<var name="portletName" value="${portletName}" />
+		<task macro-summary="ProductMenu#gotoSitesContent">
+			<execute macro="ProductMenu#gotoSitesContent">
+				<var name="portlet" value="${portlet}" />
 			</execute>
 
 			<execute macro="SiteAdmin#viewPortletTitle">
-				<var name="portletTitle" value="${portletTitle}" />
+				<var name="portletTitle" value="${portlet}" />
+			</execute>
+		</task>
+
+		<var name="webContentContent" value="Web Content Content" />
+		<var name="webContentTitle" value="Web Content Title" />
+
+		<task summary="Add a web content article with '${webContentTitle}' as the title and '${webContentContent}' as the content">
+			<execute macro="WebContentNavigator#gotoAddCP" />
+
+			<execute function="Pause" locator1="30000" />
+
+			<execute macro="WebContent#addCP">
+				<var name="webContentContent" value="${webContentContent}" />
+				<var name="webContentTitle" value="${webContentTitle}" />
+			</execute>
+
+			<execute macro="WebContent#publish" />
+
+			<execute macro="Alert#viewSuccess" />
+
+			<execute macro="WebContent#viewTitle">
+				<var name="webContentTitle" value="${webContentTitle}" />
 			</execute>
 		</task>
 	</command>

@@ -17,8 +17,8 @@ package com.liferay.dynamic.data.lists.workflow;
 import com.liferay.dynamic.data.lists.model.DDLRecord;
 import com.liferay.dynamic.data.lists.model.DDLRecordSet;
 import com.liferay.dynamic.data.lists.model.DDLRecordVersion;
-import com.liferay.dynamic.data.lists.service.DDLRecordLocalServiceUtil;
-import com.liferay.dynamic.data.lists.service.DDLRecordVersionLocalServiceUtil;
+import com.liferay.dynamic.data.lists.service.DDLRecordLocalService;
+import com.liferay.dynamic.data.lists.service.DDLRecordVersionLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.workflow.BaseWorkflowHandler;
@@ -27,8 +27,10 @@ import com.liferay.portal.kernel.workflow.WorkflowHandler;
 import com.liferay.portal.model.WorkflowDefinitionLink;
 import com.liferay.portal.security.permission.ResourceActionsUtil;
 import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.service.WorkflowDefinitionLinkLocalServiceUtil;
+import com.liferay.portal.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.theme.ThemeDisplay;
+import com.liferay.portlet.asset.model.AssetRenderer;
+import com.liferay.portlet.asset.model.AssetRendererFactory;
 
 import java.io.Serializable;
 
@@ -36,12 +38,31 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Marcellus Tavares
  */
 @Component(immediate = true, service = WorkflowHandler.class)
 public class DDLRecordWorkflowHandler extends BaseWorkflowHandler<DDLRecord> {
+
+	@Override
+	public AssetRenderer<DDLRecord> getAssetRenderer(long classPK)
+		throws PortalException {
+
+		AssetRendererFactory<DDLRecord> assetRendererFactory =
+			getAssetRendererFactory();
+
+		if (assetRendererFactory == null) {
+			return null;
+		}
+
+		DDLRecordVersion recordVersion =
+			_ddlRecordVersionLocalService.getRecordVersion(classPK);
+
+		return assetRendererFactory.getAssetRenderer(
+			recordVersion.getRecordId(), AssetRendererFactory.TYPE_LATEST);
+	}
 
 	@Override
 	public String getClassName() {
@@ -59,14 +80,13 @@ public class DDLRecordWorkflowHandler extends BaseWorkflowHandler<DDLRecord> {
 		throws PortalException {
 
 		DDLRecordVersion recordVersion =
-			DDLRecordVersionLocalServiceUtil.getRecordVersion(classPK);
+			_ddlRecordVersionLocalService.getRecordVersion(classPK);
 
 		DDLRecord record = recordVersion.getRecord();
 
-		return WorkflowDefinitionLinkLocalServiceUtil.
-			fetchWorkflowDefinitionLink(
-				companyId, groupId, DDLRecordSet.class.getName(),
-				record.getRecordSetId(), 0);
+		return _workflowDefinitionLinkLocalService.fetchWorkflowDefinitionLink(
+			companyId, groupId, DDLRecordSet.class.getName(),
+			record.getRecordSetId(), 0);
 	}
 
 	@Override
@@ -88,7 +108,7 @@ public class DDLRecordWorkflowHandler extends BaseWorkflowHandler<DDLRecord> {
 		ServiceContext serviceContext = (ServiceContext)workflowContext.get(
 			"serviceContext");
 
-		return DDLRecordLocalServiceUtil.updateStatus(
+		return _ddlRecordLocalService.updateStatus(
 			userId, classPK, status, serviceContext);
 	}
 
@@ -96,5 +116,32 @@ public class DDLRecordWorkflowHandler extends BaseWorkflowHandler<DDLRecord> {
 	protected String getIconPath(ThemeDisplay themeDisplay) {
 		return themeDisplay.getPathThemeImages() + "/common/history.png";
 	}
+
+	@Reference(unbind = "-")
+	protected void setDDLRecordLocalService(
+		DDLRecordLocalService ddlRecordLocalService) {
+
+		_ddlRecordLocalService = ddlRecordLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setDDLRecordVersionLocalService(
+		DDLRecordVersionLocalService ddlRecordVersionLocalService) {
+
+		_ddlRecordVersionLocalService = ddlRecordVersionLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setWorkflowDefinitionLinkLocalService(
+		WorkflowDefinitionLinkLocalService workflowDefinitionLinkLocalService) {
+
+		_workflowDefinitionLinkLocalService =
+			workflowDefinitionLinkLocalService;
+	}
+
+	private DDLRecordLocalService _ddlRecordLocalService;
+	private DDLRecordVersionLocalService _ddlRecordVersionLocalService;
+	private WorkflowDefinitionLinkLocalService
+		_workflowDefinitionLinkLocalService;
 
 }

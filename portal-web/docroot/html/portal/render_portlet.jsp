@@ -237,14 +237,12 @@ if (portlet.hasPortletMode(responseContentType, PortletMode.EDIT)) {
 	}
 }
 
-if (portlet.hasPortletMode(responseContentType, LiferayPortletMode.EDIT_DEFAULTS)) {
-	if (showEditIcon && themeDisplay.isShowAddContentIcon()) {
-		showEditDefaultsIcon = true;
-	}
+if (portlet.hasPortletMode(responseContentType, LiferayPortletMode.EDIT_DEFAULTS) && showEditIcon) {
+	showEditDefaultsIcon = true;
 }
 
 if (portlet.hasPortletMode(responseContentType, LiferayPortletMode.EDIT_GUEST)) {
-	if (showEditIcon && !layout.isPrivateLayout() && themeDisplay.isShowAddContentIcon()) {
+	if (showEditIcon && !layout.isPrivateLayout()) {
 		showEditGuestIcon = true;
 	}
 }
@@ -314,6 +312,16 @@ if (layout.isLayoutPrototypeLinkActive()) {
 	showPortletCssIcon = false;
 }
 
+// Portlets in a full page cannot be moved
+
+LayoutTypeController layoutTypeController = layoutTypePortlet.getLayoutTypeController();
+
+if (layoutTypeController.isFullPageDisplayable()) {
+	showCloseIcon = false;
+	showMaxIcon = false;
+	showMinIcon = false;
+}
+
 long previousScopeGroupId = themeDisplay.getScopeGroupId();
 
 if (Validator.isNotNull(portletResource)) {
@@ -335,13 +343,26 @@ if (siteGroup.isStaged() && !siteGroup.isStagedRemotely() && !siteGroup.isStaged
 	themeDisplay.setSiteGroupId(siteGroup.getGroupId());
 }
 
+// Portlet decorate
+
+boolean tilesPortletDecorate = GetterUtil.getBoolean(TilesAttributeUtil.getTilesAttribute(pageContext, "portlet_decorate"), true);
+
+boolean portletDecorate = tilesPortletDecorate;
+
+Boolean portletDecorateObj = (Boolean)request.getAttribute(WebKeys.PORTLET_DECORATE);
+
+if (portletDecorateObj != null) {
+	portletDecorate = portletDecorateObj.booleanValue();
+
+	request.removeAttribute(WebKeys.PORTLET_DECORATE);
+}
+
 portletDisplay.recycle();
 
 portletDisplay.setActive(portlet.isActive());
 portletDisplay.setColumnCount(columnCount);
 portletDisplay.setColumnId(columnId);
 portletDisplay.setColumnPos(columnPos);
-portletDisplay.setControlPanelCategory(portlet.getControlPanelEntryCategory());
 portletDisplay.setId(portletId);
 portletDisplay.setInstanceId(instanceId);
 portletDisplay.setModeAbout(modeAbout);
@@ -354,6 +375,7 @@ portletDisplay.setModePreview(modePreview);
 portletDisplay.setModePrint(modePrint);
 portletDisplay.setModeView(portletMode.equals(PortletMode.VIEW));
 portletDisplay.setNamespace(PortalUtil.getPortletNamespace(portletId));
+portletDisplay.setPortletDecorate(portletDecorate);
 portletDisplay.setPortletName(portletConfig.getPortletName());
 portletDisplay.setPortletResource(portletResource);
 portletDisplay.setResourcePK(portletPrimaryKey);
@@ -421,6 +443,8 @@ if (portlet.getConfigurationActionInstance() != null) {
 	urlConfiguration.setParameter("mvcPath", "/edit_configuration.jsp");
 
 	String settingsScope = (String)request.getAttribute(WebKeys.SETTINGS_SCOPE);
+
+	settingsScope = ParamUtil.get(request, "settingsScope", settingsScope);
 
 	if (Validator.isNotNull(settingsScope)) {
 		urlConfiguration.setParameter("settingsScope", settingsScope);
@@ -728,17 +752,11 @@ if (group.isControlPanel()) {
 	}
 }
 
-// Portlet decorate
+// Portlet decorator
 
-boolean portletDecorateDefault = GetterUtil.getBoolean(themeDisplay.getThemeSetting("portlet-setup-show-borders-default"), PropsValues.THEME_PORTLET_DECORATE_DEFAULT);
+String portletDecoratorId = portletSetup.getValue("portletSetupPortletDecoratorId", StringPool.BLANK);
 
-boolean portletDecorate = GetterUtil.getBoolean(portletSetup.getValue("portletSetupShowBorders", String.valueOf(portletDecorateDefault)));
-
-Boolean portletDecorateObj = (Boolean)renderRequestImpl.getAttribute(WebKeys.PORTLET_DECORATE);
-
-if (portletDecorateObj != null) {
-	portletDecorate = portletDecorateObj.booleanValue();
-}
+PortletDecorator portletDecorator = ThemeLocalServiceUtil.getPortletDecorator(company.getCompanyId(), theme.getThemeId(), portletDecoratorId);
 
 // Make sure the Tiles context is reset for the next portlet
 
@@ -848,8 +866,10 @@ Boolean renderPortletBoundary = GetterUtil.getBoolean(request.getAttribute(WebKe
 		}
 	}
 
-	if (!portletDecorate) {
-		cssClasses += " portlet-borderless";
+	if ((portletDecorator != null) && portletDisplay.isPortletDecorate()) {
+		portletDisplay.setPortletDecoratorId(portletDecorator.getPortletDecoratorId());
+
+		cssClasses += StringPool.SPACE + portletDecorator.getCssClass();
 	}
 
 	cssClasses = "portlet-boundary portlet-boundary" + HtmlUtil.escapeAttribute(PortalUtil.getPortletNamespace(rootPortletId)) + StringPool.SPACE + cssClasses + StringPool.SPACE + portlet.getCssClassWrapper() + StringPool.SPACE + HtmlUtil.escapeAttribute(customCSSClassName);
@@ -1007,7 +1027,7 @@ else {
 <aui:script position='<%= themeDisplay.isIsolated() ? "inline" : "auto" %>'>
 	Liferay.Portlet.onLoad(
 		{
-			canEditTitle: <%= showConfigurationIcon && portletDecorate %>,
+			canEditTitle: <%= showConfigurationIcon %>,
 			columnPos: <%= columnPos %>,
 			isStatic: '<%= staticVar %>',
 			namespacedId: 'p_p_id<%= HtmlUtil.escapeJS(renderResponseImpl.getNamespace()) %>',
@@ -1172,5 +1192,5 @@ renderRequestImpl.cleanUp();
 %>
 
 <%!
-private static Log _log = LogFactoryUtil.getLog("portal-web.docroot.html.portal.render_portlet_jsp");
+private static Log _log = LogFactoryUtil.getLog("portal_web.docroot.html.portal.render_portlet_jsp");
 %>

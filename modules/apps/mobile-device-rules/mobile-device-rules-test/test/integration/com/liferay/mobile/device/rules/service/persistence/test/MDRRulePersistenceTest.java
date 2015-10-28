@@ -45,6 +45,7 @@ import com.liferay.portal.test.rule.PersistenceTestRule;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -64,8 +65,9 @@ import java.util.Set;
  */
 @RunWith(Arquillian.class)
 public class MDRRulePersistenceTest {
+	@ClassRule
 	@Rule
-	public final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
+	public static final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
 			PersistenceTestRule.INSTANCE,
 			new TransactionalTestRule(Propagation.REQUIRED));
 
@@ -348,11 +350,9 @@ public class MDRRulePersistenceTest {
 
 		ActionableDynamicQuery actionableDynamicQuery = MDRRuleLocalServiceUtil.getActionableDynamicQuery();
 
-		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod() {
+		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<MDRRule>() {
 				@Override
-				public void performAction(Object object) {
-					MDRRule mdrRule = (MDRRule)object;
-
+				public void performAction(MDRRule mdrRule) {
 					Assert.assertNotNull(mdrRule);
 
 					count.increment();
@@ -447,9 +447,9 @@ public class MDRRulePersistenceTest {
 		Assert.assertTrue(Validator.equals(existingMDRRule.getUuid(),
 				ReflectionTestUtil.invoke(existingMDRRule, "getOriginalUuid",
 					new Class<?>[0])));
-		Assert.assertEquals(existingMDRRule.getGroupId(),
-			ReflectionTestUtil.invoke(existingMDRRule, "getOriginalGroupId",
-				new Class<?>[0]));
+		Assert.assertEquals(Long.valueOf(existingMDRRule.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(existingMDRRule,
+				"getOriginalGroupId", new Class<?>[0]));
 	}
 
 	protected MDRRule addMDRRule() throws Exception {

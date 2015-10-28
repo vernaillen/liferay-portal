@@ -4,6 +4,14 @@ AUI.add(
 		var CheckboxField = A.Component.create(
 			{
 				ATTRS: {
+					dataType: {
+						value: 'boolean'
+					},
+
+					showAsSwitcher: {
+						value: false
+					},
+
 					type: {
 						value: 'checkbox'
 					},
@@ -30,6 +38,7 @@ AUI.add(
 						return A.merge(
 							CheckboxField.superclass.getTemplateContext.apply(instance, arguments),
 							{
+								showAsSwitcher: instance.get('showAsSwitcher'),
 								status: value ? 'checked' : ''
 							}
 						);
@@ -41,6 +50,24 @@ AUI.add(
 						var inputNode = instance.getInputNode();
 
 						return inputNode.attr('checked');
+					},
+
+					setValue: function(value) {
+						var instance = this;
+
+						var inputNode = instance.getInputNode();
+
+						inputNode.attr('checked', !!value);
+					},
+
+					_renderErrorMessage: function() {
+						var instance = this;
+
+						var container = instance.get('container');
+
+						CheckboxField.superclass._renderErrorMessage.apply(instance, arguments);
+
+						container.all('.validation-message').appendTo(container);
 					},
 
 					_setValue: function(value) {
@@ -56,6 +83,16 @@ AUI.add(
 						}
 
 						return value;
+					},
+
+					_showFeedback: function() {
+						var instance = this;
+
+						var container = instance.get('container');
+
+						CheckboxField.superclass._showFeedback.apply(instance, arguments);
+
+						container.all('.form-control-feedback').appendTo(container);
 					}
 				}
 			}

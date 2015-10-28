@@ -20,17 +20,19 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.notifications.BaseModelUserNotificationHandler;
 import com.liferay.portal.kernel.notifications.UserNotificationHandler;
 import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portlet.asset.AssetRendererFactoryRegistryUtil;
 import com.liferay.portlet.asset.model.AssetRenderer;
 import com.liferay.portlet.asset.model.AssetRendererFactory;
 import com.liferay.portlet.messageboards.model.MBMessage;
-import com.liferay.portlet.messageboards.service.MBMessageLocalServiceUtil;
+import com.liferay.portlet.messageboards.service.MBMessageLocalService;
 
 import java.util.ResourceBundle;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Iván Zaera
@@ -50,7 +52,7 @@ public class MentionsUserNotificationHandler
 
 	@Override
 	protected AssetRenderer<?> getAssetRenderer(JSONObject jsonObject) {
-		MBMessage mbMessage = MBMessageLocalServiceUtil.fetchMBMessage(
+		MBMessage mbMessage = _mbMessageLocalService.fetchMBMessage(
 			jsonObject.getLong("classPK"));
 
 		if ((mbMessage != null) && mbMessage.isDiscussion()) {
@@ -69,7 +71,7 @@ public class MentionsUserNotificationHandler
 		JSONObject jsonObject, AssetRenderer<?> assetRenderer,
 		ServiceContext serviceContext) {
 
-		MBMessage mbMessage = MBMessageLocalServiceUtil.fetchMBMessage(
+		MBMessage mbMessage = _mbMessageLocalService.fetchMBMessage(
 			jsonObject.getLong("classPK"));
 
 		AssetRendererFactory<?> assetRendererFactory =
@@ -79,8 +81,8 @@ public class MentionsUserNotificationHandler
 		String typeName = assetRendererFactory.getTypeName(
 			serviceContext.getLocale());
 
-		ResourceBundle resourceBundle = ResourceBundle.getBundle(
-			"content.Language", serviceContext.getLocale());
+		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
+			"content.Language", serviceContext.getLocale(), getClass());
 
 		if ((mbMessage != null) && mbMessage.isDiscussion()) {
 			return LanguageUtil.format(
@@ -101,5 +103,14 @@ public class MentionsUserNotificationHandler
 				false);
 		}
 	}
+
+	@Reference(unbind = "-")
+	protected void setMBMessageLocalService(
+		MBMessageLocalService mbMessageLocalService) {
+
+		_mbMessageLocalService = mbMessageLocalService;
+	}
+
+	private MBMessageLocalService _mbMessageLocalService;
 
 }

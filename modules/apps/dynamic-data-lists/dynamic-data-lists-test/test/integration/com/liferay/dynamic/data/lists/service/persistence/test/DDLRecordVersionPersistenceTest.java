@@ -45,6 +45,7 @@ import com.liferay.portal.test.rule.PersistenceTestRule;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -64,8 +65,9 @@ import java.util.Set;
  */
 @RunWith(Arquillian.class)
 public class DDLRecordVersionPersistenceTest {
+	@ClassRule
 	@Rule
-	public final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
+	public static final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
 			PersistenceTestRule.INSTANCE,
 			new TransactionalTestRule(Propagation.REQUIRED));
 
@@ -349,11 +351,9 @@ public class DDLRecordVersionPersistenceTest {
 
 		ActionableDynamicQuery actionableDynamicQuery = DDLRecordVersionLocalServiceUtil.getActionableDynamicQuery();
 
-		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod() {
+		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<DDLRecordVersion>() {
 				@Override
-				public void performAction(Object object) {
-					DDLRecordVersion ddlRecordVersion = (DDLRecordVersion)object;
-
+				public void performAction(DDLRecordVersion ddlRecordVersion) {
 					Assert.assertNotNull(ddlRecordVersion);
 
 					count.increment();
@@ -447,8 +447,8 @@ public class DDLRecordVersionPersistenceTest {
 
 		DDLRecordVersion existingDDLRecordVersion = _persistence.findByPrimaryKey(newDDLRecordVersion.getPrimaryKey());
 
-		Assert.assertEquals(existingDDLRecordVersion.getRecordId(),
-			ReflectionTestUtil.invoke(existingDDLRecordVersion,
+		Assert.assertEquals(Long.valueOf(existingDDLRecordVersion.getRecordId()),
+			ReflectionTestUtil.<Long>invoke(existingDDLRecordVersion,
 				"getOriginalRecordId", new Class<?>[0]));
 		Assert.assertTrue(Validator.equals(
 				existingDDLRecordVersion.getVersion(),

@@ -16,6 +16,8 @@ package com.liferay.exportimport.web.messaging;
 
 import com.liferay.exportimport.web.configuration.ExportImportWebConfigurationValues;
 import com.liferay.exportimport.web.constants.ExportImportPortletKeys;
+import com.liferay.portal.background.task.model.BackgroundTask;
+import com.liferay.portal.background.task.service.BackgroundTaskLocalService;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Order;
 import com.liferay.portal.kernel.dao.orm.OrderFactoryUtil;
@@ -26,38 +28,51 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.messaging.BaseSchedulerEntryMessageListener;
 import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
-import com.liferay.portal.kernel.scheduler.SchedulerEntry;
+import com.liferay.portal.kernel.scheduler.SchedulerEngineHelper;
 import com.liferay.portal.kernel.scheduler.TimeUnit;
-import com.liferay.portal.kernel.scheduler.TriggerType;
+import com.liferay.portal.kernel.scheduler.TriggerFactory;
+import com.liferay.portal.kernel.scheduler.TriggerFactoryUtil;
+import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.StringBundler;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.Portlet;
 import com.liferay.portlet.exportimport.model.ExportImportConfiguration;
-import com.liferay.portlet.exportimport.service.ExportImportConfigurationLocalServiceUtil;
+import com.liferay.portlet.exportimport.service.ExportImportConfigurationLocalService;
 
 import java.util.List;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Levente Hudák
+ * @author Daniel Kocsis
  */
 @Component(
 	immediate = true,
-	property = {"javax.portlet.name=" + ExportImportPortletKeys.EXPORT_IMPORT},
-	service = SchedulerEntry.class
+	service = DraftExportImportConfigurationMessageListener.class
 )
 public class DraftExportImportConfigurationMessageListener
 	extends BaseSchedulerEntryMessageListener {
 
 	@Activate
 	protected void activate() {
-		schedulerEntry.setTimeUnit(TimeUnit.HOUR);
-		schedulerEntry.setTriggerType(TriggerType.SIMPLE);
-		schedulerEntry.setTriggerValue(
-			ExportImportWebConfigurationValues.
-				DRAFT_EXPORT_IMPORT_CONFIGURATION_CHECK_INTERVAL);
+		schedulerEntryImpl.setTrigger(
+			TriggerFactoryUtil.createTrigger(
+				getEventListenerClass(), getEventListenerClass(),
+				ExportImportWebConfigurationValues.
+					DRAFT_EXPORT_IMPORT_CONFIGURATION_CHECK_INTERVAL,
+				TimeUnit.HOUR));
+
+		_schedulerEngineHelper.register(this, schedulerEntryImpl);
+	}
+
+	@Deactivate
+	protected void deactivate() {
+		_schedulerEngineHelper.unregister(this);
 	}
 
 	@Override
@@ -69,7 +84,7 @@ public class DraftExportImportConfigurationMessageListener
 		}
 
 		DynamicQuery dynamicQuery =
-			ExportImportConfigurationLocalServiceUtil.dynamicQuery();
+			_exportImportConfigurationLocalService.dynamicQuery();
 
 		Property property = PropertyFactoryUtil.forName("status");
 
@@ -85,15 +100,73 @@ public class DraftExportImportConfigurationMessageListener
 				DRAFT_EXPORT_IMPORT_CONFIGURATION_CLEAN_UP_COUNT);
 
 		List<ExportImportConfiguration> exportImportConfigurations =
-			ExportImportConfigurationLocalServiceUtil.dynamicQuery(
-				dynamicQuery);
+			_exportImportConfigurationLocalService.dynamicQuery(dynamicQuery);
 
 		for (ExportImportConfiguration exportImportConfiguration :
 				exportImportConfigurations) {
 
-			ExportImportConfigurationLocalServiceUtil.
-				deleteExportImportConfiguration(exportImportConfiguration);
+			List<BackgroundTask> backgroundTasks = getParentBackgroundTasks(
+				exportImportConfiguration);
+
+			if (ListUtil.isEmpty(backgroundTasks)) {
+				_exportImportConfigurationLocalService.
+					deleteExportImportConfiguration(exportImportConfiguration);
+
+				continue;
+			}
+
+			// BackgroundTaskModelListener deletes the linked configuration
+			// automatically
+
+			for (BackgroundTask backgroundTask : backgroundTasks) {
+				_backgroundTaskLocalService.deleteBackgroundTask(
+					backgroundTask.getBackgroundTaskId());
+			}
 		}
+	}
+
+	protected List<BackgroundTask> getParentBackgroundTasks(
+			ExportImportConfiguration exportImportConfiguration)
+		throws PortalException {
+
+		DynamicQuery dynamicQuery = _backgroundTaskLocalService.dynamicQuery();
+
+		Property completedProperty = PropertyFactoryUtil.forName("completed");
+
+		dynamicQuery.add(completedProperty.eq(Boolean.TRUE));
+
+		Property taskContextMapProperty = PropertyFactoryUtil.forName(
+			"taskContextMap");
+
+		StringBundler sb = new StringBundler(7);
+
+		sb.append(StringPool.PERCENT);
+		sb.append(StringPool.QUOTE);
+		sb.append("exportImportConfigurationId");
+		sb.append(StringPool.QUOTE);
+		sb.append(StringPool.COLON);
+		sb.append(exportImportConfiguration.getExportImportConfigurationId());
+		sb.append(StringPool.PERCENT);
+
+		dynamicQuery.add(taskContextMapProperty.like(sb.toString()));
+
+		return _backgroundTaskLocalService.dynamicQuery(dynamicQuery);
+	}
+
+	@Reference(unbind = "-")
+	protected void setBackgroundTaskLocalService(
+		BackgroundTaskLocalService backgroundTaskLocalService) {
+
+		_backgroundTaskLocalService = backgroundTaskLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setExportImportConfigurationLocalService(
+		ExportImportConfigurationLocalService
+			exportImportConfigurationLocalService) {
+
+		_exportImportConfigurationLocalService =
+			exportImportConfigurationLocalService;
 	}
 
 	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED, unbind = "-")
@@ -106,5 +179,21 @@ public class DraftExportImportConfigurationMessageListener
 	)
 	protected void setPortlet(Portlet portlet) {
 	}
+
+	@Reference(unbind = "-")
+	protected void setSchedulerEngineHelper(
+		SchedulerEngineHelper schedulerEngineHelper) {
+
+		_schedulerEngineHelper = schedulerEngineHelper;
+	}
+
+	@Reference(unbind = "-")
+	protected void setTriggerFactory(TriggerFactory triggerFactory) {
+	}
+
+	private BackgroundTaskLocalService _backgroundTaskLocalService;
+	private ExportImportConfigurationLocalService
+		_exportImportConfigurationLocalService;
+	private SchedulerEngineHelper _schedulerEngineHelper;
 
 }

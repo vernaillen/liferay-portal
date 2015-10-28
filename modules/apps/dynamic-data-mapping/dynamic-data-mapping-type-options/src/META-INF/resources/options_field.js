@@ -63,6 +63,8 @@ AUI.add(
 								sortableHandle: '.ddm-options-row'
 							}
 						).render();
+
+						return instance;
 					},
 
 					serializeAutoFields: function() {
@@ -70,9 +72,9 @@ AUI.add(
 
 						var autoFields = instance.autoFields;
 
-						var visibleRows = autoFields._contentBox.all('.lfr-form-row').each(autoFields._clearHiddenRows, autoFields);
-
 						var serializedData = [];
+
+						var visibleRows = autoFields._contentBox.all('.lfr-form-row').each(autoFields._clearHiddenRows, autoFields);
 
 						visibleRows.each(
 							function(item) {

@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
+import com.liferay.portal.kernel.repository.capabilities.TrashCapability;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.servlet.ServletResponseConstants;
@@ -48,6 +49,7 @@ import com.liferay.portal.kernel.util.TempFileEntryUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.model.TrashedModel;
 import com.liferay.portal.security.auth.PrincipalException;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextFactory;
@@ -60,7 +62,7 @@ import com.liferay.portlet.PortletURLImpl;
 import com.liferay.portlet.asset.AssetCategoryException;
 import com.liferay.portlet.asset.AssetTagException;
 import com.liferay.portlet.asset.model.AssetVocabulary;
-import com.liferay.portlet.documentlibrary.DuplicateFileException;
+import com.liferay.portlet.documentlibrary.DuplicateFileEntryException;
 import com.liferay.portlet.documentlibrary.DuplicateFolderNameException;
 import com.liferay.portlet.documentlibrary.FileExtensionException;
 import com.liferay.portlet.documentlibrary.FileMimeTypeException;
@@ -73,11 +75,11 @@ import com.liferay.portlet.documentlibrary.NoSuchFolderException;
 import com.liferay.portlet.documentlibrary.SourceFileNameException;
 import com.liferay.portlet.documentlibrary.antivirus.AntivirusScannerException;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
-import com.liferay.portlet.documentlibrary.service.DLAppServiceUtil;
+import com.liferay.portlet.documentlibrary.service.DLAppService;
 import com.liferay.portlet.documentlibrary.util.DL;
 import com.liferay.portlet.documentlibrary.util.DLUtil;
 import com.liferay.portlet.dynamicdatamapping.StorageFieldRequiredException;
-import com.liferay.portlet.trash.service.TrashEntryServiceUtil;
+import com.liferay.portlet.trash.service.TrashEntryService;
 import com.liferay.portlet.trash.util.TrashUtil;
 
 import java.io.InputStream;
@@ -100,6 +102,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.fileupload.FileUploadBase;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Brian Wing Shun Chan
@@ -116,12 +119,14 @@ import org.osgi.service.component.annotations.Component;
 		"javax.portlet.name=" + DLPortletKeys.DOCUMENT_LIBRARY_DISPLAY,
 		"javax.portlet.name=" + DLPortletKeys.MEDIA_GALLERY_DISPLAY,
 		"mvc.command.name=/document_library/edit_file_entry",
-		"mvc.command.name=/document_library/upload_file_entry",
 		"mvc.command.name=/document_library/upload_multiple_file_entries"
 	},
 	service = MVCActionCommand.class
 )
 public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
+
+	public static final String TEMP_FOLDER_NAME =
+		EditFileEntryMVCActionCommand.class.getName();
 
 	protected void addMultipleFileEntries(
 			PortletConfig portletConfig, ActionRequest actionRequest,
@@ -195,7 +200,7 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 		try {
 			tempFileEntry = TempFileEntryUtil.getTempFileEntry(
 				themeDisplay.getScopeGroupId(), themeDisplay.getUserId(),
-				_TEMP_FOLDER_NAME, selectedFileName);
+				TEMP_FOLDER_NAME, selectedFileName);
 
 			selectedFileName = DLUtil.getFileName(
 				tempFileEntry.getGroupId(), tempFileEntry.getFolderId(),
@@ -209,7 +214,7 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 			ServiceContext serviceContext = ServiceContextFactory.getInstance(
 				DLFileEntry.class.getName(), actionRequest);
 
-			DLAppServiceUtil.addFileEntry(
+			_dlAppService.addFileEntry(
 				repositoryId, folderId, selectedFileName, mimeType,
 				selectedFileName, description, changeLog, inputStream, size,
 				serviceContext);
@@ -267,8 +272,8 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 
 			String contentType = uploadPortletRequest.getContentType("file");
 
-			FileEntry fileEntry = DLAppServiceUtil.addTempFileEntry(
-				themeDisplay.getScopeGroupId(), folderId, _TEMP_FOLDER_NAME,
+			FileEntry fileEntry = _dlAppService.addTempFileEntry(
+				themeDisplay.getScopeGroupId(), folderId, TEMP_FOLDER_NAME,
 				sb.toString(), inputStream, contentType);
 
 			JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
@@ -313,14 +318,14 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 		long fileEntryId = ParamUtil.getLong(actionRequest, "fileEntryId");
 
 		if (fileEntryId > 0) {
-			DLAppServiceUtil.cancelCheckOut(fileEntryId);
+			_dlAppService.cancelCheckOut(fileEntryId);
 		}
 		else {
 			long[] fileEntryIds = StringUtil.split(
 				ParamUtil.getString(actionRequest, "fileEntryIds"), 0L);
 
 			for (int i = 0; i < fileEntryIds.length; i++) {
-				DLAppServiceUtil.cancelCheckOut(fileEntryIds[i]);
+				_dlAppService.cancelCheckOut(fileEntryIds[i]);
 			}
 		}
 	}
@@ -334,7 +339,7 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 			actionRequest);
 
 		if (fileEntryId > 0) {
-			DLAppServiceUtil.checkInFileEntry(
+			_dlAppService.checkInFileEntry(
 				fileEntryId, false, StringPool.BLANK, serviceContext);
 		}
 		else {
@@ -342,7 +347,7 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 				ParamUtil.getString(actionRequest, "fileEntryIds"), 0L);
 
 			for (int i = 0; i < fileEntryIds.length; i++) {
-				DLAppServiceUtil.checkInFileEntry(
+				_dlAppService.checkInFileEntry(
 					fileEntryIds[i], false, StringPool.BLANK, serviceContext);
 			}
 		}
@@ -357,14 +362,14 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 			actionRequest);
 
 		if (fileEntryId > 0) {
-			DLAppServiceUtil.checkOutFileEntry(fileEntryId, serviceContext);
+			_dlAppService.checkOutFileEntry(fileEntryId, serviceContext);
 		}
 		else {
 			long[] fileEntryIds = StringUtil.split(
 				ParamUtil.getString(actionRequest, "fileEntryIds"), 0L);
 
 			for (int i = 0; i < fileEntryIds.length; i++) {
-				DLAppServiceUtil.checkOutFileEntry(
+				_dlAppService.checkOutFileEntry(
 					fileEntryIds[i], serviceContext);
 			}
 		}
@@ -383,23 +388,24 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 		String version = ParamUtil.getString(actionRequest, "version");
 
 		if (Validator.isNotNull(version)) {
-			DLAppServiceUtil.deleteFileVersion(fileEntryId, version);
+			_dlAppService.deleteFileVersion(fileEntryId, version);
 
 			return;
 		}
 
 		if (!moveToTrash) {
-			DLAppServiceUtil.deleteFileEntry(fileEntryId);
+			_dlAppService.deleteFileEntry(fileEntryId);
 
 			return;
 		}
 
-		FileEntry fileEntry = DLAppServiceUtil.moveFileEntryToTrash(
-			fileEntryId);
+		FileEntry fileEntry = _dlAppService.getFileEntry(fileEntryId);
 
-		if (fileEntry.getModel() instanceof DLFileEntry) {
+		if (fileEntry.isRepositoryCapabilityProvided(TrashCapability.class)) {
+			fileEntry = _dlAppService.moveFileEntryToTrash(fileEntryId);
+
 			TrashUtil.addTrashSessionMessages(
-				actionRequest, (DLFileEntry)fileEntry.getModel());
+				actionRequest, (TrashedModel)fileEntry.getModel());
 		}
 
 		hideDefaultSuccessMessage(actionRequest);
@@ -418,8 +424,8 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
 
 		try {
-			DLAppServiceUtil.deleteTempFileEntry(
-				themeDisplay.getScopeGroupId(), folderId, _TEMP_FOLDER_NAME,
+			_dlAppService.deleteTempFileEntry(
+				themeDisplay.getScopeGroupId(), folderId, TEMP_FOLDER_NAME,
 				fileName);
 
 			jsonObject.put("deleted", Boolean.TRUE);
@@ -607,7 +613,7 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 					vocabularyTitle);
 			}
 		}
-		else if (e instanceof DuplicateFileException) {
+		else if (e instanceof DuplicateFileEntryException) {
 			errorMessage = themeDisplay.translate(
 				"the-folder-you-selected-already-has-an-entry-with-this-name." +
 					"-please-select-a-different-folder");
@@ -727,7 +733,7 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 			SessionErrors.add(actionRequest, e.getClass(), e);
 		}
 		else if (e instanceof AntivirusScannerException ||
-				 e instanceof DuplicateFileException ||
+				 e instanceof DuplicateFileEntryException ||
 				 e instanceof DuplicateFolderNameException ||
 				 e instanceof FileExtensionException ||
 				 e instanceof FileMimeTypeException ||
@@ -771,7 +777,7 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 			}
 
 			if (e instanceof AntivirusScannerException ||
-				e instanceof DuplicateFileException ||
+				e instanceof DuplicateFileEntryException ||
 				e instanceof FileExtensionException ||
 				e instanceof FileNameException ||
 				e instanceof FileSizeException) {
@@ -798,7 +804,7 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 						ServletResponseConstants.SC_FILE_ANTIVIRUS_EXCEPTION;
 				}
 
-				if (e instanceof DuplicateFileException) {
+				if (e instanceof DuplicateFileEntryException) {
 					errorMessage = themeDisplay.translate(
 						"please-enter-a-unique-document-name");
 					errorType =
@@ -872,8 +878,9 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 		else {
 			Throwable cause = e.getCause();
 
-			if (cause instanceof DuplicateFileException) {
-				SessionErrors.add(actionRequest, DuplicateFileException.class);
+			if (cause instanceof DuplicateFileEntryException) {
+				SessionErrors.add(
+					actionRequest, DuplicateFileEntryException.class);
 			}
 			else {
 				throw e;
@@ -888,7 +895,7 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 			ParamUtil.getString(actionRequest, "restoreTrashEntryIds"), 0L);
 
 		for (long restoreTrashEntryId : restoreTrashEntryIds) {
-			TrashEntryServiceUtil.restoreEntry(restoreTrashEntryId);
+			_trashEntryService.restoreEntry(restoreTrashEntryId);
 		}
 	}
 
@@ -901,7 +908,17 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			DLFileEntry.class.getName(), actionRequest);
 
-		DLAppServiceUtil.revertFileEntry(fileEntryId, version, serviceContext);
+		_dlAppService.revertFileEntry(fileEntryId, version, serviceContext);
+	}
+
+	@Reference(unbind = "-")
+	protected void setDLAppService(DLAppService dlAppService) {
+		_dlAppService = dlAppService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setTrashEntryService(TrashEntryService trashEntryService) {
+		_trashEntryService = trashEntryService;
 	}
 
 	protected FileEntry updateFileEntry(
@@ -933,7 +950,7 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 			uploadPortletRequest, "majorVersion");
 
 		if (folderId > 0) {
-			Folder folder = DLAppServiceUtil.getFolder(folderId);
+			Folder folder = _dlAppService.getFolder(folderId);
 
 			if (folder.getGroupId() != themeDisplay.getScopeGroupId()) {
 				throw new NoSuchFolderException("{folderId=" + folderId + "}");
@@ -987,7 +1004,7 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 
 				// Add file entry
 
-				fileEntry = DLAppServiceUtil.addFileEntry(
+				fileEntry = _dlAppService.addFileEntry(
 					repositoryId, folderId, sourceFileName, contentType, title,
 					description, changeLog, inputStream, size, serviceContext);
 
@@ -1004,7 +1021,7 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 
 				// Update file entry and checkin
 
-				fileEntry = DLAppServiceUtil.updateFileEntryAndCheckIn(
+				fileEntry = _dlAppService.updateFileEntryAndCheckIn(
 					fileEntryId, sourceFileName, contentType, title,
 					description, changeLog, majorVersion, inputStream, size,
 					serviceContext);
@@ -1013,7 +1030,7 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 
 				// Update file entry
 
-				fileEntry = DLAppServiceUtil.updateFileEntry(
+				fileEntry = _dlAppService.updateFileEntry(
 					fileEntryId, sourceFileName, contentType, title,
 					description, changeLog, majorVersion, inputStream, size,
 					serviceContext);
@@ -1042,7 +1059,7 @@ public class EditFileEntryMVCActionCommand extends BaseMVCActionCommand {
 		}
 	}
 
-	private static final String _TEMP_FOLDER_NAME =
-		EditFileEntryMVCActionCommand.class.getName();
+	private DLAppService _dlAppService;
+	private TrashEntryService _trashEntryService;
 
 }

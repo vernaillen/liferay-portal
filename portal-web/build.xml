@@ -41,6 +41,7 @@
 		<pathelement location="${project.dir}/lib/portal/jfreechart.jar" />
 		<pathelement location="${project.dir}/lib/portal/jstl-api.jar" />
 		<pathelement location="${project.dir}/lib/portal/jstl-impl.jar" />
+		<pathelement location="${project.dir}/lib/portal/liferay-icu4j.jar" />
 		<pathelement location="${project.dir}/lib/portal/log4j.jar" />
 		<pathelement location="${project.dir}/lib/portal/openid4java.jar" />
 		<pathelement location="${project.dir}/lib/portal/rome.jar" />
@@ -67,7 +68,7 @@
 				/>
 			</not>
 			<then>
-				<ant dir="../modules/frontend/frontend-common-css" target="deploy" inheritAll="false" />
+				<gradle-execute dir="../modules/frontend/frontend-css-web" task="buildBourbon" />
 			</then>
 		</if>
 	</target>
@@ -78,7 +79,7 @@
 		<mkdir dir="${sass.tmp.dir}" />
 
 		<path id="css.builder.classpath">
-			<fileset dir="${sdk.dir}/dependencies/com.liferay.css.builder/lib" includes="*.jar" />
+			<fileset dir="${portal.tools.dir}/css-builder" includes="*.jar" />
 		</path>
 
 		<java
@@ -384,24 +385,10 @@ ${oversize.files.jsp}</fail>
 	</target>
 
 	<target name="compile-resin">
-		<if>
-			<not>
-				<isset property="jdk.7.home" />
-			</not>
-			<then>
-				<fail>
-.
-
-Please set the property "jdk.7.home" in build.properties.
-				</fail>
-			</then>
-		</if>
-
 		<property name="jspc.classes.dir" value="classes/${app.server.type}" />
 
 		<path id="jspc.classpath">
-			<pathelement location="${jdk.7.home}/jre/lib/rt.jar" />
-			<pathelement location="${jdk.7.home}/lib/tools.jar" />
+			<pathelement location="${env.JAVA_HOME}/jre/lib/rt.jar" />
 			<path refid="jspc.common.classpath" />
 			<pathelement location="${app.server.dir}/lib/resin.jar" />
 			<pathelement location="${project.dir}/lib/portal/abdera.jar" />
@@ -410,6 +397,7 @@ Please set the property "jdk.7.home" in build.properties.
 			<pathelement location="${project.dir}/lib/portal/commons-configuration.jar" />
 			<pathelement location="${project.dir}/lib/portal/commons-digester.jar" />
 			<pathelement location="${project.dir}/lib/portal/commons-httpclient.jar" />
+			<pathelement location="${project.dir}/lib/portal/commons-io.jar" />
 			<pathelement location="${project.dir}/lib/portal/portletbridge-core.jar" />
 			<pathelement location="${project.dir}/lib/portal/portletbridge-portlet.jar" />
 			<pathelement location="${project.dir}/lib/portal/spring-beans.jar" />
@@ -432,7 +420,6 @@ Please set the property "jdk.7.home" in build.properties.
 			fork="true"
 			maxmemory="512m"
 			newenvironment="true"
-			jvm="${jdk.7.home}\bin\java"
 		>
 			<arg line="docroot ${jspc.classes.dir}" />
 		</java>
@@ -592,6 +579,13 @@ Please set the property "jdk.7.home" in build.properties.
 
 	<target name="npm-execute">
 		<ant antfile="build-node.xml" dir="${sdk.dir}" target="npm-execute" inheritAll="false" />
+	</target>
+
+	<target name="update-gradle-cache">
+		<gradle-execute forcedcacheenabled="false" task="updateGradleCache">
+			<arg value="--build-file=build-test.gradle" />
+			<arg value="-Dmaven.local.ignore=true" />
+		</gradle-execute>
 	</target>
 
 	<target name="war" depends="build-portal-web-dependencies">

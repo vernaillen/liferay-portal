@@ -34,6 +34,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.template.TemplateHandler;
 import com.liferay.portal.kernel.template.TemplateVariableCodeHandler;
 import com.liferay.portal.kernel.template.TemplateVariableGroup;
+import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.util.PortalUtil;
@@ -77,8 +78,8 @@ public class JournalTemplateHandler extends BaseDDMTemplateHandler {
 
 	@Override
 	public String getName(Locale locale) {
-		ResourceBundle resourceBundle = ResourceBundle.getBundle(
-			"content.Language", locale);
+		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
+			"content.Language", locale, getClass());
 
 		String portletTitle = PortalUtil.getPortletTitle(
 			JournalPortletKeys.JOURNAL, resourceBundle);
@@ -155,8 +156,8 @@ public class JournalTemplateHandler extends BaseDDMTemplateHandler {
 			"com/liferay/journal/web/portlet/template/dependencies/",
 			SetUtil.fromArray(
 				new String[] {
-					"boolean", "date", "document-library", "image",
-					"link-to-page"
+					"boolean", "date", "document-library", "geolocation",
+					"image", "link-to-page"
 				}));
 
 }

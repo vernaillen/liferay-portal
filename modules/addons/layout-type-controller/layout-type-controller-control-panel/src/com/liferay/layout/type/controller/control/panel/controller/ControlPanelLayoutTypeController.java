@@ -20,7 +20,9 @@ import com.liferay.application.list.constants.ApplicationListWebKeys;
 import com.liferay.portal.kernel.io.unsync.UnsyncStringWriter;
 import com.liferay.portal.model.LayoutConstants;
 import com.liferay.portal.model.LayoutTypeController;
-import com.liferay.portal.model.impl.BasePanelLayoutTypeControllerImpl;
+import com.liferay.portal.model.impl.BaseLayoutTypeControllerImpl;
+import com.liferay.portal.security.permission.PermissionChecker;
+import com.liferay.portal.security.permission.PermissionThreadLocal;
 import com.liferay.taglib.servlet.PipingServletResponse;
 
 import javax.servlet.ServletContext;
@@ -40,7 +42,7 @@ import org.osgi.service.component.annotations.Reference;
 	service = LayoutTypeController.class
 )
 public class ControlPanelLayoutTypeController
-	extends BasePanelLayoutTypeControllerImpl {
+	extends BaseLayoutTypeControllerImpl {
 
 	@Override
 	public String getURL() {
@@ -48,8 +50,25 @@ public class ControlPanelLayoutTypeController
 	}
 
 	@Override
+	public boolean isCheckLayoutViewPermission() {
+		PermissionChecker permissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		if (!permissionChecker.isSignedIn()) {
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
 	public boolean isFirstPageable() {
 		return true;
+	}
+
+	@Override
+	public boolean isInstanceable() {
+		return false;
 	}
 
 	@Override

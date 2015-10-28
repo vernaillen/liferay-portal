@@ -17,7 +17,7 @@ AUI.add(
 				);
 			},
 
-			getAll: function() {
+			getAll: function(includeSystem) {
 				var instance = this;
 
 				return _fieldTypes;
@@ -46,6 +46,8 @@ AUI.add(
 				fieldType.set('className', config.javaScriptClass);
 				fieldType.set('name', config.name);
 				fieldType.set('settings', config.settings);
+				fieldType.set('settingsLayout', config.settingsLayout);
+				fieldType.set('system', config.system);
 				fieldType.set('templateNamespace', config.templateNamespace);
 
 				return fieldType;

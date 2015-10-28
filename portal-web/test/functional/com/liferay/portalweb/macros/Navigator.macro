@@ -1,5 +1,7 @@
 <definition>
 	<command name="_gotoPage">
+		<execute macro-mobile="MobileNavigator#clickReorderButton" />
+
 		<var name="key_pageName" value="${pageName}" />
 
 		<execute function="AssertClick" locator1="Home#PAGE" value1="${pageName}" />
@@ -24,7 +26,6 @@
 	<command name="gotoSitePage">
 		<execute macro="Navigator#openSiteURL">
 			<var name="siteName" value="${siteName}" />
-			<var name="siteNameURL" value="${siteNameURL}" />
 		</execute>
 
 		<execute macro="Navigator#_gotoPage">
@@ -52,9 +53,9 @@
 
 	<command name="openSiteURL">
 		<var method="StringUtil#replace('${siteName}', ' ', '-')" name="siteNameURL" />
-		<var method="StringUtil#lowerCase('/${siteNameURL}')" name="siteNameURL" />
+		<var method="StringUtil#lowerCase('${siteNameURL}')" name="siteNameURL" />
 
-		<execute function="Open" locator1="/web/${siteNameURL}/home" />
+		<execute function="Open" locator1="/web/${siteNameURL}" />
 	</command>
 
 	<command name="openSpecificURL">

@@ -18,11 +18,10 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.pop.MessageListener;
 import com.liferay.portal.kernel.scheduler.SchedulerEngineHelperUtil;
-import com.liferay.portal.kernel.scheduler.SchedulerEntry;
 import com.liferay.portal.kernel.scheduler.SchedulerEntryImpl;
-import com.liferay.portal.kernel.scheduler.StorageType;
 import com.liferay.portal.kernel.scheduler.TimeUnit;
-import com.liferay.portal.kernel.scheduler.TriggerType;
+import com.liferay.portal.kernel.scheduler.Trigger;
+import com.liferay.portal.kernel.scheduler.TriggerFactoryUtil;
 import com.liferay.portal.kernel.util.ClassUtil;
 import com.liferay.portal.pop.messaging.POPNotificationsMessageListener;
 import com.liferay.portal.util.PropsValues;
@@ -120,17 +119,26 @@ public class POPServerUtil {
 		}
 
 		try {
-			SchedulerEntry schedulerEntry = new SchedulerEntryImpl();
+			POPNotificationsMessageListener popNotificationsMessageListener =
+				new POPNotificationsMessageListener();
 
-			schedulerEntry.setEventListenerClass(
+			SchedulerEntryImpl schedulerEntryImpl = new SchedulerEntryImpl();
+
+			schedulerEntryImpl.setEventListenerClass(
 				POPNotificationsMessageListener.class.getName());
-			schedulerEntry.setTimeUnit(TimeUnit.MINUTE);
-			schedulerEntry.setTriggerType(TriggerType.SIMPLE);
-			schedulerEntry.setTriggerValue(
-				PropsValues.POP_SERVER_NOTIFICATIONS_INTERVAL);
 
-			SchedulerEngineHelperUtil.schedule(
-				schedulerEntry, StorageType.MEMORY_CLUSTERED, null, 0);
+			Trigger trigger = TriggerFactoryUtil.createTrigger(
+				POPNotificationsMessageListener.class.getName(),
+				POPNotificationsMessageListener.class.getName(),
+				PropsValues.POP_SERVER_NOTIFICATIONS_INTERVAL, TimeUnit.MINUTE);
+
+			schedulerEntryImpl.setTrigger(trigger);
+
+			schedulerEntryImpl.setEventListenerClass(
+				POPNotificationsMessageListener.class.getName());
+
+			SchedulerEngineHelperUtil.register(
+				popNotificationsMessageListener, schedulerEntryImpl);
 		}
 		catch (Exception e) {
 			_log.error(e, e);

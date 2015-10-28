@@ -45,6 +45,7 @@ import com.liferay.shopping.service.persistence.ShoppingCategoryUtil;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -64,8 +65,9 @@ import java.util.Set;
  */
 @RunWith(Arquillian.class)
 public class ShoppingCategoryPersistenceTest {
+	@ClassRule
 	@Rule
-	public final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
+	public static final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
 			PersistenceTestRule.INSTANCE,
 			new TransactionalTestRule(Propagation.REQUIRED));
 
@@ -333,11 +335,9 @@ public class ShoppingCategoryPersistenceTest {
 
 		ActionableDynamicQuery actionableDynamicQuery = ShoppingCategoryLocalServiceUtil.getActionableDynamicQuery();
 
-		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod() {
+		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<ShoppingCategory>() {
 				@Override
-				public void performAction(Object object) {
-					ShoppingCategory shoppingCategory = (ShoppingCategory)object;
-
+				public void performAction(ShoppingCategory shoppingCategory) {
 					Assert.assertNotNull(shoppingCategory);
 
 					count.increment();
@@ -429,8 +429,8 @@ public class ShoppingCategoryPersistenceTest {
 
 		ShoppingCategory existingShoppingCategory = _persistence.findByPrimaryKey(newShoppingCategory.getPrimaryKey());
 
-		Assert.assertEquals(existingShoppingCategory.getGroupId(),
-			ReflectionTestUtil.invoke(existingShoppingCategory,
+		Assert.assertEquals(Long.valueOf(existingShoppingCategory.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(existingShoppingCategory,
 				"getOriginalGroupId", new Class<?>[0]));
 		Assert.assertTrue(Validator.equals(existingShoppingCategory.getName(),
 				ReflectionTestUtil.invoke(existingShoppingCategory,

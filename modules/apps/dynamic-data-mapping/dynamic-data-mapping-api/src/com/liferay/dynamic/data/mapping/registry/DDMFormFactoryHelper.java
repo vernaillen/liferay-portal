@@ -15,21 +15,24 @@
 package com.liferay.dynamic.data.mapping.registry;
 
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldOptions;
+import com.liferay.dynamic.data.mapping.model.DDMFormFieldValidation;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.registry.annotations.DDMForm;
 import com.liferay.dynamic.data.mapping.registry.annotations.DDMFormField;
 import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.language.UTF8Control;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
+import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.lang.reflect.Method;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TreeSet;
@@ -67,27 +70,7 @@ public class DDMFormFactoryHelper {
 	}
 
 	public LocalizedValue getDDMFormFieldLabel() {
-		LocalizedValue localizedValue = new LocalizedValue(_defaultLocale);
-
-		String label = _ddmFormField.label();
-
-		if (Validator.isNull(label)) {
-			return localizedValue;
-		}
-
-		if (!isLocalizableKey(label)) {
-			localizedValue.addString(_defaultLocale, label);
-
-			return localizedValue;
-		}
-
-		String key = getKey(label);
-
-		for (Locale locale : _availableLocales) {
-			localizedValue.addString(locale, getLocalizedKey(locale, key));
-		}
-
-		return localizedValue;
+		return createLocalizedValue(_ddmFormField.label());
 	}
 
 	public String getDDMFormFieldName() {
@@ -115,22 +98,38 @@ public class DDMFormFactoryHelper {
 		for (int i = 0; i < optionLabels.length; i++) {
 			String optionLabel = optionLabels[i];
 
-			if (!isLocalizableKey(optionLabel)) {
+			if (isLocalizableValue(optionLabel)) {
+				String languageKey = extractLanguageKey(optionLabel);
+
+				ddmFormFieldOptions.addOptionLabel(
+					optionValues[i], _defaultLocale,
+					getLocalizedValue(_defaultLocale, languageKey));
+			}
+			else {
 				ddmFormFieldOptions.addOptionLabel(
 					optionValues[i], _defaultLocale, optionLabel);
-
-				continue;
-			}
-
-			String key = getKey(optionLabels[i]);
-
-			for (Locale locale : _availableLocales) {
-				ddmFormFieldOptions.addOptionLabel(
-					optionValues[i], locale, getLocalizedKey(locale, key));
 			}
 		}
 
 		return ddmFormFieldOptions;
+	}
+
+	public LocalizedValue getDDMFormFieldPredefinedValue() {
+		LocalizedValue localizedValue = new LocalizedValue(_defaultLocale);
+
+		String predefinedValue = _ddmFormField.predefinedValue();
+
+		if (Validator.isNull(predefinedValue)) {
+			return localizedValue;
+		}
+
+		localizedValue.addString(_defaultLocale, predefinedValue);
+
+		return localizedValue;
+	}
+
+	public LocalizedValue getDDMFormFieldTip() {
+		return createLocalizedValue(_ddmFormField.tip());
 	}
 
 	public String getDDMFormFieldType() {
@@ -149,20 +148,21 @@ public class DDMFormFactoryHelper {
 		return "text";
 	}
 
-	public String getDDMFormFieldValidationExpression() {
+	public DDMFormFieldValidation getDDMFormFieldValidation() {
+		DDMFormFieldValidation ddmFormFieldValidation =
+			new DDMFormFieldValidation();
+
 		if (Validator.isNotNull(_ddmFormField.validationExpression())) {
-			return _ddmFormField.validationExpression();
+			ddmFormFieldValidation.setExpression(
+				_ddmFormField.validationExpression());
 		}
 
-		return StringPool.TRUE;
-	}
-
-	public String getDDMFormFieldValidationMessage() {
-		if (Validator.isNotNull(_ddmFormField.validationMessage())) {
-			return _ddmFormField.validationMessage();
+		if (Validator.isNotNull(_ddmFormField.validationErrorMessage())) {
+			ddmFormFieldValidation.setErrorMessage(
+				_ddmFormField.validationErrorMessage());
 		}
 
-		return StringPool.BLANK;
+		return ddmFormFieldValidation;
 	}
 
 	public String getDDMFormFieldVisibilityExpression() {
@@ -171,6 +171,41 @@ public class DDMFormFactoryHelper {
 		}
 
 		return StringPool.TRUE;
+	}
+
+	public Map<String, Object> getProperties() {
+		Map<String, Object> propertiesMap = new HashMap<>();
+
+		for (String property : _ddmFormField.properties()) {
+			String key = StringUtil.extractFirst(property, StringPool.EQUAL);
+			String value = StringUtil.extractLast(property, StringPool.EQUAL);
+
+			propertiesMap.put(key, value);
+		}
+
+		return propertiesMap;
+	}
+
+	public LocalizedValue getPropertyValue(Object value) {
+		LocalizedValue localizedValue = new LocalizedValue(_defaultLocale);
+
+		if (Validator.isNull(value)) {
+			return localizedValue;
+		}
+
+		String valueString = (String)value;
+
+		if (isLocalizableValue(valueString)) {
+			String languageKey = extractLanguageKey(valueString);
+
+			localizedValue.addString(
+				_defaultLocale, getLocalizedValue(_defaultLocale, languageKey));
+		}
+		else {
+			localizedValue.addString(_defaultLocale, valueString);
+		}
+
+		return localizedValue;
 	}
 
 	public boolean isDDMFormFieldLocalizable(Method method) {
@@ -183,26 +218,59 @@ public class DDMFormFactoryHelper {
 		return false;
 	}
 
-	protected String getKey(String value) {
+	public boolean isDDMFormFieldRequired() {
+		return _ddmFormField.required();
+	}
+
+	public boolean isLocalizableValue(String value) {
+		if (isLocalizableDDMForm() &&
+			StringUtil.startsWith(value, StringPool.PERCENT)) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	protected LocalizedValue createLocalizedValue(String property) {
+		LocalizedValue localizedValue = new LocalizedValue(_defaultLocale);
+
+		if (Validator.isNull(property)) {
+			return localizedValue;
+		}
+
+		if (isLocalizableValue(property)) {
+			String languageKey = extractLanguageKey(property);
+
+			localizedValue.addString(
+				_defaultLocale, getLocalizedValue(_defaultLocale, languageKey));
+		}
+		else {
+			localizedValue.addString(_defaultLocale, property);
+		}
+
+		return localizedValue;
+	}
+
+	protected String extractLanguageKey(String value) {
 		return StringUtil.extractLast(value, StringPool.PERCENT);
 	}
 
-	protected String getLocalizedKey(Locale locale, String key) {
+	protected String getLocalizedValue(Locale locale, String value) {
 		ResourceBundle resourceBundle = getResourceBundle(locale);
 
-		return LanguageUtil.get(resourceBundle, key);
+		return LanguageUtil.get(resourceBundle, value);
 	}
 
 	protected ResourceBundle getResourceBundle(Locale locale) {
 		try {
-			return ResourceBundle.getBundle(
-				getResourceBundleBaseName(_clazz), locale,
-				_clazz.getClassLoader(), UTF8Control.INSTANCE);
+			return ResourceBundleUtil.getBundle(
+				getResourceBundleBaseName(_clazz), locale, _clazz);
 		}
 		catch (Exception e) {
-			return ResourceBundle.getBundle(
+			return ResourceBundleUtil.getBundle(
 				getResourceBundleBaseName(_clazz), locale,
-				PortalClassLoaderUtil.getClassLoader(), UTF8Control.INSTANCE);
+				PortalClassLoaderUtil.getClassLoader());
 		}
 	}
 
@@ -235,16 +303,6 @@ public class DDMFormFactoryHelper {
 
 	protected boolean isLocalizableDDMForm() {
 		if (Validator.isNotNull(getResourceBundleBaseName(_clazz))) {
-			return true;
-		}
-
-		return false;
-	}
-
-	protected boolean isLocalizableKey(String key) {
-		if (isLocalizableDDMForm() &&
-			StringUtil.startsWith(key, StringPool.PERCENT)) {
-
 			return true;
 		}
 

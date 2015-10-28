@@ -19,27 +19,35 @@
 <%
 String redirect = ParamUtil.getString(request, "redirect");
 
-String backURL = ParamUtil.getString(request, "backURL");
-
 JournalArticle article = ActionUtil.getArticle(request);
 
 long classNameId = BeanParamUtil.getLong(article, request, "classNameId");
 
-boolean localizeTitle = true;
-String title = "new-web-content";
+portletDisplay.setShowBackIcon(true);
+
+if ((classNameId == JournalArticleConstants.CLASSNAME_ID_DEFAULT) && (article != null)) {
+	PortletURL backURL = liferayPortletResponse.createRenderURL();
+
+	backURL.setParameter("groupId", String.valueOf(article.getGroupId()));
+	backURL.setParameter("folderId", String.valueOf(article.getFolderId()));
+
+	portletDisplay.setURLBack(backURL.toString());
+}
+else {
+	portletDisplay.setURLBack(redirect);
+}
+
+String title = StringPool.BLANK;
 
 if (classNameId > JournalArticleConstants.CLASSNAME_ID_DEFAULT) {
-	title = "structure-default-values";
+	title = LanguageUtil.get(request, "structure-default-values");
 }
 else if ((article != null) && !article.isNew()) {
-	localizeTitle = false;
-
 	title = article.getTitle(locale);
 }
-%>
+else {
+	title = LanguageUtil.get(request, "new-web-content");
+}
 
-<liferay-ui:header
-	backURL="<%= article == null ? redirect : backURL %>"
-	localizeTitle="<%= localizeTitle %>"
-	title="<%= title %>"
-/>
+renderResponse.setTitle(title);
+%>

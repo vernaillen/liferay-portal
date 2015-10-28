@@ -15,18 +15,18 @@
 package com.liferay.calendar.lar;
 
 import com.liferay.calendar.constants.CalendarPortletKeys;
+import com.liferay.calendar.exportimport.content.processor.CalendarNotificationTemplateExportImportContentProcessor;
 import com.liferay.calendar.model.Calendar;
 import com.liferay.calendar.model.CalendarNotificationTemplate;
 import com.liferay.calendar.notification.NotificationTemplateType;
 import com.liferay.calendar.notification.NotificationType;
-import com.liferay.calendar.service.CalendarLocalServiceUtil;
-import com.liferay.calendar.service.CalendarNotificationTemplateLocalServiceUtil;
+import com.liferay.calendar.service.CalendarLocalService;
+import com.liferay.calendar.service.CalendarNotificationTemplateLocalService;
+import com.liferay.exportimport.lar.BaseStagedModelDataHandler;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.service.ServiceContext;
-import com.liferay.portlet.exportimport.lar.BaseStagedModelDataHandler;
-import com.liferay.portlet.exportimport.lar.ExportImportHelperUtil;
 import com.liferay.portlet.exportimport.lar.ExportImportPathUtil;
 import com.liferay.portlet.exportimport.lar.PortletDataContext;
 import com.liferay.portlet.exportimport.lar.StagedModelDataHandler;
@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Andrea Di Giorgi
@@ -56,7 +57,7 @@ public class CalendarNotificationTemplateStagedModelDataHandler
 	public void deleteStagedModel(
 		CalendarNotificationTemplate calendarNotificationTemplate) {
 
-		CalendarNotificationTemplateLocalServiceUtil.
+		_calendarNotificationTemplateLocalService.
 			deleteCalendarNotificationTemplate(calendarNotificationTemplate);
 	}
 
@@ -76,7 +77,7 @@ public class CalendarNotificationTemplateStagedModelDataHandler
 	public CalendarNotificationTemplate fetchStagedModelByUuidAndGroupId(
 		String uuid, long groupId) {
 
-		return CalendarNotificationTemplateLocalServiceUtil.
+		return _calendarNotificationTemplateLocalService.
 			fetchCalendarNotificationTemplateByUuidAndGroupId(uuid, groupId);
 	}
 
@@ -84,7 +85,7 @@ public class CalendarNotificationTemplateStagedModelDataHandler
 	public List<CalendarNotificationTemplate>
 		fetchStagedModelsByUuidAndCompanyId(String uuid, long companyId) {
 
-		return CalendarNotificationTemplateLocalServiceUtil.
+		return _calendarNotificationTemplateLocalService.
 			getCalendarNotificationTemplatesByUuidAndCompanyId(
 				uuid, companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
 				new StagedModelModifiedDateComparator
@@ -102,18 +103,21 @@ public class CalendarNotificationTemplateStagedModelDataHandler
 			CalendarNotificationTemplate calendarNotificationTemplate)
 		throws Exception {
 
-		Calendar calendar = CalendarLocalServiceUtil.getCalendar(
+		Calendar calendar = _calendarLocalService.getCalendar(
 			calendarNotificationTemplate.getCalendarId());
 
 		StagedModelDataHandlerUtil.exportReferenceStagedModel(
 			portletDataContext, calendarNotificationTemplate, calendar,
 			PortletDataContext.REFERENCE_TYPE_STRONG);
 
-		String body = ExportImportHelperUtil.replaceExportContentReferences(
-			portletDataContext, calendarNotificationTemplate,
-			calendarNotificationTemplate.getBody(),
-			portletDataContext.getBooleanParameter(
-				"calendar", "referenced-content"));
+		String body =
+			_calendarNotificationTemplateExportImportContentProcessor.
+				replaceExportContentReferences(
+					portletDataContext, calendarNotificationTemplate,
+					calendarNotificationTemplate.getBody(),
+					portletDataContext.getBooleanParameter(
+						"calendar", "referenced-content"),
+					true);
 
 		calendarNotificationTemplate.setBody(body);
 
@@ -156,9 +160,11 @@ public class CalendarNotificationTemplateStagedModelDataHandler
 		CalendarNotificationTemplate importedCalendarNotificationTemplate =
 			null;
 
-		String body = ExportImportHelperUtil.replaceImportContentReferences(
-			portletDataContext, calendarNotificationTemplate,
-			calendarNotificationTemplate.getBody());
+		String body =
+			_calendarNotificationTemplateExportImportContentProcessor.
+				replaceImportContentReferences(
+					portletDataContext, calendarNotificationTemplate,
+					calendarNotificationTemplate.getBody());
 
 		if (portletDataContext.isDataStrategyMirror()) {
 			CalendarNotificationTemplate existingCalendarNotificationTemplate =
@@ -170,7 +176,7 @@ public class CalendarNotificationTemplateStagedModelDataHandler
 				serviceContext.setUuid(calendarNotificationTemplate.getUuid());
 
 				importedCalendarNotificationTemplate =
-					CalendarNotificationTemplateLocalServiceUtil.
+					_calendarNotificationTemplateLocalService.
 						addCalendarNotificationTemplate(
 							userId, calendarId, notificationType,
 							calendarNotificationTemplate.
@@ -181,7 +187,7 @@ public class CalendarNotificationTemplateStagedModelDataHandler
 			}
 			else {
 				importedCalendarNotificationTemplate =
-					CalendarNotificationTemplateLocalServiceUtil.
+					_calendarNotificationTemplateLocalService.
 						updateCalendarNotificationTemplate(
 							existingCalendarNotificationTemplate.
 								getCalendarNotificationTemplateId(),
@@ -193,7 +199,7 @@ public class CalendarNotificationTemplateStagedModelDataHandler
 		}
 		else {
 			importedCalendarNotificationTemplate =
-				CalendarNotificationTemplateLocalServiceUtil.
+				_calendarNotificationTemplateLocalService.
 					addCalendarNotificationTemplate(
 						userId, calendarId, notificationType,
 						calendarNotificationTemplate.
@@ -206,5 +212,36 @@ public class CalendarNotificationTemplateStagedModelDataHandler
 		portletDataContext.importClassedModel(
 			calendarNotificationTemplate, importedCalendarNotificationTemplate);
 	}
+
+	@Reference(unbind = "-")
+	protected void setCalendarLocalService(
+		CalendarLocalService calendarLocalService) {
+
+		_calendarLocalService = calendarLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setCalendarNotificationTemplateExportImportContentProcessor(
+		CalendarNotificationTemplateExportImportContentProcessor
+			calendarNotificationTemplateExportImportContentProcessor) {
+
+		_calendarNotificationTemplateExportImportContentProcessor =
+			calendarNotificationTemplateExportImportContentProcessor;
+	}
+
+	@Reference(unbind = "-")
+	protected void setCalendarNotificationTemplateLocalService(
+		CalendarNotificationTemplateLocalService
+			calendarNotificationTemplateLocalService) {
+
+		_calendarNotificationTemplateLocalService =
+			calendarNotificationTemplateLocalService;
+	}
+
+	private CalendarLocalService _calendarLocalService;
+	private CalendarNotificationTemplateExportImportContentProcessor
+		_calendarNotificationTemplateExportImportContentProcessor;
+	private CalendarNotificationTemplateLocalService
+		_calendarNotificationTemplateLocalService;
 
 }

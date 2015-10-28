@@ -45,6 +45,7 @@ import com.liferay.portal.test.rule.PersistenceTestRule;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -64,8 +65,9 @@ import java.util.Set;
  */
 @RunWith(Arquillian.class)
 public class CalendarNotificationTemplatePersistenceTest {
+	@ClassRule
 	@Rule
-	public final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
+	public static final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
 			PersistenceTestRule.INSTANCE,
 			new TransactionalTestRule(Propagation.REQUIRED));
 
@@ -386,11 +388,10 @@ public class CalendarNotificationTemplatePersistenceTest {
 
 		ActionableDynamicQuery actionableDynamicQuery = CalendarNotificationTemplateLocalServiceUtil.getActionableDynamicQuery();
 
-		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod() {
+		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<CalendarNotificationTemplate>() {
 				@Override
-				public void performAction(Object object) {
-					CalendarNotificationTemplate calendarNotificationTemplate = (CalendarNotificationTemplate)object;
-
+				public void performAction(
+					CalendarNotificationTemplate calendarNotificationTemplate) {
 					Assert.assertNotNull(calendarNotificationTemplate);
 
 					count.increment();
@@ -494,13 +495,17 @@ public class CalendarNotificationTemplatePersistenceTest {
 				ReflectionTestUtil.invoke(
 					existingCalendarNotificationTemplate, "getOriginalUuid",
 					new Class<?>[0])));
-		Assert.assertEquals(existingCalendarNotificationTemplate.getGroupId(),
-			ReflectionTestUtil.invoke(existingCalendarNotificationTemplate,
-				"getOriginalGroupId", new Class<?>[0]));
+		Assert.assertEquals(Long.valueOf(
+				existingCalendarNotificationTemplate.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(
+				existingCalendarNotificationTemplate, "getOriginalGroupId",
+				new Class<?>[0]));
 
-		Assert.assertEquals(existingCalendarNotificationTemplate.getCalendarId(),
-			ReflectionTestUtil.invoke(existingCalendarNotificationTemplate,
-				"getOriginalCalendarId", new Class<?>[0]));
+		Assert.assertEquals(Long.valueOf(
+				existingCalendarNotificationTemplate.getCalendarId()),
+			ReflectionTestUtil.<Long>invoke(
+				existingCalendarNotificationTemplate, "getOriginalCalendarId",
+				new Class<?>[0]));
 		Assert.assertTrue(Validator.equals(
 				existingCalendarNotificationTemplate.getNotificationType(),
 				ReflectionTestUtil.invoke(

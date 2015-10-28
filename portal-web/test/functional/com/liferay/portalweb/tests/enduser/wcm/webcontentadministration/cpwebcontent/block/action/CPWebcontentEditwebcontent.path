@@ -45,23 +45,12 @@
 </tr>
 <tr>
 	<td>AVAILABLE_TRANSLATION</td>
-	<td>//span[contains(@class,'translation-editing') and contains(.,'${key_localizedLanguage}')]</td>
+	<td>//span[contains(@class,'available-translations')]//span[contains(@class,'translation-manager') and contains(.,'${key_localizedLanguage}')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>TITLE_LOCALIZATION</td>
 	<td>//span[contains(@class,'translation-manager') and contains(.,'${key_localizedLanguage}')]</td>
-	<td></td>
-</tr>
-<tr>
-	<td></td>
-	<td></td>
-	<td></td>
-</tr>
-<!--ADD_TRANSLATION_MENULIST-->
-<tr>
-	<td>ADD_TRANSLATION_MENULIST_LANGUAGE</td>
-	<td>//li[@role='presentation']/a/span[contains(.,'${key_localizedLanguage}')]</td>
 	<td></td>
 </tr>
 <tr>

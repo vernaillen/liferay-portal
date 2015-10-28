@@ -17,8 +17,10 @@ package com.liferay.dynamic.data.mapping.web.lar;
 import com.liferay.dynamic.data.mapping.constants.DDMPortletKeys;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
-import com.liferay.dynamic.data.mapping.service.DDMStructureLocalServiceUtil;
-import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalServiceUtil;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
+import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
+import com.liferay.dynamic.data.mapping.web.exportimport.content.processor.DDMTemplateExportImportContentProcessor;
+import com.liferay.exportimport.lar.BaseStagedModelDataHandler;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.util.FileUtil;
@@ -29,12 +31,10 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Image;
-import com.liferay.portal.service.ImageLocalServiceUtil;
+import com.liferay.portal.service.ImageLocalService;
 import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.service.UserLocalServiceUtil;
+import com.liferay.portal.service.UserLocalService;
 import com.liferay.portal.util.PortalUtil;
-import com.liferay.portlet.exportimport.lar.BaseStagedModelDataHandler;
-import com.liferay.portlet.exportimport.lar.ExportImportHelperUtil;
 import com.liferay.portlet.exportimport.lar.ExportImportPathUtil;
 import com.liferay.portlet.exportimport.lar.PortletDataContext;
 import com.liferay.portlet.exportimport.lar.PortletDataException;
@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Mate Thurzo
@@ -66,7 +67,7 @@ public class DDMTemplateStagedModelDataHandler
 
 	@Override
 	public void deleteStagedModel(DDMTemplate template) throws PortalException {
-		DDMTemplateLocalServiceUtil.deleteTemplate(template);
+		_ddmTemplateLocalService.deleteTemplate(template);
 	}
 
 	@Override
@@ -86,7 +87,7 @@ public class DDMTemplateStagedModelDataHandler
 	public DDMTemplate fetchStagedModelByUuidAndGroupId(
 		String uuid, long groupId) {
 
-		return DDMTemplateLocalServiceUtil.fetchDDMTemplateByUuidAndGroupId(
+		return _ddmTemplateLocalService.fetchDDMTemplateByUuidAndGroupId(
 			uuid, groupId);
 	}
 
@@ -94,7 +95,7 @@ public class DDMTemplateStagedModelDataHandler
 	public List<DDMTemplate> fetchStagedModelsByUuidAndCompanyId(
 		String uuid, long companyId) {
 
-		return DDMTemplateLocalServiceUtil.getDDMTemplatesByUuidAndCompanyId(
+		return _ddmTemplateLocalService.getDDMTemplatesByUuidAndCompanyId(
 			uuid, companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
 			new StagedModelModifiedDateComparator<DDMTemplate>());
 	}
@@ -122,7 +123,7 @@ public class DDMTemplateStagedModelDataHandler
 		long defaultUserId = 0;
 
 		try {
-			defaultUserId = UserLocalServiceUtil.getDefaultUserId(
+			defaultUserId = _userLocalService.getDefaultUserId(
 				template.getCompanyId());
 		}
 		catch (Exception e) {
@@ -226,7 +227,7 @@ public class DDMTemplateStagedModelDataHandler
 		Element templateElement = portletDataContext.getExportDataElement(
 			template);
 
-		DDMStructure structure = DDMStructureLocalServiceUtil.fetchStructure(
+		DDMStructure structure = _ddmStructureLocalService.fetchStructure(
 			template.getClassPK());
 
 		if (structure != null) {
@@ -236,14 +237,16 @@ public class DDMTemplateStagedModelDataHandler
 		}
 
 		if (template.isSmallImage()) {
-			Image smallImage = ImageLocalServiceUtil.fetchImage(
+			Image smallImage = _imageLocalService.fetchImage(
 				template.getSmallImageId());
 
 			if (Validator.isNotNull(template.getSmallImageURL())) {
 				String smallImageURL =
-					ExportImportHelperUtil.replaceExportContentReferences(
-						portletDataContext, template,
-						template.getSmallImageURL() + StringPool.SPACE, true);
+					_ddmTemplateExportImportContentProcessor.
+						replaceExportContentReferences(
+							portletDataContext, template,
+							template.getSmallImageURL() + StringPool.SPACE,
+							true, true);
 
 				template.setSmallImageURL(smallImageURL);
 			}
@@ -263,14 +266,17 @@ public class DDMTemplateStagedModelDataHandler
 			}
 		}
 
-		String script = ExportImportHelperUtil.replaceExportContentReferences(
-			portletDataContext, template, template.getScript(),
-			portletDataContext.getBooleanParameter(
-				DDMPortletDataHandler.NAMESPACE, "referenced-content"));
+		String script =
+			_ddmTemplateExportImportContentProcessor.
+				replaceExportContentReferences(
+					portletDataContext, template, template.getScript(),
+					portletDataContext.getBooleanParameter(
+						DDMPortletDataHandler.NAMESPACE, "referenced-content"),
+					true);
 
 		template.setScript(script);
 
-		long defaultUserId = UserLocalServiceUtil.getDefaultUserId(
+		long defaultUserId = _userLocalService.getDefaultUserId(
 			template.getCompanyId());
 
 		if (defaultUserId == template.getUserId()) {
@@ -312,9 +318,10 @@ public class DDMTemplateStagedModelDataHandler
 
 				if (Validator.isNotNull(template.getSmallImageURL())) {
 					String smallImageURL =
-						ExportImportHelperUtil.replaceImportContentReferences(
-							portletDataContext, template,
-							template.getSmallImageURL());
+						_ddmTemplateExportImportContentProcessor.
+							replaceImportContentReferences(
+								portletDataContext, template,
+								template.getSmallImageURL());
 
 					template.setSmallImageURL(smallImageURL);
 				}
@@ -332,8 +339,9 @@ public class DDMTemplateStagedModelDataHandler
 			}
 
 			String script =
-				ExportImportHelperUtil.replaceImportContentReferences(
-					portletDataContext, template, template.getScript());
+				_ddmTemplateExportImportContentProcessor.
+					replaceImportContentReferences(
+						portletDataContext, template, template.getScript());
 
 			template.setScript(script);
 
@@ -358,7 +366,7 @@ public class DDMTemplateStagedModelDataHandler
 				if (existingTemplate == null) {
 					serviceContext.setUuid(template.getUuid());
 
-					importedTemplate = DDMTemplateLocalServiceUtil.addTemplate(
+					importedTemplate = _ddmTemplateLocalService.addTemplate(
 						userId, portletDataContext.getScopeGroupId(),
 						template.getClassNameId(), classPK,
 						template.getResourceClassNameId(),
@@ -370,20 +378,18 @@ public class DDMTemplateStagedModelDataHandler
 						smallFile, serviceContext);
 				}
 				else {
-					importedTemplate =
-						DDMTemplateLocalServiceUtil.updateTemplate(
-							userId, existingTemplate.getTemplateId(),
-							template.getClassPK(), template.getNameMap(),
-							template.getDescriptionMap(), template.getType(),
-							template.getMode(), template.getLanguage(),
-							template.getScript(), template.isCacheable(),
-							template.isSmallImage(),
-							template.getSmallImageURL(), smallFile,
-							serviceContext);
+					importedTemplate = _ddmTemplateLocalService.updateTemplate(
+						userId, existingTemplate.getTemplateId(),
+						template.getClassPK(), template.getNameMap(),
+						template.getDescriptionMap(), template.getType(),
+						template.getMode(), template.getLanguage(),
+						template.getScript(), template.isCacheable(),
+						template.isSmallImage(), template.getSmallImageURL(),
+						smallFile, serviceContext);
 				}
 			}
 			else {
-				importedTemplate = DDMTemplateLocalServiceUtil.addTemplate(
+				importedTemplate = _ddmTemplateLocalService.addTemplate(
 					userId, portletDataContext.getScopeGroupId(),
 					template.getClassNameId(), classPK,
 					template.getResourceClassNameId(), null,
@@ -420,11 +426,51 @@ public class DDMTemplateStagedModelDataHandler
 			existingTemplate = fetchStagedModelByUuidAndGroupId(uuid, groupId);
 		}
 		else {
-			existingTemplate = DDMTemplateLocalServiceUtil.fetchTemplate(
+			existingTemplate = _ddmTemplateLocalService.fetchTemplate(
 				groupId, classNameId, templateKey);
 		}
 
 		return existingTemplate;
 	}
+
+	@Reference(unbind = "-")
+	protected void setDDMStructureLocalService(
+		DDMStructureLocalService ddmStructureLocalService) {
+
+		_ddmStructureLocalService = ddmStructureLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setDDMTemplateExportImportContentProcessor(
+		DDMTemplateExportImportContentProcessor
+			ddmTemplateExportImportContentProcessor) {
+
+		_ddmTemplateExportImportContentProcessor =
+			ddmTemplateExportImportContentProcessor;
+	}
+
+	@Reference(unbind = "-")
+	protected void setDDMTemplateLocalService(
+		DDMTemplateLocalService ddmTemplateLocalService) {
+
+		_ddmTemplateLocalService = ddmTemplateLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setImageLocalService(ImageLocalService imageLocalService) {
+		_imageLocalService = imageLocalService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setUserLocalService(UserLocalService userLocalService) {
+		_userLocalService = userLocalService;
+	}
+
+	private DDMStructureLocalService _ddmStructureLocalService;
+	private DDMTemplateExportImportContentProcessor
+		_ddmTemplateExportImportContentProcessor;
+	private DDMTemplateLocalService _ddmTemplateLocalService;
+	private ImageLocalService _imageLocalService;
+	private UserLocalService _userLocalService;
 
 }

@@ -95,7 +95,7 @@
 		</execute>
 
 		<execute macro="WikiPortlet#viewConfigurationTabs">
-			<var name="isNotPresent" value="NAVIGATION_EMAIL_FROM, NAVIGATION_PAGE_ADDED_EMAIL, NAVIGATION_PAGE_UPDATED_EMAIL,SETUP_RSS" />
+			<var name="isNotPresent" value="NAVIGATION_EMAIL_FROM,NAVIGATION_PAGE_ADDED_EMAIL,NAVIGATION_PAGE_UPDATED_EMAIL,NAVIGATION_RSS" />
 			<var name="isPresent" value="SETUP_DISPLAY_SETTINGS" />
 		</execute>
 
@@ -107,7 +107,7 @@
 
 		<execute macro="WikiPortlet#viewConfigurationTabs">
 			<var name="isNotPresent" value="SETUP_DISPLAY_SETTINGS" />
-			<var name="isPresent" value="NAVIGATION_EMAIL_FROM,NAVIGATION_PAGE_ADDED_EMAIL,NAVIGATION_PAGE_UPDATED_EMAIL,SETUP_RSS" />
+			<var name="isPresent" value="NAVIGATION_EMAIL_FROM,NAVIGATION_PAGE_ADDED_EMAIL,NAVIGATION_PAGE_UPDATED_EMAIL,NAVIGATION_RSS" />
 		</execute>
 
 		<execute macro="Page#gotoPG">
@@ -119,7 +119,7 @@
 		</execute>
 
 		<execute macro="WikiPortlet#configureDisplaySettings">
-			<var name="uncheckSetting" value="ENABLE_COMMENTS,ENABLE_COMMENTS_RATINGS,ENABLE_PAGE_RATINGS,ENABLE_RELATED_ASSETS" />
+			<var name="uncheckSetting" value="ENABLE_COMMENTS,ENABLE_COMMENT_RATINGS,ENABLE_PAGE_RATINGS,ENABLE_RELATED_ASSETS" />
 		</execute>
 
 		<execute macro="Page#gotoPG">
@@ -131,7 +131,7 @@
 		</execute>
 
 		<execute macro="WikiPortlet#viewDisplaySettings">
-			<var name="uncheckedSetting" value="ENABLE_COMMENTS,ENABLE_COMMENTS_RATINGS,ENABLE_PAGE_RATINGS,ENABLE_RELATED_ASSETS" />
+			<var name="uncheckedSetting" value="ENABLE_COMMENTS,ENABLE_COMMENT_RATINGS,ENABLE_PAGE_RATINGS,ENABLE_RELATED_ASSETS" />
 		</execute>
 	</command>
 
@@ -195,6 +195,138 @@
 
 		<execute macro="WikiPage#viewFrontPageDefaultCP">
 			<var name="wikiPageTitle" value="FrontPage" />
+		</execute>
+	</command>
+
+	<command name="RateAndEditPageComment" priority="5">
+		<execute macro="Page#gotoContentCP">
+			<var name="portletName" value="Wiki" />
+		</execute>
+
+		<execute macro="WikiTable#gotoNode">
+			<var name="wikiNodeName" value="Main" />
+		</execute>
+
+		<execute function="AssertClick" locator1="Button#ADD_PAGE" value1="Add Page" />
+
+		<execute macro="WikiEntry#addPageTitle">
+			<var name="wikiPageTitle" value="Wiki Page 1" />
+		</execute>
+
+		<execute macro="WikiEntry#addPageContent">
+			<var name="wikiPageContent" value="Wiki Page Content 1" />
+		</execute>
+
+		<execute macro="WikiEntry#publish" />
+
+		<execute macro="Page#gotoPG">
+			<var name="pageName" value="Wiki Test Page" />
+		</execute>
+
+		<execute macro="WikiNavigator#gotoAllPages" />
+
+		<execute macro="WikiTable#viewEntry">
+			<var name="draftStatus" value="Approved" />
+			<var name="wikiPageTitle" value="Wiki Page 1" />
+		</execute>
+
+		<execute macro="WikiTable#gotoEntry">
+			<var name="wikiPageTitle" value="Wiki Page 1" />
+		</execute>
+
+		<execute macro="WikiPage#viewPageContentBody">
+			<var name="wikiPageContent" value="Wiki Page Content 1" />
+		</execute>
+
+		<execute macro="WikiPage#addComment">
+			<var name="entryComment" value="Wiki Page Comment" />
+		</execute>
+
+		<execute macro="WikiPage#rateCommentAsGood" />
+
+		<execute macro="WikiPage#editComment">
+			<var name="entryComment" value="Wiki Page Comment" />
+			<var name="entryCommentEdit" value="Wiki Page Comment Edited" />
+		</execute>
+
+		<execute macro="Page#gotoPG">
+			<var name="pageName" value="Wiki Test Page" />
+		</execute>
+
+		<execute macro="WikiNavigator#gotoAllPages" />
+
+		<execute macro="WikiTable#gotoEntry">
+			<var name="wikiPageTitle" value="Wiki Page 1" />
+		</execute>
+
+		<execute macro="WikiPage#viewCommentPG">
+			<var name="entryComment" value="Wiki Page Comment Edited" />
+			<var name="wikiPageTitle" value="Wiki Page 1" />
+		</execute>
+
+		<execute macro="WikiPage#viewCommentRatingGood" />
+	</command>
+
+	<command name="RatePage" priority="5">
+		<execute macro="Page#gotoContentCP">
+			<var name="portletName" value="Wiki" />
+		</execute>
+
+		<execute macro="WikiTable#gotoNode">
+			<var name="wikiNodeName" value="Main" />
+		</execute>
+
+		<execute function="AssertClick" locator1="Button#ADD_PAGE" value1="Add Page" />
+
+		<execute macro="WikiEntry#addPageTitle">
+			<var name="wikiPageTitle" value="Wiki Page 1" />
+		</execute>
+
+		<execute macro="WikiEntry#addPageContent">
+			<var name="wikiPageContent" value="Wiki Page Content 1" />
+		</execute>
+
+		<execute macro="WikiEntry#publish" />
+
+		<execute macro="Page#gotoPG">
+			<var name="pageName" value="Wiki Test Page" />
+		</execute>
+
+		<execute macro="WikiNavigator#gotoAllPages" />
+
+		<execute macro="WikiTable#viewEntry">
+			<var name="draftStatus" value="Approved" />
+			<var name="wikiPageTitle" value="Wiki Page 1" />
+		</execute>
+
+		<execute macro="WikiTable#gotoEntry">
+			<var name="wikiPageTitle" value="Wiki Page 1" />
+		</execute>
+
+		<execute macro="WikiPage#viewPageContentBody">
+			<var name="wikiPageContent" value="Wiki Page Content 1" />
+		</execute>
+
+		<execute macro="WikiPage#rate4StarsPG">
+			<var name="wikiPageTitle" value="Wiki Page 1" />
+		</execute>
+
+		<execute macro="Page#gotoPG">
+			<var name="pageName" value="Wiki Test Page" />
+		</execute>
+
+		<execute macro="WikiNavigator#gotoAllPages" />
+
+		<execute macro="WikiTable#gotoEntry">
+			<var name="wikiPageTitle" value="Wiki Page 1" />
+		</execute>
+
+		<execute macro="WikiPage#viewPageContentBody">
+			<var name="wikiPageContent" value="Wiki Page Content 1" />
+		</execute>
+
+		<execute macro="WikiPage#viewRate4StarsPG">
+			<var name="wikiPageTitle" value="Wiki Page 1" />
 		</execute>
 	</command>
 
@@ -287,8 +419,8 @@
 			<var name="wikiPageTitle" value="Wiki FrontPage Child Page Title" />
 		</execute>
 
-		<execute macro="WikiPage#addCommentPG">
-			<var name="commentBody" value="Wiki FrontPage Child Page Comment Body document" />
+		<execute macro="WikiPage#addComment">
+			<var name="entryComment" value="Wiki FrontPage Child Page Comment Body document" />
 		</execute>
 
 		<execute macro="Page#gotoPG">
@@ -312,7 +444,7 @@
 		</execute>
 	</command>
 
-	<command name="ViewCKEditorResizerAfterEditing" priority="4">
+	<command name="ViewCKEditorResizerAfterEditing" priority="3">
 		<execute macro="Page#gotoPG">
 			<var name="pageName" value="Wiki Test Page" />
 		</execute>
@@ -341,7 +473,7 @@
 		</execute>
 	</command>
 
-	<command name="ViewNoWikiXSSviaAddPage" priority="4">
+	<command name="ViewNoWikiXSSviaAddPage" priority="3">
 		<execute macro="Page#gotoPG">
 			<var name="pageName" value="Wiki Test Page" />
 		</execute>

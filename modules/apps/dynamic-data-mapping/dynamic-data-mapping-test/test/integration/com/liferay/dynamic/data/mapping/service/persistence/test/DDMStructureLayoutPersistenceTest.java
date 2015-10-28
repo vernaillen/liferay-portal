@@ -45,6 +45,7 @@ import com.liferay.portal.test.rule.PersistenceTestRule;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -64,8 +65,9 @@ import java.util.Set;
  */
 @RunWith(Arquillian.class)
 public class DDMStructureLayoutPersistenceTest {
+	@ClassRule
 	@Rule
-	public final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
+	public static final AggregateTestRule aggregateTestRule = new AggregateTestRule(new LiferayIntegrationTestRule(),
 			PersistenceTestRule.INSTANCE,
 			new TransactionalTestRule(Propagation.REQUIRED));
 
@@ -337,11 +339,9 @@ public class DDMStructureLayoutPersistenceTest {
 
 		ActionableDynamicQuery actionableDynamicQuery = DDMStructureLayoutLocalServiceUtil.getActionableDynamicQuery();
 
-		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod() {
+		actionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<DDMStructureLayout>() {
 				@Override
-				public void performAction(Object object) {
-					DDMStructureLayout ddmStructureLayout = (DDMStructureLayout)object;
-
+				public void performAction(DDMStructureLayout ddmStructureLayout) {
 					Assert.assertNotNull(ddmStructureLayout);
 
 					count.increment();
@@ -439,12 +439,14 @@ public class DDMStructureLayoutPersistenceTest {
 				existingDDMStructureLayout.getUuid(),
 				ReflectionTestUtil.invoke(existingDDMStructureLayout,
 					"getOriginalUuid", new Class<?>[0])));
-		Assert.assertEquals(existingDDMStructureLayout.getGroupId(),
-			ReflectionTestUtil.invoke(existingDDMStructureLayout,
+		Assert.assertEquals(Long.valueOf(
+				existingDDMStructureLayout.getGroupId()),
+			ReflectionTestUtil.<Long>invoke(existingDDMStructureLayout,
 				"getOriginalGroupId", new Class<?>[0]));
 
-		Assert.assertEquals(existingDDMStructureLayout.getStructureVersionId(),
-			ReflectionTestUtil.invoke(existingDDMStructureLayout,
+		Assert.assertEquals(Long.valueOf(
+				existingDDMStructureLayout.getStructureVersionId()),
+			ReflectionTestUtil.<Long>invoke(existingDDMStructureLayout,
 				"getOriginalStructureVersionId", new Class<?>[0]));
 	}
 

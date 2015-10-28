@@ -86,11 +86,6 @@
 			<var name="portletName" value="RSS" />
 		</execute>
 
-		<execute macro="Portlet#gotoPortletOptions">
-			<var name="portletName" value="RSS" />
-			<var name="portletOption" value="Configuration" />
-		</execute>
-
 		<execute macro="ApplicationDisplayTemplates#addPG">
 			<var name="adtFile" value="adt_rss_navigation_corrupt.ftl" />
 			<var name="adtType" value="RSS" />
@@ -115,11 +110,6 @@
 
 		<execute macro="Portlet#addPG">
 			<var name="portletName" value="RSS" />
-		</execute>
-
-		<execute macro="Portlet#gotoPortletOptions">
-			<var name="portletName" value="RSS" />
-			<var name="portletOption" value="Configuration" />
 		</execute>
 
 		<execute macro="ApplicationDisplayTemplates#addPG">
@@ -153,7 +143,7 @@
 	<command name="ADTAssetPublisher" priority="3">
 		<var name="siteName" value="${siteName}" />
 
-		<execute macro="Page#gotoPublishingtools">
+		<execute macro="Page#gotoPublishingTools">
 			<var name="portletName" value="Staging Configuration" />
 			<var name="siteName" value="${siteName}" />
 			<var name="siteURL" value="true" />
@@ -305,7 +295,7 @@
 			<var name="vocabularyName" value="Vocabulary Name" />
 		</execute>
 
-		<execute macro="Page#gotoPublishingtools">
+		<execute macro="Page#gotoPublishingTools">
 			<var name="portletName" value="Staging Configuration" />
 			<var name="siteName" value="${siteName}" />
 			<var name="siteURL" value="true" />
@@ -383,10 +373,10 @@
 		</execute>
 	</command>
 
-	<command known-issues="LRQA-9807" name="ADTDMMediaGallery" priority="3">
+	<command name="ADTDMMediaGallery" priority="3">
 		<var name="siteName" value="${siteName}" />
 
-		<execute macro="Page#gotoPublishingtools">
+		<execute macro="Page#gotoPublishingTools">
 			<var name="portletName" value="Staging Configuration" />
 			<var name="siteName" value="${siteName}" />
 			<var name="siteURL" value="true" />
@@ -515,7 +505,7 @@
 	<command name="ADTSiteMap" priority="3">
 		<var name="siteName" value="${siteName}" />
 
-		<execute macro="Page#gotoPublishingtools">
+		<execute macro="Page#gotoPublishingTools">
 			<var name="portletName" value="Staging Configuration" />
 			<var name="siteName" value="${siteName}" />
 			<var name="siteURL" value="true" />
@@ -536,9 +526,12 @@
 			<var name="portletName" value="Site Map" />
 		</execute>
 
-		<execute macro="Page#gotoCP">
-			<var name="portletName" value="Sites" />
-			<var name="siteScopeSelected" value="true" />
+		<execute macro="Page#gotoPagesCP">
+			<var name="pageStaging" value="true" />
+			<var name="portletName" value="Site Pages" />
+			<var name="siteName" value="${siteName}" />
+			<var name="siteScopeName" value="${siteName}" />
+			<var name="siteURL" value="true" />
 		</execute>
 
 		<execute macro="SitePage#addChildCP">
@@ -546,28 +539,23 @@
 			<var name="siteName" value="${siteName}" />
 			<var name="sitePageName" value="ADT Test Page" />
 			<var name="sitePagePrivacy" value="Public" />
-		</execute>
-
-		<execute macro="Page#gotoCP">
-			<var name="portletName" value="Sites" />
 			<var name="siteScopeSelected" value="true" />
 		</execute>
 
-		<execute macro="SitePage#addCP">
+		<execute macro="Page#addPG">
+			<var name="pageName" value="ADT Test Page 2" />
+			<var name="pageStaging" value="true" />
 			<var name="siteName" value="${siteName}" />
-			<var name="sitePageName" value="ADT Test Page 2" />
-			<var name="sitePagePrivacy" value="Public" />
+			<var name="siteScopeName" value="${siteName}" />
+			<var name="siteURL" value="true" />
 		</execute>
 
-		<execute macro="Page#gotoCP">
-			<var name="portletName" value="Sites" />
-			<var name="siteScopeSelected" value="true" />
-		</execute>
-
-		<execute macro="SitePage#addCP">
+		<execute macro="Page#addPG">
+			<var name="pageName" value="ADT Test Page 3" />
+			<var name="pageStaging" value="true" />
 			<var name="siteName" value="${siteName}" />
-			<var name="sitePageName" value="ADT Test Page 3" />
-			<var name="sitePagePrivacy" value="Public" />
+			<var name="siteScopeName" value="${siteName}" />
+			<var name="siteURL" value="true" />
 		</execute>
 
 		<execute macro="Page#gotoPG">
@@ -632,7 +620,7 @@
 	<command name="ADTTagsNavigationPortlet" priority="5">
 		<var name="siteName" value="${siteName}" />
 
-		<execute macro="Page#gotoPublishingtools">
+		<execute macro="Page#gotoPublishingTools">
 			<var name="portletName" value="Staging Configuration" />
 			<var name="siteName" value="${siteName}" />
 			<var name="siteURL" value="true" />
@@ -795,7 +783,7 @@
 	<command name="ADTWiki" priority="3">
 		<var name="siteName" value="${siteName}" />
 
-		<execute macro="Page#gotoPublishingtools">
+		<execute macro="Page#gotoPublishingTools">
 			<var name="portletName" value="Staging Configuration" />
 			<var name="siteName" value="${siteName}" />
 			<var name="siteURL" value="true" />
@@ -834,7 +822,8 @@
 		</execute>
 
 		<execute macro="Page#gotoConfigurationCP">
-			<var name="portletName" value="Application Display Template" />
+			<var name="pageStaging" value="true" />
+			<var name="portletName" value="Application Display Templates" />
 			<var name="siteName" value="${siteName}" />
 			<var name="siteURL" value="true" />
 		</execute>
@@ -853,6 +842,7 @@
 
 		<execute macro="ApplicationDisplayTemplates#addADTviaPortletPG">
 			<var name="adtType" value="Wiki" />
+			<var name="portletName" value="Wiki" />
 		</execute>
 
 		<execute macro="Page#gotoPG">

@@ -65,12 +65,12 @@ page import="com.liferay.portal.util.comparator.PortletTitleComparator" %><%@
 page import="com.liferay.portlet.PortletURLUtil" %><%@
 page import="com.liferay.portlet.backgroundtask.util.comparator.BackgroundTaskCreateDateComparator" %><%@
 page import="com.liferay.portlet.exportimport.RemoteExportException" %><%@
-page import="com.liferay.portlet.exportimport.backgroundtask.LayoutStagingBackgroundTaskExecutor" %><%@
+page import="com.liferay.portlet.exportimport.background.task.BackgroundTaskExecutorNames" %><%@
 page import="com.liferay.portlet.exportimport.lar.ExportImportHelperUtil" %><%@
 page import="com.liferay.portlet.exportimport.lar.PortletDataHandler" %><%@
 page import="com.liferay.portlet.exportimport.staging.StagingConstants" %><%@
 page import="com.liferay.portlet.exportimport.staging.StagingUtil" %><%@
-page import="com.liferay.portlet.layoutsadmin.context.GroupDisplayContextHelper" %>
+page import="com.liferay.portlet.layoutsadmin.display.context.GroupDisplayContextHelper" %>
 
 <%@ page import="java.util.HashSet" %><%@
 page import="java.util.List" %><%@

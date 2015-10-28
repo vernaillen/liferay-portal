@@ -49,13 +49,13 @@ boolean changeStructure = GetterUtil.getBoolean(request.getAttribute("edit_artic
 			selLayout = LayoutLocalServiceUtil.fetchLayoutByUuidAndGroupId(layoutUuid, themeDisplay.getSiteGroupId(), false);
 
 			if (selLayout != null) {
-				layoutBreadcrumb = _getLayoutBreadcrumb(selLayout, locale);
+				layoutBreadcrumb = _getLayoutBreadcrumb(request, selLayout, locale);
 			}
 			else {
 				selLayout = LayoutLocalServiceUtil.fetchLayoutByUuidAndGroupId(layoutUuid, themeDisplay.getSiteGroupId(), true);
 
 				if (selLayout != null) {
-					layoutBreadcrumb = _getLayoutBreadcrumb(selLayout, locale);
+					layoutBreadcrumb = _getLayoutBreadcrumb(request, selLayout, locale);
 				}
 			}
 		}
@@ -113,6 +113,8 @@ boolean changeStructure = GetterUtil.getBoolean(request.getAttribute("edit_artic
 
 		LayoutItemSelectorCriterion layoutItemSelectorCriterion = new LayoutItemSelectorCriterion();
 
+		layoutItemSelectorCriterion.setCheckDisplayPage(true);
+
 		List<ItemSelectorReturnType> desiredItemSelectorReturnTypes = new ArrayList<ItemSelectorReturnType>();
 
 		desiredItemSelectorReturnTypes.add(new UUIDItemSelectorReturnType());
@@ -166,16 +168,16 @@ boolean changeStructure = GetterUtil.getBoolean(request.getAttribute("edit_artic
 </c:choose>
 
 <%!
-private String _getLayoutBreadcrumb(Layout layout, Locale locale) throws Exception {
+private String _getLayoutBreadcrumb(HttpServletRequest request, Layout layout, Locale locale) throws Exception {
 	List<Layout> ancestors = layout.getAncestors();
 
 	StringBundler sb = new StringBundler(4 * ancestors.size() + 5);
 
 	if (layout.isPrivateLayout()) {
-		sb.append(LanguageUtil.get(locale, "private-pages"));
+		sb.append(LanguageUtil.get(request, "private-pages"));
 	}
 	else {
-		sb.append(LanguageUtil.get(locale, "public-pages"));
+		sb.append(LanguageUtil.get(request, "public-pages"));
 	}
 
 	sb.append(StringPool.SPACE);

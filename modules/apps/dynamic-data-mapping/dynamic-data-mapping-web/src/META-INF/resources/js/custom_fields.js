@@ -433,7 +433,7 @@ AUI.add(
 				valueFn: function() {
 					var instance = this;
 
-					var name = LiferayFormBuilderUtil.normalizeKey(instance.get('label'));
+					var name = LiferayFormBuilderUtil.normalizeKey(instance.get('label')) + instance._randomString(4);
 
 					while (UNIQUE_FIELD_NAMES_MAP.has(name)) {
 						name = A.FormBuilderField.buildFieldName(name);
@@ -462,11 +462,18 @@ AUI.add(
 			UNIQUE_FIELD_NAMES_MAP.put(event.newVal, instance);
 		};
 
+		LiferayFieldSupport.prototype._randomString = function(length) {
+			var randomString = Liferay.Util.randomInt().toString(36);
+
+			return randomString.substring(0, length);
+		};
+
 		var LocalizableFieldSupport = function() {
 		};
 
 		LocalizableFieldSupport.ATTRS = {
 			localizationMap: {
+				setter: A.clone,
 				value: {}
 			},
 
@@ -611,21 +618,15 @@ AUI.add(
 				instance._updateLocalizationMapOptions(locale);
 			}
 			else {
-				var localizationMap = {};
+				var localizationMap = instance.get('localizationMap');
 
-				localizationMap[locale] = instance.getAttrs([attributeName]);
+				var localeMap = localizationMap[locale] || {};
 
-				instance.set(
-					'localizationMap',
-					A.mix(
-						instance.get('localizationMap'),
-						localizationMap,
-						true,
-						null,
-						0,
-						true
-					)
-				);
+				localeMap[attributeName] = instance.get(attributeName);
+
+				localizationMap[locale] = localeMap;
+
+				instance.set('localizationMap', localizationMap);
 			}
 		};
 

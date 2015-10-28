@@ -17,38 +17,13 @@
 <%@ include file="/init.jsp" %>
 
 <%
-String navigation = ParamUtil.getString(request, "navigation");
 String browseBy = ParamUtil.getString(request, "browseBy");
-
-JournalFolder folder = ActionUtil.getFolder(request);
-
-long folderId = BeanParamUtil.getLong(folder, request, "folderId", JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID);
-
-if ((folder == null) && (folderId != JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID)) {
-	folder = JournalFolderLocalServiceUtil.fetchFolder(folderId);
-
-	if (folder == null) {
-		folderId = JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID;
-	}
-}
 
 String keywords = ParamUtil.getString(request, "keywords");
 
 boolean advancedSearch = ParamUtil.getBoolean(liferayPortletRequest, ArticleDisplayTerms.ADVANCED_SEARCH);
 
 boolean search = Validator.isNotNull(keywords) || advancedSearch;
-
-boolean showSelectAll = false;
-
-int total = JournalFolderServiceUtil.getFoldersAndArticlesCount(scopeGroupId, folderId, WorkflowConstants.STATUS_ANY);
-
-if (total > 0) {
-	showSelectAll = true;
-}
-
-request.setAttribute("view.jsp-folder", folder);
-
-request.setAttribute("view.jsp-folderId", String.valueOf(folderId));
 %>
 
 <portlet:actionURL name="restoreTrashEntries" var="restoreTrashEntriesURL" />
@@ -57,30 +32,27 @@ request.setAttribute("view.jsp-folderId", String.valueOf(folderId));
 	portletURL="<%= restoreTrashEntriesURL %>"
 />
 
+<liferay-util:include page="/navigation.jsp" servletContext="<%= application %>" />
+
+<liferay-util:include page="/toolbar.jsp" servletContext="<%= application %>" />
+
 <div id="<portlet:namespace />journalContainer">
-	<aui:row cssClass="lfr-app-column-view">
-		<aui:col cssClass="navigation-pane" width="<%= 25 %>">
-			<liferay-util:include page="/view_folders.jsp" servletContext="<%= application %>" />
-		</aui:col>
+	<div class="closed container-fluid-1280 sidenav-container sidenav-right" id="<portlet:namespace />infoPanelId">
+		<div class="sidenav-menu-slider">
+			<div class="sidebar sidebar-default sidenav-menu">
+				<liferay-util:include page="/info_panel.jsp" servletContext="<%= application %>" />
+			</div>
+		</div>
 
-		<aui:col cssClass="context-pane" last="<%= true %>" width="<%= 75 %>">
-			<liferay-ui:app-view-toolbar
-				includeDisplayStyle="<%= true %>"
-				includeSelectAll="<%= showSelectAll %>"
-			>
-				<liferay-util:include page="/toolbar.jsp" servletContext="<%= application %>" />
-			</liferay-ui:app-view-toolbar>
-
+		<div class="sidenav-content">
 			<div class="journal-breadcrumb" id="<portlet:namespace />breadcrumbContainer">
-				<c:if test='<%= !navigation.equals("recent") && !navigation.equals("mine") && Validator.isNull(browseBy) %>'>
+				<c:if test="<%= !journalDisplayContext.isNavigationRecent() && !journalDisplayContext.isNavigationMine() && Validator.isNull(browseBy) %>">
 					<liferay-util:include page="/breadcrumb.jsp" servletContext="<%= application %>" />
 				</c:if>
 			</div>
 
 			<%
-			PortletURL portletURL = liferayPortletResponse.createRenderURL();
-
-			portletURL.setParameter("folderId", String.valueOf(folderId));
+			PortletURL portletURL = journalDisplayContext.getPortletURL();
 			%>
 
 			<aui:form action="<%= portletURL.toString() %>" method="get" name="fm">
@@ -102,8 +74,8 @@ request.setAttribute("view.jsp-folderId", String.valueOf(folderId));
 					</c:choose>
 				</div>
 			</aui:form>
-		</aui:col>
-	</aui:row>
+		</div>
+	</div>
 </div>
 
 <c:if test="<%= !search %>">
@@ -111,15 +83,16 @@ request.setAttribute("view.jsp-folderId", String.valueOf(folderId));
 </c:if>
 
 <aui:script>
-	function <portlet:namespace />toggleActionsButton() {
-		var form = AUI.$(document.<portlet:namespace />fm);
-
-		var hide = Liferay.Util.listCheckedExcept(form, '<portlet:namespace /><%= RowChecker.ALL_ROW_IDS %>').length == 0;
-
-		AUI.$('#<portlet:namespace />actionsButtonContainer').toggleClass('hide', hide);
-	}
-
-	<portlet:namespace />toggleActionsButton();
+	$('#<portlet:namespace />infoPanelId').sideNavigation(
+		{
+			gutter: 15,
+			position: 'right',
+			toggler: '.infoPanelToggler',
+			type: 'relative',
+			typeMobile: 'fixed',
+			width: 320
+		}
+	);
 </aui:script>
 
 <aui:script use="liferay-journal-navigation">
@@ -143,11 +116,7 @@ request.setAttribute("view.jsp-folderId", String.valueOf(folderId));
 			},
 			namespace: '<portlet:namespace />',
 			portletId: '<%= portletDisplay.getId() %>',
-			rowIds: '<portlet:namespace /><%= RowChecker.ROW_IDS %>',
-			select: {
-				displayStyleCSSClass: 'entry-display-style',
-				selectedCSSClass: 'active'
-			}
+			rowIds: '<portlet:namespace /><%= RowChecker.ROW_IDS %>'
 		}
 	);
 

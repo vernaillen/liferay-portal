@@ -33,7 +33,7 @@ public class JenkinsResultsParserUtil {
 
 	public static String fixJSON(String json) {
 		json = json.replaceAll("\t", "&#09;");
-		json = json.replaceAll("\\\"", "&#34; ");
+		json = json.replaceAll("\\\"", "&#34;");
 		json = json.replaceAll("'", "&#39;");
 		json = json.replaceAll("\\(", "&#40;");
 		json = json.replaceAll("\\)", "&#41;");
@@ -137,7 +137,14 @@ public class JenkinsResultsParserUtil {
 		return "";
 	}
 
+	public static String getJobVariant(String json) throws Exception {
+		return getJobVariant(new JSONObject(json));
+	}
+
 	public static String getLocalURL(String remoteURL) {
+		remoteURL = remoteURL.replace(
+			"${user.dir}", System.getProperty("user.dir"));
+
 		Matcher matcher = _localURLPattern1.matcher(remoteURL);
 
 		if (matcher.find()) {
@@ -168,10 +175,12 @@ public class JenkinsResultsParserUtil {
 	}
 
 	public static JSONObject toJSONObject(String url) throws Exception {
-		return new JSONObject(toString(fixURL(url)));
+		return new JSONObject(toString(url));
 	}
 
 	public static String toString(String url) throws IOException {
+		url = fixURL(url);
+
 		System.out.println("Downloading " + url);
 
 		StringBuilder sb = new StringBuilder();

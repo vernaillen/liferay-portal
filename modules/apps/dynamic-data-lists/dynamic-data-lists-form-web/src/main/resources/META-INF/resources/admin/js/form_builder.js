@@ -23,6 +23,9 @@ AUI.add(
 						}
 					},
 
+					dataProviders: {
+					},
+
 					definition: {
 						validator: Lang.isObject
 					},
@@ -43,6 +46,9 @@ AUI.add(
 					pagesJSON: {
 						validator: Array.isArray,
 						value: []
+					},
+
+					portletNamespace: {
 					},
 
 					visitor: {
@@ -101,7 +107,9 @@ AUI.add(
 							A.merge(
 								fieldType.get('defaultConfig'),
 								{
-									builder: instance
+									builder: instance,
+									dataProviders: instance.get('dataProviders'),
+									portletNamespace: instance.get('portletNamespace')
 								}
 							)
 						);
@@ -254,6 +262,22 @@ AUI.add(
 						pages._uiSetActivePageNumber(pages.get('activePageNumber'));
 					},
 
+					_setFieldToolbarConfig: function() {
+						var instance = this;
+
+						return A.merge(
+							FormBuilder.superclass._setFieldToolbarConfig.apply(instance, arguments),
+							{
+								items: [
+									A.FormBuilderFieldToolbar.ITEM_EDIT,
+									A.FormBuilderFieldToolbar.ITEM_MOVE,
+									A.FormBuilderFieldToolbar.ITEM_REMOVE,
+									A.FormBuilderFieldToolbar.ITEM_CLOSE
+								]
+							}
+						);
+					},
+
 					_setFieldTypes: function(fieldTypes) {
 						var instance = this;
 
@@ -302,6 +326,25 @@ AUI.add(
 						return FieldTypes.getAll();
 					},
 
+					_valueFieldTypesModal: function() {
+						var instance = this;
+
+						var fieldTypesModal = new Liferay.DDL.FormBuilderFieldTypesModal(
+							{
+								draggable: false,
+								fieldTypes: instance.get('fieldTypes'),
+								modal: true,
+								portletNamespace: instance.get('portletNamespace'),
+								resizable: false,
+								visible: false
+							}
+						);
+
+						fieldTypesModal.addTarget(this);
+
+						return fieldTypesModal;
+					},
+
 					_valueLayouts: function() {
 						var instance = this;
 
@@ -329,6 +372,6 @@ AUI.add(
 	},
 	'',
 	{
-		requires: ['aui-form-builder', 'aui-form-builder-pages', 'liferay-ddl-form-builder-layout-deserializer', 'liferay-ddl-form-builder-layout-visitor', 'liferay-ddl-form-builder-pages-manager', 'liferay-ddl-form-builder-util', 'liferay-ddm-form-field-types', 'liferay-ddm-form-renderer']
+		requires: ['aui-form-builder', 'aui-form-builder-pages', 'liferay-ddl-form-builder-field-support', 'liferay-ddl-form-builder-field-types-modal', 'liferay-ddl-form-builder-layout-deserializer', 'liferay-ddl-form-builder-layout-visitor', 'liferay-ddl-form-builder-pages-manager', 'liferay-ddl-form-builder-util', 'liferay-ddm-form-field-types', 'liferay-ddm-form-renderer']
 	}
 );

@@ -31,6 +31,11 @@ import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
+import com.liferay.dynamic.data.mapping.validator.DDMFormLayoutValidationException;
+import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException;
+import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustNotDuplicateFieldName;
+import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetOptionsForField;
+import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidCharactersForFieldName;
 import com.liferay.portal.LocaleException;
 import com.liferay.portal.PortletPreferencesException;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -112,7 +117,12 @@ public class DDMPortlet extends MVCPortlet {
 
 				include("/error.jsp", actionRequest, actionResponse);
 			}
-			else if (e instanceof LocaleException ||
+			else if (e instanceof DDMFormLayoutValidationException ||
+					 e instanceof DDMFormValidationException ||
+					 e instanceof LocaleException ||
+					 e instanceof MustNotDuplicateFieldName ||
+					 e instanceof MustSetOptionsForField ||
+					 e instanceof MustSetValidCharactersForFieldName ||
 					 e instanceof RequiredStructureException ||
 					 e instanceof StructureDefinitionException ||
 					 e instanceof StructureDuplicateElementException ||
@@ -187,7 +197,7 @@ public class DDMPortlet extends MVCPortlet {
 	protected void setDDMStructureLocalService(
 		DDMStructureLocalService ddmStructureLocalService) {
 
-		_ddmStructureLocalService = ddmStructureLocalService;
+		this.ddmStructureLocalService = ddmStructureLocalService;
 	}
 
 	protected void setDDMStructureRequestAttribute(RenderRequest renderRequest)
@@ -203,7 +213,7 @@ public class DDMPortlet extends MVCPortlet {
 				DDMStructure.class);
 
 			if ((structureClassNameId == classNameId) && (classPK > 0)) {
-				structure = _ddmStructureLocalService.getStructure(classPK);
+				structure = ddmStructureLocalService.getStructure(classPK);
 			}
 
 			renderRequest.setAttribute(
@@ -215,7 +225,7 @@ public class DDMPortlet extends MVCPortlet {
 	protected void setDDMTemplateLocalService(
 		DDMTemplateLocalService ddmTemplateLocalService) {
 
-		_ddmTemplateLocalService = ddmTemplateLocalService;
+		this.ddmTemplateLocalService = ddmTemplateLocalService;
 	}
 
 	protected void setDDMTemplateRequestAttribute(RenderRequest renderRequest)
@@ -224,7 +234,7 @@ public class DDMPortlet extends MVCPortlet {
 		long templateId = ParamUtil.getLong(renderRequest, "templateId");
 
 		if (templateId > 0) {
-			DDMTemplate template = _ddmTemplateLocalService.getDDMTemplate(
+			DDMTemplate template = ddmTemplateLocalService.getDDMTemplate(
 				templateId);
 
 			renderRequest.setAttribute(
@@ -232,9 +242,9 @@ public class DDMPortlet extends MVCPortlet {
 		}
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(DDMPortlet.class);
+	protected DDMStructureLocalService ddmStructureLocalService;
+	protected DDMTemplateLocalService ddmTemplateLocalService;
 
-	private DDMStructureLocalService _ddmStructureLocalService;
-	private DDMTemplateLocalService _ddmTemplateLocalService;
+	private static final Log _log = LogFactoryUtil.getLog(DDMPortlet.class);
 
 }

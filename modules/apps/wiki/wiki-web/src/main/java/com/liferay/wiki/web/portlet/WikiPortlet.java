@@ -15,11 +15,13 @@
 package com.liferay.wiki.web.portlet;
 
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
+import com.liferay.portal.model.Release;
 import com.liferay.wiki.constants.WikiPortletKeys;
 
 import javax.portlet.Portlet;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Iván Zaera
@@ -28,6 +30,8 @@ import org.osgi.service.component.annotations.Component;
 	immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
+		"com.liferay.portlet.application-type=full-page-application",
+		"com.liferay.portlet.application-type=widget",
 		"com.liferay.portlet.css-class-wrapper=portlet-wiki",
 		"com.liferay.portlet.display-category=category.wiki",
 		"com.liferay.portlet.header-portlet-css=/wiki/css/main.css",
@@ -40,6 +44,7 @@ import org.osgi.service.component.annotations.Component;
 		"com.liferay.portlet.struts-path=wiki",
 		"com.liferay.portlet.use-default-template=true",
 		"javax.portlet.display-name=Wiki", "javax.portlet.expiration-cache=0",
+		"javax.portlet.init-param.portlet-title-based-navigation=false",
 		"javax.portlet.init-param.template-path=/",
 		"javax.portlet.init-param.view-template=/wiki/view.jsp",
 		"javax.portlet.name=" + WikiPortletKeys.WIKI,
@@ -56,4 +61,12 @@ import org.osgi.service.component.annotations.Component;
 	service = Portlet.class
 )
 public class WikiPortlet extends MVCPortlet {
+
+	@Reference(
+		target = "(&(release.bundle.symbolic.name=com.liferay.wiki.web)(release.schema.version=1.0.0))",
+		unbind = "-"
+	)
+	protected void setRelease(Release release) {
+	}
+
 }

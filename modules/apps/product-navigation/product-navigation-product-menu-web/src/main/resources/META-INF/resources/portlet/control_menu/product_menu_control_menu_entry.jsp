@@ -21,7 +21,26 @@ String productMenuState = SessionClicks.get(request, "com.liferay.control.menu.w
 %>
 
 <li class="<%= Validator.equals(productMenuState, "open") ? "active" : StringPool.BLANK %>">
-	<a class="control-menu-icon sidenav-toggler" data-content="body" data-toggle="sidenav" data-type="fixed-push" data-type-mobile="fixed" href="#sidenavSliderId" id="sidenavToggleId">
-		<span class="icon-align-justify icon-monospaced"></span>
+	<a class="control-menu-icon sidenav-toggler" data-content="body" data-qa-id="productMenu" data-target="#sidenavSliderId,#wrapper" data-title="<%= HtmlUtil.escape(LanguageUtil.get(request, "menu")) %>" data-toggle="sidenav" data-type="fixed-push" data-type-mobile="fixed" href="#sidenavSliderId" id="sidenavToggleId">
+		<div class="toast-animation">
+			<div class="pm"></div>
+
+			<div class="cn"></div>
+		</div>
 	</a>
 </li>
+
+<%
+String controlMenuPortletId = PortletProviderUtil.getPortletId(PortalControlMenuApplicationType.ControlMenu.CLASS_NAME, PortletProvider.Action.VIEW);
+%>
+
+<c:if test="<%= Validator.isNotNull(controlMenuPortletId) %>">
+	<aui:script>
+		Liferay.on(
+			'<%= controlMenuPortletId %>:portletRefreshed',
+			function(event) {
+				Liferay.Portlet.refresh('#p_p_id_<%= ProductNavigationProductMenuPortletKeys.PRODUCT_NAVIGATION_PRODUCT_MENU %>_', {});
+			}
+		);
+	</aui:script>
+</c:if>

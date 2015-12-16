@@ -50,7 +50,7 @@ if (Validator.isNotNull(keywords)) {
 
 <aui:nav-bar cssClass="collapse-basic-search" markupView="lexicon">
 	<aui:nav cssClass="navbar-nav">
-		<aui:nav-item cssClass="active" label="entries" />
+		<aui:nav-item label="entries" selected="<%= true %>" />
 	</aui:nav>
 
 	<aui:nav-bar-search>
@@ -199,7 +199,6 @@ if (Validator.isNotNull(keywords)) {
 				name="name"
 			>
 				<liferay-ui:icon
-					iconCssClass="<%= trashRenderer.getIconCssClass() %>"
 					label="<%= true %>"
 					message="<%= HtmlUtil.escape(trashRenderer.getTitle(locale)) %>"
 					method="get"
@@ -229,7 +228,6 @@ if (Validator.isNotNull(keywords)) {
 
 					<liferay-util:buffer var="rootEntryIcon">
 						<liferay-ui:icon
-							iconCssClass="<%= rootTrashRenderer.getIconCssClass() %>"
 							label="<%= true %>"
 							message="<%= HtmlUtil.escape(rootTrashRenderer.getTitle(locale)) %>"
 							method="get"
@@ -287,14 +285,16 @@ if (Validator.isNotNull(keywords)) {
 			</c:choose>
 		</liferay-ui:search-container-row>
 
-		<portlet:actionURL name="emptyTrash" var="emptyTrashURL">
-			<portlet:param name="groupId" value="<%= String.valueOf(groupId) %>" />
-		</portlet:actionURL>
+		<c:if test="<%= Validator.isNull(keywords) %>">
+			<portlet:actionURL name="emptyTrash" var="emptyTrashURL">
+				<portlet:param name="groupId" value="<%= String.valueOf(groupId) %>" />
+			</portlet:actionURL>
 
-		<liferay-ui:trash-empty
-			portletURL="<%= emptyTrashURL %>"
-			totalEntries="<%= searchContainer.getTotal() %>"
-		/>
+			<liferay-ui:trash-empty
+				portletURL="<%= emptyTrashURL %>"
+				totalEntries="<%= searchContainer.getTotal() %>"
+			/>
+		</c:if>
 
 		<liferay-ui:breadcrumb
 			showCurrentGroup="<%= false %>"

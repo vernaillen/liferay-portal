@@ -57,7 +57,7 @@ import com.liferay.portal.service.UserService;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PortletKeys;
-import com.liferay.roles.admin.web.constants.RolesAdminPortletKeys;
+import com.liferay.roles.admin.constants.RolesAdminPortletKeys;
 
 import java.io.IOException;
 
@@ -173,6 +173,18 @@ public class RolesAdminPortlet extends MVCPortlet {
 		long roleId = ParamUtil.getLong(actionRequest, "roleId");
 
 		_roleService.deleteRole(roleId);
+	}
+
+	public void deleteRoles(
+			ActionRequest actionRequest, ActionResponse actionResponse)
+		throws Exception {
+
+		long[] deleteRoleIds = StringUtil.split(
+			ParamUtil.getString(actionRequest, "deleteRoleIds"), 0L);
+
+		for (long roleId : deleteRoleIds) {
+			_roleService.deleteRole(roleId);
+		}
 	}
 
 	public Role editRole(
@@ -662,14 +674,14 @@ public class RolesAdminPortlet extends MVCPortlet {
 		}
 	}
 
-	private GroupService _groupService;
-	private PanelAppRegistry _panelAppRegistry;
-	private PanelCategoryRegistry _panelCategoryRegistry;
-	private ResourceBlockLocalService _resourceBlockLocalService;
-	private ResourceBlockService _resourceBlockService;
-	private ResourcePermissionService _resourcePermissionService;
-	private RoleLocalService _roleLocalService;
-	private RoleService _roleService;
-	private UserService _userService;
+	private volatile GroupService _groupService;
+	private volatile PanelAppRegistry _panelAppRegistry;
+	private volatile PanelCategoryRegistry _panelCategoryRegistry;
+	private volatile ResourceBlockLocalService _resourceBlockLocalService;
+	private volatile ResourceBlockService _resourceBlockService;
+	private volatile ResourcePermissionService _resourcePermissionService;
+	private volatile RoleLocalService _roleLocalService;
+	private volatile RoleService _roleService;
+	private volatile UserService _userService;
 
 }

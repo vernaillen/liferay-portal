@@ -26,6 +26,7 @@ import com.liferay.dynamic.data.mapping.storage.Field;
 import com.liferay.dynamic.data.mapping.storage.Fields;
 import com.liferay.dynamic.data.mapping.util.impl.DDMImpl;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 
 import java.io.Serializable;
 
@@ -41,7 +42,10 @@ import org.junit.Test;
 public class DDMImplTest extends BaseDDMTestCase {
 
 	@Before
+	@Override
 	public void setUp() throws Exception {
+		super.setUp();
+
 		setUpConfigurationFactoryUtil();
 		setUpDDMFormFieldTypeServicesTrackerUtil();
 		setUpDDMFormJSONDeserializerUtil();
@@ -75,6 +79,54 @@ public class DDMImplTest extends BaseDDMTestCase {
 
 		assertDefaultDDMFormLayoutRow("Text1", ddmFormLayoutRows.get(0));
 		assertDefaultDDMFormLayoutRow("Text2", ddmFormLayoutRows.get(1));
+	}
+
+	@Test
+	public void testMergeAfterNewFieldIsAddedAndPublishingContentAtBranch()
+		throws Exception {
+
+		DDMForm ddmForm = createDDMForm();
+
+		addDDMFormFields(
+			ddmForm,
+			createTextDDMFormField("Text1807", "", true, false, false));
+
+		DDMStructure ddmStructure = createStructure("Test Structure", ddmForm);
+
+		Field existingField = createField(
+			ddmStructure.getStructureId(), "Text1807", null, null);
+
+		Field existingFieldsDisplayField = createFieldsDisplayField(
+			ddmStructure.getStructureId(), "Text1807_INSTANCE_hgfs");
+
+		Fields existingFields = createFields(
+			existingField, existingFieldsDisplayField);
+
+		ddmStructure.setDDMForm(ddmForm);
+
+		Field newField = createField(
+			ddmStructure.getStructureId(), "Test2", null, null);
+
+		Field newFieldsDisplayField = createFieldsDisplayField(
+			ddmStructure.getStructureId(),
+			"Text1807_INSTANCE_hgfs,Text1853_INSTANCE_cgac");
+
+		Fields newFields = createFields(newField, newFieldsDisplayField);
+
+		Fields mergedFields = _ddmImpl.mergeFields(newFields, existingFields);
+
+		Field fieldsDisplayField = mergedFields.get(
+			DDMImpl.FIELDS_DISPLAY_NAME);
+
+		Assert.assertNotNull(fieldsDisplayField);
+
+		String fieldsDisplayValue = (String)fieldsDisplayField.getValue();
+
+		String[] fieldsDisplayValues = StringUtil.split(fieldsDisplayValue);
+
+		testValues(
+			fieldsDisplayValues, "Text1807_INSTANCE_hgfs",
+			"Text1853_INSTANCE_cgac");
 	}
 
 	@Test
@@ -397,6 +449,63 @@ public class DDMImplTest extends BaseDDMTestCase {
 	}
 
 	@Test
+	public void testMergeFieldsWhenAddingTranslationAtBranch()
+		throws Exception {
+
+		DDMForm ddmForm = createDDMForm();
+
+		addDDMFormFields(
+			ddmForm,
+			createTextDDMFormField("Localizable", "", true, false, false));
+
+		addDDMFormFields(
+			ddmForm,
+			createTextDDMFormField("Nonlocalizable", "", false, false, false));
+
+		DDMStructure ddmStructure = createStructure("Test Structure", ddmForm);
+
+		Field existingLocalizableField = createField(
+			ddmStructure.getStructureId(), "Localizable",
+			createValuesList("Joe"), null);
+
+		Field existingNonlocalizableField = createField(
+			ddmStructure.getStructureId(), "Nonlocalizable",
+			createValuesList("Nonlocalizable"), null);
+
+		Field existingFieldsDisplayField = createFieldsDisplayField(
+			ddmStructure.getStructureId(),
+			"Localizable_INSTANCE_ovho,Nonlocalizable_INSTANCE_zuvh");
+
+		Fields existingFields = createFields(
+			existingLocalizableField, existingNonlocalizableField,
+			existingFieldsDisplayField);
+
+		Field newLocalizedField = createBRField(
+			ddmStructure.getStructureId(), "Localizable",
+			createValuesList("Joao"));
+
+		Field newFieldsDisplayField = createFieldsDisplayField(
+			ddmStructure.getStructureId(), "Localizable_INSTANCE_ovho");
+
+		Fields newFields = createFields(
+			newLocalizedField, newFieldsDisplayField);
+
+		Fields mergedFields = _ddmImpl.mergeFields(newFields, existingFields);
+
+		Field fieldsDisplayField = mergedFields.get(
+			_ddmImpl.FIELDS_DISPLAY_NAME);
+
+		Assert.assertNotNull(fieldsDisplayField);
+
+		String fieldsDisplayValue = (String)fieldsDisplayField.getValue();
+		String[] fieldsDisplayValues = StringUtil.split(fieldsDisplayValue);
+
+		testValues(
+			fieldsDisplayValues, "Localizable_INSTANCE_ovho",
+			"Nonlocalizable_INSTANCE_zuvh");
+	}
+
+	@Test
 	public void testMergeFieldsWithFieldsValuesWithNoInstanceSuffix()
 		throws Exception {
 
@@ -533,6 +642,14 @@ public class DDMImplTest extends BaseDDMTestCase {
 
 		for (int i = 0; i < expectedValues.length; i++) {
 			Assert.assertEquals(expectedValues[i], actualValues.get(i));
+		}
+	}
+
+	protected void testValues(String[] actualValues, String... expectedValues) {
+		Assert.assertEquals(expectedValues.length, actualValues.length);
+
+		for (int i = 0; i < expectedValues.length; i++) {
+			Assert.assertEquals(expectedValues[i], actualValues[i]);
 		}
 	}
 

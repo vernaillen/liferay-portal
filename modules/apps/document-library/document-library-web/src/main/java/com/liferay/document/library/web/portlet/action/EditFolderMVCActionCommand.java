@@ -33,7 +33,7 @@ import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StreamUtil;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.zip.ZipWriter;
 import com.liferay.portal.kernel.zip.ZipWriterFactoryUtil;
@@ -42,7 +42,7 @@ import com.liferay.portal.security.auth.PrincipalException;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextFactory;
 import com.liferay.portal.theme.ThemeDisplay;
-import com.liferay.portal.util.WebKeys;
+import com.liferay.portlet.documentlibrary.DuplicateFileEntryException;
 import com.liferay.portlet.documentlibrary.DuplicateFileException;
 import com.liferay.portlet.documentlibrary.DuplicateFolderNameException;
 import com.liferay.portlet.documentlibrary.FolderNameException;
@@ -52,6 +52,7 @@ import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
 import com.liferay.portlet.documentlibrary.model.DLFolderConstants;
 import com.liferay.portlet.documentlibrary.service.DLAppService;
+import com.liferay.portlet.documentlibrary.service.DLTrashService;
 import com.liferay.portlet.trash.util.TrashUtil;
 
 import java.io.File;
@@ -80,7 +81,6 @@ import org.osgi.service.component.annotations.Reference;
 	property = {
 		"javax.portlet.name=" + DLPortletKeys.DOCUMENT_LIBRARY,
 		"javax.portlet.name=" + DLPortletKeys.DOCUMENT_LIBRARY_ADMIN,
-		"javax.portlet.name=" + DLPortletKeys.DOCUMENT_LIBRARY_DISPLAY,
 		"javax.portlet.name=" + DLPortletKeys.MEDIA_GALLERY_DISPLAY,
 		"mvc.command.name=/document_library/edit_folder"
 	},
@@ -120,15 +120,16 @@ public class EditFolderMVCActionCommand extends BaseMVCActionCommand {
 			deleteFolderIds = new long[] {folderId};
 		}
 		else {
-			deleteFolderIds = StringUtil.split(
-				ParamUtil.getString(actionRequest, "folderIds"), 0L);
+			deleteFolderIds = ParamUtil.getLongValues(
+				actionRequest, "rowIdsFolder");
 		}
 
 		List<TrashedModel> trashedModels = new ArrayList<>();
 
 		for (long deleteFolderId : deleteFolderIds) {
 			if (moveToTrash) {
-				Folder folder = _dlAppService.moveFolderToTrash(deleteFolderId);
+				Folder folder = _dlTrashService.moveFolderToTrash(
+					deleteFolderId);
 
 				if (folder.getModel() instanceof DLFolder) {
 					trashedModels.add((DLFolder)folder.getModel());
@@ -182,8 +183,9 @@ public class EditFolderMVCActionCommand extends BaseMVCActionCommand {
 			actionResponse.setRenderParameter(
 				"mvcPath", "/document_library/error.jsp");
 		}
-		catch (DuplicateFileException | DuplicateFolderNameException |
-			   FolderNameException | RequiredFileEntryTypeException e) {
+		catch (DuplicateFileEntryException | DuplicateFileException |
+			   DuplicateFolderNameException | FolderNameException |
+			   RequiredFileEntryTypeException e) {
 
 			SessionErrors.add(actionRequest, e.getClass());
 		}
@@ -239,6 +241,11 @@ public class EditFolderMVCActionCommand extends BaseMVCActionCommand {
 	@Reference(unbind = "-")
 	protected void setDLAppService(DLAppService dlAppService) {
 		_dlAppService = dlAppService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setDLTrashService(DLTrashService dlTrashService) {
+		_dlTrashService = dlTrashService;
 	}
 
 	protected void subscribeFolder(ActionRequest actionRequest)
@@ -333,6 +340,7 @@ public class EditFolderMVCActionCommand extends BaseMVCActionCommand {
 		}
 	}
 
-	private DLAppService _dlAppService;
+	private volatile DLAppService _dlAppService;
+	private volatile DLTrashService _dlTrashService;
 
 }

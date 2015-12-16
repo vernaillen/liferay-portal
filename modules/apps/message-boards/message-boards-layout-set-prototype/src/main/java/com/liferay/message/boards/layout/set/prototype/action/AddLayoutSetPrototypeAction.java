@@ -14,8 +14,9 @@
 
 package com.liferay.message.boards.layout.set.prototype.action;
 
-import com.liferay.layout.set.prototype.web.constants.LayoutSetPrototypePortletKeys;
+import com.liferay.layout.set.prototype.constants.LayoutSetPrototypePortletKeys;
 import com.liferay.message.boards.web.constants.MBPortletKeys;
+import com.liferay.polls.constants.PollsPortletKeys;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
 import com.liferay.portal.kernel.portlet.PortletProvider;
@@ -90,6 +91,9 @@ public class AddLayoutSetPrototypeAction {
 		DefaultLayoutPrototypesUtil.addPortletId(layout, portletId, "column-1");
 
 		DefaultLayoutPrototypesUtil.addPortletId(
+			layout, PollsPortletKeys.POLLS_DISPLAY, "column-2");
+
+		DefaultLayoutPrototypesUtil.addPortletId(
 			layout, SocialUserStatisticsPortletKeys.SOCIAL_USER_STATISTICS,
 			"column-2");
 
@@ -142,6 +146,10 @@ public class AddLayoutSetPrototypeAction {
 		ModuleServiceLifecycle moduleServiceLifecycle) {
 	}
 
+	@Reference(target = "(javax.portlet.name=59)", unbind = "-")
+	protected void setPollsPortlet(Portlet portlet) {
+	}
+
 	@Reference(
 		target = "(javax.portlet.name=" + SocialUserStatisticsPortletKeys.SOCIAL_USER_STATISTICS + ")",
 		unbind = "-"
@@ -154,8 +162,9 @@ public class AddLayoutSetPrototypeAction {
 		_userLocalService = userLocalService;
 	}
 
-	private CompanyLocalService _companyLocalService;
-	private LayoutSetPrototypeLocalService _layoutSetPrototypeLocalService;
-	private UserLocalService _userLocalService;
+	private volatile CompanyLocalService _companyLocalService;
+	private volatile LayoutSetPrototypeLocalService
+		_layoutSetPrototypeLocalService;
+	private volatile UserLocalService _userLocalService;
 
 }

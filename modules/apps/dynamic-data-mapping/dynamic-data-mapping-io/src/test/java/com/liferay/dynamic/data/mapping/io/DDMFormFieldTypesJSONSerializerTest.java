@@ -14,13 +14,14 @@
 
 package com.liferay.dynamic.data.mapping.io;
 
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldRenderer;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldType;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeSettings;
 import com.liferay.dynamic.data.mapping.io.internal.DDMFormFieldTypesJSONSerializerImpl;
 import com.liferay.dynamic.data.mapping.io.internal.DDMFormJSONSerializerImpl;
 import com.liferay.dynamic.data.mapping.io.internal.DDMFormLayoutJSONSerializerImpl;
-import com.liferay.dynamic.data.mapping.registry.DDMFormFieldRenderer;
-import com.liferay.dynamic.data.mapping.registry.DDMFormFieldType;
-import com.liferay.dynamic.data.mapping.registry.DDMFormFieldTypeServicesTracker;
-import com.liferay.dynamic.data.mapping.registry.DDMFormFieldTypeSettings;
+import com.liferay.dynamic.data.mapping.test.util.DDMFormFieldTypeSettingsTestUtil;
 import com.liferay.portal.json.JSONFactoryImpl;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
@@ -100,7 +101,7 @@ public class DDMFormFieldTypesJSONSerializerTest extends BaseDDMTestCase {
 		DDMFormFieldType ddmFormFieldType = mock(DDMFormFieldType.class);
 
 		whenDDMFormFieldTypeGetDDMFormFieldTypeSettings(
-			ddmFormFieldType, DDMFormFieldTypeSettings.class);
+			ddmFormFieldType, DDMFormFieldTypeSettingsTestUtil.getSettings());
 		whenDDMFormFieldTypeGetName(ddmFormFieldType, "Text");
 
 		return ddmFormFieldType;
@@ -128,9 +129,6 @@ public class DDMFormFieldTypesJSONSerializerTest extends BaseDDMTestCase {
 
 		DDMFormFieldRenderer ddmFormFieldRenderer = mock(
 			DDMFormFieldRenderer.class);
-
-		whenDDMFormFieldRendererGetTemplateNamespace(
-			ddmFormFieldRenderer, "_templateNamespace_");
 
 		when(
 			ddmFormFieldTypeServicesTracker.getDDMFormFieldRenderer(
@@ -179,17 +177,6 @@ public class DDMFormFieldTypesJSONSerializerTest extends BaseDDMTestCase {
 			DDMFormFieldTypesJSONSerializerImpl.class, "_jsonFactory");
 
 		field.set(_ddmFormFieldTypesJSONSerializer, new JSONFactoryImpl());
-	}
-
-	protected void whenDDMFormFieldRendererGetTemplateNamespace(
-		DDMFormFieldRenderer ddmFormFieldRenderer,
-		String returnTemplateNamespace) {
-
-		when(
-			ddmFormFieldRenderer.getTemplateNamespace()
-		).thenReturn(
-			returnTemplateNamespace
-		);
 	}
 
 	protected void whenDDMFormFieldTypeGetDDMFormFieldTypeSettings(

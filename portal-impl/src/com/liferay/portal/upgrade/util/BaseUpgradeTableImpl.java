@@ -16,7 +16,7 @@ package com.liferay.portal.upgrade.util;
 
 import com.liferay.portal.events.StartupHelperUtil;
 import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -96,7 +96,7 @@ public abstract class BaseUpgradeTableImpl extends Table {
 		String tempFileName = getTempFileName();
 
 		try {
-			DB db = DBFactoryUtil.getDB();
+			DB db = DBManagerUtil.getDB();
 
 			if (Validator.isNotNull(tempFileName) && deleteSource) {
 				String deleteSQL = getDeleteSQL();
@@ -131,7 +131,8 @@ public abstract class BaseUpgradeTableImpl extends Table {
 				}
 
 				try {
-					db.runSQL(targetConnection, indexSQL);
+					db.runSQLTemplateString(
+						targetConnection, indexSQL, false, false);
 				}
 				catch (Exception e) {
 					if (_log.isWarnEnabled()) {

@@ -63,10 +63,12 @@ public abstract class VerifyProcess extends BaseDBProcess {
 	public void verify() throws VerifyException {
 		long start = System.currentTimeMillis();
 
-		try {
-			if (_log.isInfoEnabled()) {
-				_log.info("Verifying " + ClassUtil.getClassName(this));
-			}
+		if (_log.isInfoEnabled()) {
+			_log.info("Verifying " + ClassUtil.getClassName(this));
+		}
+
+		try (Connection con = DataAccess.getUpgradeOptimizedConnection()) {
+			connection = con;
 
 			doVerify();
 		}
@@ -74,6 +76,8 @@ public abstract class VerifyProcess extends BaseDBProcess {
 			throw new VerifyException(e);
 		}
 		finally {
+			connection = null;
+
 			if (_log.isInfoEnabled()) {
 				_log.info(
 					"Completed verification process " +
@@ -150,19 +154,24 @@ public abstract class VerifyProcess extends BaseDBProcess {
 	 *         com.liferay.portal.kernel.util.ReleaseInfo#getBuildNumber}
 	 */
 	protected int getBuildNumber() throws Exception {
-		String sql =
-			"select buildNumber from Release_ where servletContextName = ?";
+		PreparedStatement ps = null;
+		ResultSet rs = null;
 
-		try (Connection con = DataAccess.getUpgradeOptimizedConnection();
-			PreparedStatement ps = con.prepareStatement(sql)) {
+		try {
+			ps = connection.prepareStatement(
+				"select buildNumber from Release_ where servletContextName " +
+					"= ?");
 
 			ps.setString(1, ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				rs.next();
+			rs = ps.executeQuery();
 
-				return rs.getInt(1);
-			}
+			rs.next();
+
+			return rs.getInt(1);
+		}
+		finally {
+			DataAccess.cleanUp(ps, rs);
 		}
 	}
 

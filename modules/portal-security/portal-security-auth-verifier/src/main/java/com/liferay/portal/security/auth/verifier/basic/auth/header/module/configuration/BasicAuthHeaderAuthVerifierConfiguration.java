@@ -16,11 +16,15 @@ package com.liferay.portal.security.auth.verifier.basic.auth.header.module.confi
 
 import aQute.bnd.annotation.metatype.Meta;
 
+import com.liferay.configuration.admin.ConfigurationAdmin;
 import com.liferay.portal.security.auth.verifier.module.configuration.BaseAuthVerifierConfiguration;
 
 /**
  * @author Tomas Polesovsky
  */
+@ConfigurationAdmin(
+	category = "platform", factoryInstanceLabelAttribute = "urlsIncludes"
+)
 @Meta.OCD(
 	factory = true,
 	id = "com.liferay.portal.security.auth.verifier.basic.auth.header.module.configuration.BasicAuthHeaderAuthVerifierConfiguration"

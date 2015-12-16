@@ -21,11 +21,13 @@ import com.liferay.portal.kernel.util.Validator;
 
 import java.io.IOException;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- *
  * @author Julio Camarero
  */
 public abstract class BaseControlMenuEntry implements ControlMenuEntry {
@@ -47,6 +49,11 @@ public abstract class BaseControlMenuEntry implements ControlMenuEntry {
 		}
 
 		return false;
+	}
+
+	@Override
+	public Map<String, Object> getData(HttpServletRequest request) {
+		return new HashMap<>();
 	}
 
 	@Override

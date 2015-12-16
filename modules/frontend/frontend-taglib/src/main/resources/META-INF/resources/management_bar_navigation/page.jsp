@@ -17,47 +17,31 @@
 <%@ include file="/management_bar_navigation/init.jsp" %>
 
 <%
-String[] navigationKeys = (String[])request.getAttribute("liferay-frontend:management-bar-navigation:navigationKeys");
-String navigationParam = (String)request.getAttribute("liferay-frontend:management-bar-navigation:navigationParam");
-PortletURL portletURL = (PortletURL)request.getAttribute("liferay-frontend:management-bar-navigation:portletURL");
-
-String navigationKey = ParamUtil.getString(request, navigationParam);
+List<FilterNavigationItem> filterNavigationItems = (List<FilterNavigationItem>)request.getAttribute("liferay-frontend:management-bar-navigation:filterNavigationItems");
+String label = (String)request.getAttribute("liferay-frontend:management-bar-navigation:label");
 %>
 
-<c:if test="<%= ArrayUtil.isNotEmpty(navigationKeys) %>">
-	<li>
-		<aui:select inlineField="<%= true %>" inlineLabel="left" label="" name="<%= navigationParam %>">
+<c:if test="<%= ListUtil.isNotEmpty(filterNavigationItems) %>">
+	<li class="dropdown">
+		<a aria-expanded="true" class="dropdown-toggle" data-qa-id="filter" data-toggle="dropdown" href="javascript:;">
+			<span class="management-bar-item-title"><liferay-ui:message key="<%= label %>" /></span>
+			<span class="icon-sort"></span>
+		</a>
+
+		<ul class="dropdown-menu" data-qa-id="filterValues">
 
 			<%
-			for (String curNavigationKey : navigationKeys) {
+			for (FilterNavigationItem curFilterNavigationItem : filterNavigationItems) {
 			%>
 
-				<aui:option label="<%= curNavigationKey %>" selected="<%= curNavigationKey.equals(navigationKey) %>" value="<%= curNavigationKey %>" />
+				<li class="<%= curFilterNavigationItem.isActive() ? "active" : StringPool.BLANK %>">
+					<aui:a href="<%= curFilterNavigationItem.getUrl() %>" id="<%= Validator.isNotNull(curFilterNavigationItem.getId()) ? curFilterNavigationItem.getId() : StringPool.BLANK %>" label="<%= curFilterNavigationItem.getLabel() %>" />
+				</li>
 
 			<%
 			}
 			%>
 
-		</aui:select>
+		</ul>
 	</li>
 </c:if>
-
-<aui:script>
-
-	<%
-	PortletURL navigationURL = PortletURLUtil.clone(portletURL, liferayPortletResponse);
-	%>
-
-	var navigation = $('#<%= namespace + navigationParam %>');
-
-	navigation.on(
-		'change',
-		function(event) {
-			var uri = '<%= navigationURL %>';
-
-			uri = Liferay.Util.addParams('<%= namespace + navigationParam %>=' + navigation.val(), uri);
-
-			window.location.href = uri;
-		}
-	);
-</aui:script>

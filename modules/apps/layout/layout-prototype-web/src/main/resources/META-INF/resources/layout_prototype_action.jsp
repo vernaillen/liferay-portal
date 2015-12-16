@@ -59,7 +59,7 @@ LayoutPrototype layoutPrototype = (LayoutPrototype)row.getObject();
 	<c:if test="<%= GroupPermissionUtil.contains(permissionChecker, layoutPrototype.getGroup(), ActionKeys.EXPORT_IMPORT_LAYOUTS) %>">
 
 		<%
-		PortletURL exportURL = PortalUtil.getControlPanelPortletURL(request, PortletKeys.EXPORT_IMPORT, 0, PortletRequest.RENDER_PHASE);
+		PortletURL exportURL = PortalUtil.getControlPanelPortletURL(request, PortletKeys.EXPORT_IMPORT, PortletRequest.RENDER_PHASE);
 
 		exportURL.setParameter("mvcRenderCommandName", "exportLayouts");
 		exportURL.setParameter(Constants.CMD, Constants.EXPORT);
@@ -79,7 +79,7 @@ LayoutPrototype layoutPrototype = (LayoutPrototype)row.getObject();
 		/>
 
 		<%
-		PortletURL importURL = PortalUtil.getControlPanelPortletURL(request, PortletKeys.EXPORT_IMPORT, 0, PortletRequest.RENDER_PHASE);
+		PortletURL importURL = PortalUtil.getControlPanelPortletURL(request, PortletKeys.EXPORT_IMPORT, PortletRequest.RENDER_PHASE);
 
 		importURL.setParameter("mvcRenderCommandName", "importLayouts");
 		importURL.setParameter(Constants.CMD, Constants.IMPORT);
@@ -102,7 +102,7 @@ LayoutPrototype layoutPrototype = (LayoutPrototype)row.getObject();
 	<c:if test="<%= LayoutPrototypePermissionUtil.contains(permissionChecker, layoutPrototype.getLayoutPrototypeId(), ActionKeys.DELETE) %>">
 		<portlet:actionURL name="deleteLayoutPrototypes" var="deleteLayoutPrototypesURL">
 			<portlet:param name="redirect" value="<%= redirect %>" />
-			<portlet:param name="layoutPrototypeIds" value="<%= String.valueOf(layoutPrototype.getLayoutPrototypeId()) %>" />
+			<portlet:param name="layoutPrototypeId" value="<%= String.valueOf(layoutPrototype.getLayoutPrototypeId()) %>" />
 		</portlet:actionURL>
 
 		<liferay-ui:icon-delete

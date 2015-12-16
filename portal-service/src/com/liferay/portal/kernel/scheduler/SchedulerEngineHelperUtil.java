@@ -211,10 +211,6 @@ public class SchedulerEngineHelperUtil {
 			jobName, groupName, storageType);
 	}
 
-	public static boolean isClusteredSchedulerEngine() {
-		return getSchedulerEngineHelper().isClusteredSchedulerEngine();
-	}
-
 	public static void pause(String groupName, StorageType storageType)
 		throws SchedulerException {
 
@@ -228,11 +224,12 @@ public class SchedulerEngineHelperUtil {
 		getSchedulerEngineHelper().pause(jobName, groupName, storageType);
 	}
 
-	public static String register(
-		MessageListener messageListener, SchedulerEntry schedulerEntry) {
+	public static void register(
+		MessageListener messageListener, SchedulerEntry schedulerEntry,
+		String destinationName) {
 
-		return getSchedulerEngineHelper().register(
-			messageListener, schedulerEntry);
+		getSchedulerEngineHelper().register(
+			messageListener, schedulerEntry, destinationName);
 	}
 
 	public static void resume(String groupName, StorageType storageType)

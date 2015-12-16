@@ -6,6 +6,7 @@
  * @param childElementsHTML
  * @param label
  * @param name
+ * @param readOnly
  * @param required
  * @param showAsSwitcher
  * @param showLabel
@@ -13,14 +14,22 @@
  * @param visible
  */
 {template .checkbox}
-	<div class="form-group form-inline{$visible ? '' : ' hide'}" data-fieldname="{$name}">
+	<div class="form-group form-inline{$visible ? '' : ' hide'} liferay-ddm-form-field-checkbox" data-fieldname="{$name}">
 		{if $showAsSwitcher}
 			<div class="checkbox">
 				<label class="control-label" for="{$name}">
-					<input class="toggle-switch" id="{$name}" name="{$name}" type="checkbox" {$status} value="true" />
+					<input class="hide toggle-switch" {if $readOnly}disabled{/if} id="{$name}" name="{$name}" type="checkbox" {$status} value="true" />
 
 					<span aria-hidden="true" class="toggle-switch-bar">
-						<span class="toggle-switch-handle" data-label-off="{$label}" data-label-on="{$label}"></span>
+						<span class="toggle-switch-handle">
+							<span class="toggle-switch-text">
+								{$label}
+
+								{if $required}
+									<b>*</b>
+								{/if}
+							</span>
+						</span>
 					</span>
 				</label>
 			</div>
@@ -30,7 +39,7 @@
 					<label class="control-label" for="{$name}">
 				{/if}
 
-				<input id="{$name}" name="{$name}" type="checkbox" {$status} value="true" />{if $showLabel} {$label}{/if}
+				<input {if $readOnly}disabled{/if} id="{$name}" name="{$name}" type="checkbox" {$status} value="true" />{if $showLabel} {$label}{/if}
 
 				{if $showLabel}
 						{if $required}

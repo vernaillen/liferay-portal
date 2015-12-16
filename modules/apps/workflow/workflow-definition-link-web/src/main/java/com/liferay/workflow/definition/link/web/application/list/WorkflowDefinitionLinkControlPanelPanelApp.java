@@ -30,7 +30,7 @@ import org.osgi.service.component.annotations.Reference;
 	immediate = true,
 	property = {
 		"panel.category.key=" + PanelCategoryKeys.CONTROL_PANEL_CONFIGURATION,
-		"service.ranking:Integer=500"
+		"service.ranking:Integer=400"
 	},
 	service = PanelApp.class
 )
@@ -42,6 +42,7 @@ public class WorkflowDefinitionLinkControlPanelPanelApp extends BasePanelApp {
 			WORKFLOW_DEFINITION_LINK_CONTROL_PANEL;
 	}
 
+	@Override
 	@Reference(
 		target = "(javax.portlet.name=" + WorkflowDefinitionLinkPortletKeys.WORKFLOW_DEFINITION_LINK_CONTROL_PANEL + ")",
 		unbind = "-"

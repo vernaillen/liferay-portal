@@ -14,12 +14,17 @@
 
 package com.liferay.configuration.admin.web.model;
 
+import com.liferay.configuration.admin.ConfigurationAdmin;
 import com.liferay.configuration.admin.ExtendedAttributeDefinition;
 import com.liferay.configuration.admin.ExtendedObjectClassDefinition;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.io.IOException;
 import java.io.InputStream;
 
+import java.util.Dictionary;
 import java.util.Map;
 import java.util.Set;
 
@@ -47,6 +52,14 @@ public class ConfigurationModel implements ExtendedObjectClassDefinition {
 
 	public String getBundleLocation() {
 		return _bundleLocation;
+	}
+
+	public String getCategory() {
+		Map<String, String> extensionAttributes =
+			_extendedObjectClassDefinition.getExtensionAttributes(
+				ConfigurationAdmin.XML_NAMESPACE);
+
+		return GetterUtil.get(extensionAttributes.get("category"), "other");
 	}
 
 	public Configuration getConfiguration() {
@@ -93,6 +106,34 @@ public class ConfigurationModel implements ExtendedObjectClassDefinition {
 		}
 
 		return _extendedObjectClassDefinition.getID();
+	}
+
+	public String getLabel() {
+		String factoryInstanceLabelAttribute = getLabelAttribute();
+
+		if (Validator.isNull(factoryInstanceLabelAttribute)) {
+			return getName();
+		}
+
+		Dictionary<String, Object> properties = _configuration.getProperties();
+
+		Object value = properties.get(factoryInstanceLabelAttribute);
+
+		if (value == null) {
+			return getName();
+		}
+
+		return String.valueOf(value);
+	}
+
+	public String getLabelAttribute() {
+		Map<String, String> extensionAttributes =
+			_extendedObjectClassDefinition.getExtensionAttributes(
+				ConfigurationAdmin.XML_NAMESPACE);
+
+		return GetterUtil.get(
+			extensionAttributes.get("factoryInstanceLabelAttribute"),
+			StringPool.BLANK);
 	}
 
 	@Override

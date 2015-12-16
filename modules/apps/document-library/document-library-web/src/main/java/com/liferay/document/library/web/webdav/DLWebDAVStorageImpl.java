@@ -31,6 +31,7 @@ import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
+import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -62,6 +63,7 @@ import com.liferay.portlet.documentlibrary.model.DLFileEntryConstants;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
 import com.liferay.portlet.documentlibrary.model.DLFolderConstants;
 import com.liferay.portlet.documentlibrary.service.DLAppService;
+import com.liferay.portlet.documentlibrary.service.DLTrashService;
 import com.liferay.portlet.documentlibrary.util.DL;
 import com.liferay.portlet.documentlibrary.webdav.DLFileEntryResourceImpl;
 import com.liferay.portlet.documentlibrary.webdav.DLWebDAVUtil;
@@ -89,7 +91,6 @@ import org.osgi.service.component.annotations.Reference;
 	property = {
 		"javax.portlet.name=" + DLPortletKeys.DOCUMENT_LIBRARY,
 		"javax.portlet.name=" + DLPortletKeys.DOCUMENT_LIBRARY_ADMIN,
-		"javax.portlet.name=" + DLPortletKeys.DOCUMENT_LIBRARY_DISPLAY,
 		"javax.portlet.name=" + DLPortletKeys.MEDIA_GALLERY_DISPLAY,
 		"webdav.storage.token=document_library"
 	},
@@ -303,7 +304,7 @@ public class DLWebDAVStorageImpl extends BaseWebDAVStorageImpl {
 				if ((folder.getModel() instanceof DLFolder) &&
 					TrashUtil.isTrashEnabled(folder.getGroupId())) {
 
-					_dlAppService.moveFolderToTrash(folderId);
+					_dlTrashService.moveFolderToTrash(folderId);
 				}
 				else {
 					_dlAppService.deleteFolder(folderId);
@@ -323,7 +324,7 @@ public class DLWebDAVStorageImpl extends BaseWebDAVStorageImpl {
 				if ((fileEntry.getModel() instanceof DLFileEntry) &&
 					TrashUtil.isTrashEnabled(fileEntry.getGroupId())) {
 
-					_dlAppService.moveFileEntryToTrash(fileEntryId);
+					_dlTrashService.moveFileEntryToTrash(fileEntryId);
 				}
 				else {
 					_dlAppService.deleteFileEntry(fileEntryId);
@@ -368,7 +369,16 @@ public class DLWebDAVStorageImpl extends BaseWebDAVStorageImpl {
 				if ((folder.getParentFolderId() != parentFolderId) ||
 					(webDAVRequest.getGroupId() != folder.getRepositoryId())) {
 
-					throw new NoSuchFolderException();
+					StringBundler sb = new StringBundler(6);
+
+					sb.append("No DLFolder exists with the key ");
+					sb.append("{parendFolderId=");
+					sb.append(parentFolderId);
+					sb.append(", repositoryId=");
+					sb.append(webDAVRequest.getGroupId());
+					sb.append(StringPool.CLOSE_CURLY_BRACE);
+
+					throw new NoSuchFolderException(sb.toString());
 				}
 
 				return toResource(webDAVRequest, folder, false);
@@ -988,7 +998,14 @@ public class DLWebDAVStorageImpl extends BaseWebDAVStorageImpl {
 				if (!hasLock(fileEntry, lockUuid) &&
 					(fileEntry.getLock() != null)) {
 
-					throw new LockException();
+					StringBundler sb = new StringBundler(4);
+
+					sb.append("Inconsistent file lock state for file entry ");
+					sb.append(fileEntry.getPrimaryKey());
+					sb.append(" and lock UUID ");
+					sb.append(lockUuid);
+
+					throw new LockException(sb.toString());
 				}
 
 				_dlAppService.deleteFileEntryByTitle(
@@ -1209,6 +1226,11 @@ public class DLWebDAVStorageImpl extends BaseWebDAVStorageImpl {
 		_dlAppService = dlAppService;
 	}
 
+	@Reference(unbind = "-")
+	protected void setDLTrashService(DLTrashService dlTrashService) {
+		_dlTrashService = dlTrashService;
+	}
+
 	protected Resource toResource(
 		WebDAVRequest webDAVRequest, FileEntry fileEntry, boolean appendPath) {
 
@@ -1241,10 +1263,11 @@ public class DLWebDAVStorageImpl extends BaseWebDAVStorageImpl {
 	private static final Log _log = LogFactoryUtil.getLog(
 		DLWebDAVStorageImpl.class);
 
-	private AssetCategoryLocalService _assetCategoryLocalService;
-	private AssetEntryLocalService _assetEntryLocalService;
-	private AssetLinkLocalService _assetLinkLocalService;
-	private AssetTagLocalService _assetTagLocalService;
-	private DLAppService _dlAppService;
+	private volatile AssetCategoryLocalService _assetCategoryLocalService;
+	private volatile AssetEntryLocalService _assetEntryLocalService;
+	private volatile AssetLinkLocalService _assetLinkLocalService;
+	private volatile AssetTagLocalService _assetTagLocalService;
+	private volatile DLAppService _dlAppService;
+	private volatile DLTrashService _dlTrashService;
 
 }

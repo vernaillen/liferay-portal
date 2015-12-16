@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.util.UpgradeTable;
 import com.liferay.portal.kernel.upgrade.util.UpgradeTableFactoryUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.upgrade.v7_0_0.util.ClassNameTable;
 import com.liferay.portal.upgrade.v7_0_0.util.ClusterGroupTable;
@@ -30,6 +31,7 @@ import com.liferay.portal.upgrade.v7_0_0.util.PortalPreferencesTable;
 import com.liferay.portal.upgrade.v7_0_0.util.RegionTable;
 import com.liferay.portal.upgrade.v7_0_0.util.ReleaseTable;
 import com.liferay.portal.upgrade.v7_0_0.util.ResourceActionTable;
+import com.liferay.portal.upgrade.v7_0_0.util.ServiceComponentTable;
 import com.liferay.portal.upgrade.v7_0_0.util.VirtualHostTable;
 import com.liferay.portal.util.PropsUtil;
 
@@ -66,7 +68,8 @@ public class UpgradeSharding extends UpgradeProcess {
 		if (Validator.isNull(defaultShardName)) {
 			throw new RuntimeException(
 				"The property \"shard.default.name\" is not set in " +
-					"portal.properties");
+					"portal.properties. Please specify a default shard name " +
+						"from: " + StringUtil.merge(shardNames, ", ") + ".");
 		}
 
 		for (String shardName : shardNames) {
@@ -120,6 +123,11 @@ public class UpgradeSharding extends UpgradeProcess {
 				ResourceActionTable.TABLE_COLUMNS,
 				ResourceActionTable.TABLE_SQL_CREATE);
 			copyControlTable(
+				sourceConnection, targetConnection,
+				ServiceComponentTable.TABLE_NAME,
+				ServiceComponentTable.TABLE_COLUMNS,
+				ServiceComponentTable.TABLE_SQL_CREATE);
+			copyControlTable(
 				sourceConnection, targetConnection, VirtualHostTable.TABLE_NAME,
 				VirtualHostTable.TABLE_COLUMNS,
 				VirtualHostTable.TABLE_SQL_CREATE);
@@ -146,16 +154,13 @@ public class UpgradeSharding extends UpgradeProcess {
 	}
 
 	protected List<String> getShardNames() throws Exception {
-		Connection con = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 
 		List<String> shardNames = new ArrayList<>();
 
 		try {
-			con = DataAccess.getUpgradeOptimizedConnection();
-
-			ps = con.prepareStatement("select name from Shard");
+			ps = connection.prepareStatement("select name from Shard");
 
 			rs = ps.executeQuery();
 
@@ -164,7 +169,7 @@ public class UpgradeSharding extends UpgradeProcess {
 			}
 		}
 		finally {
-			DataAccess.cleanUp(con, ps, rs);
+			DataAccess.cleanUp(ps, rs);
 		}
 
 		return shardNames;

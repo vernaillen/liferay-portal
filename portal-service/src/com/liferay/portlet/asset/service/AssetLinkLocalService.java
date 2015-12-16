@@ -72,7 +72,6 @@ public interface AssetLinkLocalService extends BaseLocalService,
 	* @param weight the weight of the relationship, allowing precedence
 	ordering of links
 	* @return the asset link
-	* @throws PortalException if the user could not be found
 	*/
 	public com.liferay.portlet.asset.model.AssetLink addLink(long userId,
 		long entryId1, long entryId2, int type, int weight)
@@ -108,6 +107,8 @@ public interface AssetLinkLocalService extends BaseLocalService,
 	public com.liferay.portlet.asset.model.AssetLink deleteAssetLink(
 		long linkId) throws PortalException;
 
+	public void deleteGroupLinks(long groupId);
+
 	/**
 	* Deletes the asset link.
 	*
@@ -119,7 +120,6 @@ public interface AssetLinkLocalService extends BaseLocalService,
 	* Deletes the asset link.
 	*
 	* @param linkId the primary key of the asset link
-	* @throws PortalException if the asset link could not be found
 	*/
 	public void deleteLink(long linkId) throws PortalException;
 
@@ -282,6 +282,9 @@ public interface AssetLinkLocalService extends BaseLocalService,
 	public com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery getExportActionbleDynamicQuery(
 		com.liferay.portlet.exportimport.lar.PortletDataContext portletDataContext);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery getIndexableActionableDynamicQuery();
+
 	/**
 	* Returns all the asset links whose first or second entry ID is the given
 	* entry ID.
@@ -375,7 +378,6 @@ public interface AssetLinkLocalService extends BaseLocalService,
 	bidirectional relationship and {@link
 	AssetLinkConstants#TYPE_CHILD} which is a unidirectional
 	relationship. For more information see {@link AssetLinkConstants}
-	* @throws PortalException if the user could not be found
 	*/
 	public void updateLinks(long userId, long entryId, long[] linkEntryIds,
 		int typeId) throws PortalException;

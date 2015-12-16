@@ -59,7 +59,6 @@ public class AssetLinkLocalServiceWrapper implements AssetLinkLocalService,
 	* @param weight the weight of the relationship, allowing precedence
 	ordering of links
 	* @return the asset link
-	* @throws PortalException if the user could not be found
 	*/
 	@Override
 	public com.liferay.portlet.asset.model.AssetLink addLink(long userId,
@@ -106,6 +105,11 @@ public class AssetLinkLocalServiceWrapper implements AssetLinkLocalService,
 		return _assetLinkLocalService.deleteAssetLink(linkId);
 	}
 
+	@Override
+	public void deleteGroupLinks(long groupId) {
+		_assetLinkLocalService.deleteGroupLinks(groupId);
+	}
+
 	/**
 	* Deletes the asset link.
 	*
@@ -120,7 +124,6 @@ public class AssetLinkLocalServiceWrapper implements AssetLinkLocalService,
 	* Deletes the asset link.
 	*
 	* @param linkId the primary key of the asset link
-	* @throws PortalException if the asset link could not be found
 	*/
 	@Override
 	public void deleteLink(long linkId)
@@ -330,6 +333,11 @@ public class AssetLinkLocalServiceWrapper implements AssetLinkLocalService,
 		return _assetLinkLocalService.getExportActionbleDynamicQuery(portletDataContext);
 	}
 
+	@Override
+	public com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery getIndexableActionableDynamicQuery() {
+		return _assetLinkLocalService.getIndexableActionableDynamicQuery();
+	}
+
 	/**
 	* Returns all the asset links whose first or second entry ID is the given
 	* entry ID.
@@ -440,7 +448,6 @@ public class AssetLinkLocalServiceWrapper implements AssetLinkLocalService,
 	bidirectional relationship and {@link
 	AssetLinkConstants#TYPE_CHILD} which is a unidirectional
 	relationship. For more information see {@link AssetLinkConstants}
-	* @throws PortalException if the user could not be found
 	*/
 	@Override
 	public void updateLinks(long userId, long entryId, long[] linkEntryIds,

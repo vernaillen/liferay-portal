@@ -15,8 +15,8 @@
 package com.liferay.message.boards.web.portlet;
 
 import com.liferay.message.boards.web.constants.MBPortletKeys;
-import com.liferay.message.boards.web.upgrade.MBWebUpgrade;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
+import com.liferay.portal.model.Release;
 
 import javax.portlet.Portlet;
 
@@ -48,6 +48,7 @@ import org.osgi.service.component.annotations.Reference;
 		"com.liferay.portlet.use-default-template=true",
 		"javax.portlet.display-name=Message Boards",
 		"javax.portlet.expiration-cache=0",
+		"javax.portlet.init-param.portlet-title-based-navigation=false",
 		"javax.portlet.init-param.template-path=/",
 		"javax.portlet.init-param.view-template=/message_boards/view",
 		"javax.portlet.name=" + MBPortletKeys.MESSAGE_BOARDS,
@@ -60,8 +61,11 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class MBPortlet extends MVCPortlet {
 
-	@Reference(unbind = "-")
-	protected void setMBWebUpgrade(MBWebUpgrade mbWebUpgrade) {
+	@Reference(
+		target = "(&(release.bundle.symbolic.name=com.liferay.message.boards.web)(release.schema.version=1.0.0))",
+		unbind = "-"
+	)
+	protected void setRelease(Release release) {
 	}
 
 }

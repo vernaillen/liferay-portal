@@ -52,6 +52,7 @@ public class SiteTeamsPortletDataHandler extends BasePortletDataHandler {
 				NAMESPACE, "site-teams", true, true, null,
 				Team.class.getName()));
 		setPublishToLiveByDefault(true);
+		setRank(80);
 	}
 
 	@Override
@@ -128,6 +129,6 @@ public class SiteTeamsPortletDataHandler extends BasePortletDataHandler {
 		_teamLocalService = teamLocalService;
 	}
 
-	private TeamLocalService _teamLocalService;
+	private volatile TeamLocalService _teamLocalService;
 
 }

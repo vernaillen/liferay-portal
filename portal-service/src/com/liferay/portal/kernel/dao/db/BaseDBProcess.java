@@ -34,30 +34,40 @@ public abstract class BaseDBProcess implements DBProcess {
 	public void runSQL(Connection connection, String template)
 		throws IOException, SQLException {
 
-		DB db = DBFactoryUtil.getDB();
+		DB db = DBManagerUtil.getDB();
 
 		db.runSQL(connection, template);
 	}
 
 	@Override
 	public void runSQL(String template) throws IOException, SQLException {
-		DB db = DBFactoryUtil.getDB();
+		DB db = DBManagerUtil.getDB();
 
-		db.runSQL(template);
+		if (connection == null) {
+			db.runSQL(template);
+		}
+		else {
+			db.runSQL(connection, template);
+		}
 	}
 
 	@Override
 	public void runSQL(String[] templates) throws IOException, SQLException {
-		DB db = DBFactoryUtil.getDB();
+		DB db = DBManagerUtil.getDB();
 
-		db.runSQL(templates);
+		if (connection == null) {
+			db.runSQL(templates);
+		}
+		else {
+			db.runSQL(connection, templates);
+		}
 	}
 
 	@Override
 	public void runSQLTemplate(String path)
 		throws IOException, NamingException, SQLException {
 
-		DB db = DBFactoryUtil.getDB();
+		DB db = DBManagerUtil.getDB();
 
 		db.runSQLTemplate(path);
 	}
@@ -66,7 +76,7 @@ public abstract class BaseDBProcess implements DBProcess {
 	public void runSQLTemplate(String path, boolean failOnError)
 		throws IOException, NamingException, SQLException {
 
-		DB db = DBFactoryUtil.getDB();
+		DB db = DBManagerUtil.getDB();
 
 		db.runSQLTemplate(path, failOnError);
 	}
@@ -76,9 +86,17 @@ public abstract class BaseDBProcess implements DBProcess {
 			String template, boolean evaluate, boolean failOnError)
 		throws IOException, NamingException, SQLException {
 
-		DB db = DBFactoryUtil.getDB();
+		DB db = DBManagerUtil.getDB();
 
-		db.runSQLTemplateString(template, evaluate, failOnError);
+		if (connection == null) {
+			db.runSQLTemplateString(template, evaluate, failOnError);
+		}
+		else {
+			db.runSQLTemplateString(
+				connection, template, evaluate, failOnError);
+		}
 	}
+
+	protected Connection connection;
 
 }

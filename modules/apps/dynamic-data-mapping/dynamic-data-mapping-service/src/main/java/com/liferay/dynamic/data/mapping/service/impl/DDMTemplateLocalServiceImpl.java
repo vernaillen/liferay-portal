@@ -266,7 +266,7 @@ public class DDMTemplateLocalServiceImpl
 	 * @param  template the template to add resources to
 	 * @param  addGroupPermissions whether to add group permissions
 	 * @param  addGuestPermissions whether to add guest permissions
-	 * @throws PortalException if a portal exception occurred
+	 * @throws PortalException
 	 */
 	@Override
 	public void addTemplateResources(
@@ -461,6 +461,18 @@ public class DDMTemplateLocalServiceImpl
 	}
 
 	/**
+	 * Returns the template with the primary key.
+	 *
+	 * @param  templateId the primary key of the template
+	 * @return the matching template, or <code>null</code> if a matching
+	 *         template could not be found
+	 */
+	@Override
+	public DDMTemplate fetchTemplate(long templateId) {
+		return ddmTemplatePersistence.fetchByPrimaryKey(templateId);
+	}
+
+	/**
 	 * Returns the template matching the group and template key.
 	 *
 	 * @param  groupId the primary key of the group
@@ -537,11 +549,11 @@ public class DDMTemplateLocalServiceImpl
 	}
 
 	/**
-	 * Returns the template with the ID.
+	 * Returns the template with the primary key.
 	 *
 	 * @param  templateId the primary key of the template
-	 * @return the template with the ID
-	 * @throws PortalException if a matching template could not be found
+	 * @return the template with the primary key
+	 * @throws PortalException if a portal exception occurred
 	 */
 	@Override
 	public DDMTemplate getTemplate(long templateId) throws PortalException {
@@ -556,7 +568,7 @@ public class DDMTemplateLocalServiceImpl
 	 *         related model
 	 * @param  templateKey the unique string identifying the template
 	 * @return the matching template
-	 * @throws PortalException if a matching template could not be found
+	 * @throws PortalException if a portal exception occurred
 	 */
 	@Override
 	public DDMTemplate getTemplate(
@@ -589,7 +601,7 @@ public class DDMTemplateLocalServiceImpl
 	 *         have sharing enabled) and include global scoped sites in the
 	 *         search in the search
 	 * @return the matching template
-	 * @throws PortalException if a matching template could not be found
+	 * @throws PortalException if a portal exception occurred
 	 */
 	@Override
 	public DDMTemplate getTemplate(
@@ -782,8 +794,8 @@ public class DDMTemplateLocalServiceImpl
 	}
 
 	/**
-	 * Returns an ordered range of all the templates matching the group and
-	 * structure class name ID.
+	 * Returns an ordered range of all the templates matching the group,
+	 * structure class name ID, and status.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end -
@@ -798,6 +810,9 @@ public class DDMTemplateLocalServiceImpl
 	 * @param  groupId the primary key of the group
 	 * @param  structureClassNameId the primary key of the class name for the
 	 *         template's related structure
+	 * @param  status the template's workflow status. For more information see
+	 *         {@link WorkflowConstants} for constants starting with the
+	 *         "STATUS_" prefix.
 	 * @param  start the lower bound of the range of templates to return
 	 * @param  end the upper bound of the range of templates to return (not
 	 *         inclusive)
@@ -816,12 +831,15 @@ public class DDMTemplateLocalServiceImpl
 	}
 
 	/**
-	 * Returns the number of templates matching the group and structure class
-	 * name ID, including Generic Templates.
+	 * Returns the number of templates matching the group, structure class name
+	 * ID, and status, including Generic Templates.
 	 *
 	 * @param  groupId the primary key of the group
 	 * @param  structureClassNameId the primary key of the class name for the
 	 *         template's related structure
+	 * @param  status the template's workflow status. For more information see
+	 *         {@link WorkflowConstants} for constants starting with the
+	 *         "STATUS_" prefix.
 	 * @return the number of matching templates
 	 */
 	@Override
@@ -904,8 +922,8 @@ public class DDMTemplateLocalServiceImpl
 
 	/**
 	 * Returns an ordered range of all the templates matching the group, class
-	 * name ID, class PK, type, and mode, and matching the keywords in the
-	 * template names and descriptions.
+	 * name ID, class PK, type, mode, and status, and matching the keywords in
+	 * the template names and descriptions.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end -
@@ -932,6 +950,9 @@ public class DDMTemplateLocalServiceImpl
 	 * @param  mode the template's mode (optionally <code>null</code>). For more
 	 *         information, see DDMTemplateConstants in the
 	 *         dynamic-data-mapping-api module.
+	 * @param  status the template's workflow status. For more information see
+	 *         {@link WorkflowConstants} for constants starting with the
+	 *         "STATUS_" prefix.
 	 * @param  start the lower bound of the range of templates to return
 	 * @param  end the upper bound of the range of templates to return (not
 	 *         inclusive)
@@ -953,8 +974,8 @@ public class DDMTemplateLocalServiceImpl
 
 	/**
 	 * Returns an ordered range of all the templates matching the group, class
-	 * name ID, class PK, name keyword, description keyword, type, mode, and
-	 * language.
+	 * name ID, class PK, name keyword, description keyword, type, mode, status,
+	 * and language.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end -
@@ -985,6 +1006,9 @@ public class DDMTemplateLocalServiceImpl
 	 * @param  language the template's script language (optionally
 	 *         <code>null</code>). For more information, see
 	 *         DDMTemplateConstants in the dynamic-data-mapping-api module.
+	 * @param  status the template's workflow status. For more information see
+	 *         {@link WorkflowConstants} for constants starting with the
+	 *         "STATUS_" prefix.
 	 * @param  andOperator whether every field must match its keywords, or just
 	 *         one field
 	 * @param  start the lower bound of the range of templates to return
@@ -1009,8 +1033,8 @@ public class DDMTemplateLocalServiceImpl
 
 	/**
 	 * Returns an ordered range of all the templates matching the group IDs,
-	 * class Name IDs, class PK, type, and mode, and include the keywords on its
-	 * names and descriptions.
+	 * class Name IDs, class PK, type, mode, and status, and include the
+	 * keywords on its names and descriptions.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end -
@@ -1037,6 +1061,9 @@ public class DDMTemplateLocalServiceImpl
 	 * @param  mode the template's mode (optionally <code>null</code>). For more
 	 *         information, see DDMTemplateConstants in the
 	 *         dynamic-data-mapping-api module.
+	 * @param  status the template's workflow status. For more information see
+	 *         {@link WorkflowConstants} for constants starting with the
+	 *         "STATUS_" prefix.
 	 * @param  start the lower bound of the range of templates to return
 	 * @param  end the upper bound of the range of templates to return (not
 	 *         inclusive)
@@ -1059,7 +1086,7 @@ public class DDMTemplateLocalServiceImpl
 	/**
 	 * Returns an ordered range of all the templates matching the group IDs,
 	 * class name IDs, class PK, name keyword, description keyword, type, mode,
-	 * and language.
+	 * language, and status.
 	 *
 	 * <p>
 	 * Useful when paginating results. Returns a maximum of <code>end -
@@ -1090,6 +1117,9 @@ public class DDMTemplateLocalServiceImpl
 	 * @param  language the template's script language (optionally
 	 *         <code>null</code>). For more information, see
 	 *         DDMTemplateConstants in the dynamic-data-mapping-api module.
+	 * @param  status the template's workflow status. For more information see
+	 *         {@link WorkflowConstants} for constants starting with the
+	 *         "STATUS_" prefix.
 	 * @param  andOperator whether every field must match its keywords, or just
 	 *         one field.
 	 * @param  start the lower bound of the range of templates to return
@@ -1114,8 +1144,8 @@ public class DDMTemplateLocalServiceImpl
 
 	/**
 	 * Returns the number of templates matching the group, class name ID, class
-	 * PK, type, and matching the keywords in the template names and
-	 * descriptions.
+	 * PK, type, mode, and status, and matching the keywords in the template
+	 * names and descriptions.
 	 *
 	 * @param  companyId the primary key of the template's company
 	 * @param  groupId the primary key of the group
@@ -1132,6 +1162,9 @@ public class DDMTemplateLocalServiceImpl
 	 * @param  mode the template's mode (optionally <code>null</code>). For more
 	 *         information, see DDMTemplateConstants in the
 	 *         dynamic-data-mapping-api module.
+	 * @param  status the template's workflow status. For more information see
+	 *         {@link WorkflowConstants} for constants starting with the
+	 *         "STATUS_" prefix.
 	 * @return the number of matching templates
 	 */
 	@Override
@@ -1147,7 +1180,7 @@ public class DDMTemplateLocalServiceImpl
 
 	/**
 	 * Returns the number of templates matching the group, class name ID, class
-	 * PK, name keyword, description keyword, type, mode, and language.
+	 * PK, name keyword, description keyword, type, mode, language, and status.
 	 *
 	 * @param  companyId the primary key of the template's company
 	 * @param  groupId the primary key of the group
@@ -1168,6 +1201,9 @@ public class DDMTemplateLocalServiceImpl
 	 * @param  language the template's script language (optionally
 	 *         <code>null</code>). For more information, see
 	 *         DDMTemplateConstants in the dynamic-data-mapping-api module.
+	 * @param  status the template's workflow status. For more information see
+	 *         {@link WorkflowConstants} for constants starting with the
+	 *         "STATUS_" prefix.
 	 * @param  andOperator whether every field must match its keywords, or just
 	 *         one field.
 	 * @return the number of matching templates
@@ -1185,8 +1221,8 @@ public class DDMTemplateLocalServiceImpl
 
 	/**
 	 * Returns the number of templates matching the group IDs, class name IDs,
-	 * class PK, type, and mode, and matching the keywords in the template names
-	 * and descriptions.
+	 * class PK, type, mode, and status, and matching the keywords in the
+	 * template names and descriptions.
 	 *
 	 * @param  companyId the primary key of the template's company
 	 * @param  groupIds the primary keys of the groups
@@ -1203,6 +1239,9 @@ public class DDMTemplateLocalServiceImpl
 	 * @param  mode the template's mode (optionally <code>null</code>). For more
 	 *         information, see DDMTemplateConstants in the
 	 *         dynamic-data-mapping-api module.
+	 * @param  status the template's workflow status. For more information see
+	 *         {@link WorkflowConstants} for constants starting with the
+	 *         "STATUS_" prefix.
 	 * @return the number of matching templates
 	 */
 	@Override
@@ -1218,7 +1257,8 @@ public class DDMTemplateLocalServiceImpl
 
 	/**
 	 * Returns the number of templates matching the group IDs, class name IDs,
-	 * class PKs, name keyword, description keyword, type, mode, and language.
+	 * class PKs, name keyword, description keyword, type, mode, language, and
+	 * status.
 	 *
 	 * @param  companyId the primary key of the templates company
 	 * @param  groupIds the primary keys of the groups
@@ -1239,6 +1279,9 @@ public class DDMTemplateLocalServiceImpl
 	 * @param  language the template's script language (optionally
 	 *         <code>null</code>). For more information, see
 	 *         DDMTemplateConstants in the dynamic-data-mapping-api module.
+	 * @param  status the template's workflow status. For more information see
+	 *         {@link WorkflowConstants} for constants starting with the
+	 *         "STATUS_" prefix.
 	 * @param  andOperator whether every field must match its keywords, or just
 	 *         one field.
 	 * @return the number of matching templates
@@ -1360,7 +1403,7 @@ public class DDMTemplateLocalServiceImpl
 	}
 
 	/**
-	 * Updates the template matching the ID.
+	 * Updates the template matching the primary key.
 	 *
 	 * @param  userId the primary key of the template's creator/owner
 	 * @param  templateId the primary key of the template

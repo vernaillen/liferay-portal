@@ -17,7 +17,7 @@
 <%@ include file="/init.jsp" %>
 
 <%
-JournalArticle article = ActionUtil.getArticle(request);
+JournalArticle article = journalDisplayContext.getArticle();
 
 long assetEntryId = 0;
 long classPK = 0;
@@ -40,12 +40,8 @@ if (article != null) {
 
 <aui:model-context bean="<%= article %>" model="<%= JournalArticle.class %>" />
 
-<h3><liferay-ui:message key="related-assets" /></h3>
-
-<aui:fieldset>
-	<liferay-ui:input-asset-links
-		assetEntryId="<%= assetEntryId %>"
-		className="<%= JournalArticle.class.getName() %>"
-		classPK="<%= classPK %>"
-	/>
-</aui:fieldset>
+<liferay-ui:input-asset-links
+	assetEntryId="<%= assetEntryId %>"
+	className="<%= JournalArticle.class.getName() %>"
+	classPK="<%= classPK %>"
+/>

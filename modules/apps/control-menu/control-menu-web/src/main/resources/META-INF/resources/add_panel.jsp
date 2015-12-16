@@ -38,7 +38,7 @@
 
 			<c:if test="<%= !group.isControlPanel() && (hasLayoutAddPermission || hasLayoutUpdatePermission || (layoutTypePortlet.isCustomizable() && layoutTypePortlet.isCustomizedView() && hasLayoutCustomizePermission)) %>">
 				<div class="add-content-menu" id="<portlet:namespace />addPanelContainer">
-					<aui:button cssClass="close" name="closePanelAdd" value="&times;" />
+					<aui:icon cssClass="close" id="closePanelAdd" image="times" markupView="lexicon" url="javascript:;" />
 
 					<%
 					String[] tabs1Names = new String[0];
@@ -59,15 +59,7 @@
 						tabs1Names = ArrayUtil.append(tabs1Names, "applications");
 					}
 
-					if (hasLayoutAddPermission) {
-						tabs1Names = ArrayUtil.append(tabs1Names, "page");
-					}
-
 					String selectedTab = GetterUtil.getString(SessionClicks.get(request, "com.liferay.control.menu.web_addPanelTab", "content"));
-
-					if (stateMaximized) {
-						selectedTab = "page";
-					}
 					%>
 
 					<h1><liferay-ui:message key="add" /></h1>
@@ -89,37 +81,11 @@
 								<liferay-util:include page="/add_application.jsp" servletContext="<%= application %>" />
 							</liferay-ui:section>
 						</c:if>
-
-						<c:if test="<%= hasLayoutAddPermission && themeDisplay.isShowSiteAdministrationIcon() %>">
-
-							<%
-							long selPlid = ParamUtil.getLong(request, "selPlid", LayoutConstants.DEFAULT_PLID);
-							%>
-
-							<liferay-ui:section>
-
-								<%
-								PortletURL newPageURL = PortletProviderUtil.getPortletURL(request, groupDisplayContextHelper.getLiveGroup(), Layout.class.getName(), PortletProvider.Action.EDIT);
-
-								newPageURL.setParameter("tabs1", layout.isPrivateLayout() ? "private-pages" : "public-pages");
-								newPageURL.setParameter("groupId", String.valueOf(groupDisplayContextHelper.getLiveGroupId()));
-								newPageURL.setParameter("selPlid", String.valueOf(selPlid));
-								newPageURL.setParameter("treeId", "layoutsTree");
-								newPageURL.setParameter("viewLayout", Boolean.TRUE.toString());
-
-								String newPageURLString = HttpUtil.setParameter(newPageURL.toString(), "refererPlid", String.valueOf(selPlid));
-								%>
-
-								<aui:button-row>
-									<aui:button href="<%= newPageURLString %>"  primary="<%= true %>" value="new-page" />
-								</aui:button-row>
-							</liferay-ui:section>
-						</c:if>
 					</liferay-ui:tabs>
 
 					<span class="added-message hide" id="<portlet:namespace />addedMessage">
 						<span class="alert-success message">
-							<liferay-ui:icon iconCssClass="icon-ok-sign" /> <span id="<portlet:namespace />portletName"></span> <liferay-ui:message key="added" />
+							<aui:icon image="check" markupView="lexicon" /> <span id="<portlet:namespace />portletName"></span> <liferay-ui:message key="added" />
 
 							<a class="content-link" href="javascript:;" id="<portlet:namespace />contentLink"><liferay-ui:message key="skip-to-content" /></a>
 						</span>

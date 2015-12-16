@@ -33,8 +33,6 @@ import com.liferay.portal.kernel.image.GhostscriptUtil;
 import com.liferay.portal.kernel.image.ImageMagickUtil;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
 import com.liferay.portal.kernel.io.unsync.UnsyncPrintWriter;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
-import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.log.SanitizerLogWrapper;
@@ -44,14 +42,11 @@ import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.MessageBusUtil;
 import com.liferay.portal.kernel.messaging.MessageListener;
 import com.liferay.portal.kernel.messaging.MessageListenerException;
-import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.scripting.ScriptingException;
 import com.liferay.portal.kernel.scripting.ScriptingHelperUtil;
 import com.liferay.portal.kernel.scripting.ScriptingUtil;
-import com.liferay.portal.kernel.search.Indexer;
-import com.liferay.portal.kernel.search.IndexerRegistryUtil;
 import com.liferay.portal.kernel.search.SearchEngineUtil;
 import com.liferay.portal.kernel.servlet.DirectServletRegistryUtil;
 import com.liferay.portal.kernel.servlet.SessionErrors;
@@ -60,8 +55,6 @@ import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.InstancePool;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.ProgressStatusConstants;
-import com.liferay.portal.kernel.util.ProgressTracker;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -69,7 +62,9 @@ import com.liferay.portal.kernel.util.ThreadUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.UnsyncPrintWriterPool;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.kernel.xuggler.XugglerInstallException;
 import com.liferay.portal.kernel.xuggler.XugglerUtil;
 import com.liferay.portal.model.CompanyConstants;
 import com.liferay.portal.security.auth.PrincipalException;
@@ -85,7 +80,6 @@ import com.liferay.portal.security.membershippolicy.UserGroupMembershipPolicyFac
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.service.ServiceComponentLocalService;
 import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.struts.ActionConstants;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.upload.UploadServletRequestImpl;
 import com.liferay.portal.util.MaintenanceUtil;
@@ -94,7 +88,6 @@ import com.liferay.portal.util.PortalInstances;
 import com.liferay.portal.util.PortletKeys;
 import com.liferay.portal.util.PrefsPropsUtil;
 import com.liferay.portal.util.ShutdownUtil;
-import com.liferay.portal.util.WebKeys;
 import com.liferay.portlet.ActionResponseImpl;
 import com.liferay.portlet.admin.util.CleanUpPermissionsUtil;
 import com.liferay.portlet.documentlibrary.util.DLPreviewableProcessor;
@@ -192,12 +185,14 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 			gc();
 		}
 		else if (cmd.equals("installXuggler")) {
-			installXuggler(actionRequest, actionResponse);
-
-			actionResponse.setRenderParameter(
-				"mvcPath", ActionConstants.COMMON_NULL);
-
-			return;
+			try {
+				installXuggler(actionRequest, actionResponse);
+			}
+			catch (XugglerInstallException xie) {
+				SessionErrors.add(
+					actionRequest, XugglerInstallException.class.getName(),
+					xie);
+			}
 		}
 		else if (cmd.equals("reindex")) {
 			reindex(actionRequest);
@@ -213,9 +208,6 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 		}
 		else if (cmd.equals("threadDump")) {
 			threadDump();
-		}
-		else if (cmd.equals("toggleIndexerEnabled")) {
-			toggleIndexerEnabled(actionRequest);
 		}
 		else if (cmd.equals("updateCaptcha")) {
 			updateCaptcha(actionRequest, portletPreferences);
@@ -318,7 +310,7 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 		if (path != null) {
 			PortletURL portletURL = actionResponseImpl.createRenderURL();
 
-			portletURL.setParameter("struts_action", path);
+			portletURL.setParameter("mvcRenderCommandName", path);
 			portletURL.setWindowState(WindowState.MAXIMIZED);
 
 			return portletURL.toString();
@@ -347,48 +339,12 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
-		ProgressTracker progressTracker = new ProgressTracker(
-			WebKeys.XUGGLER_INSTALL_STATUS);
-
-		progressTracker.addProgress(
-			ProgressStatusConstants.DOWNLOADING, 15, "downloading-xuggler");
-		progressTracker.addProgress(
-			ProgressStatusConstants.COPYING, 70, "copying-xuggler-files");
-
-		progressTracker.initialize(actionRequest);
-
 		String jarName = ParamUtil.getString(actionRequest, "jarName");
 
-		try {
-			XugglerUtil.installNativeLibraries(jarName, progressTracker);
-
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
-
-			jsonObject.put("success", Boolean.TRUE);
-
-			JSONPortletResponseUtil.writeJSON(
-				actionRequest, actionResponse, jsonObject);
-
-			actionResponse.setRenderParameter(
-				"mvcPath", ActionConstants.COMMON_NULL);
-		}
-		catch (Exception e) {
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
-
-			jsonObject.put("exception", e.getMessage());
-			jsonObject.put("success", Boolean.FALSE);
-
-			JSONPortletResponseUtil.writeJSON(
-				actionRequest, actionResponse, jsonObject);
-
-			actionResponse.setRenderParameter(
-				"mvcPath", ActionConstants.COMMON_NULL);
-		}
-
-		progressTracker.finish(actionRequest);
+		XugglerUtil.installNativeLibraries(jarName);
 	}
 
-	protected void reindex(ActionRequest actionRequest) throws Exception {
+	protected void reindex(final ActionRequest actionRequest) throws Exception {
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
@@ -431,7 +387,8 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 				try {
 					BackgroundTask backgroundTask =
 						BackgroundTaskManagerUtil.getBackgroundTask(
-							message.getLong("backgroundTaskId"));
+							message.getLong(
+								BackgroundTaskConstants.BACKGROUND_TASK_ID));
 
 					Map<String, Serializable> taskContextMap =
 						backgroundTask.getTaskContextMap();
@@ -450,6 +407,21 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 						BackgroundTaskConstants.STATUS_CANCELLED) ||
 					(status == BackgroundTaskConstants.STATUS_FAILED) ||
 					(status == BackgroundTaskConstants.STATUS_SUCCESSFUL)) {
+
+					PortletSession portletSession =
+						actionRequest.getPortletSession();
+
+					long lastAccessedTime =
+						portletSession.getLastAccessedTime();
+					int maxInactiveInterval =
+						portletSession.getMaxInactiveInterval();
+
+					int extendedMaxInactiveIntervalTime =
+						(int)(System.currentTimeMillis() - lastAccessedTime +
+							maxInactiveInterval);
+
+					portletSession.setMaxInactiveInterval(
+						extendedMaxInactiveIntervalTime);
 
 					countDownLatch.countDown();
 				}
@@ -577,25 +549,6 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 		}
 	}
 
-	protected void toggleIndexerEnabled(ActionRequest actionRequest)
-		throws Exception {
-
-		String className = ParamUtil.getString(actionRequest, "className");
-
-		Indexer<?> indexer = IndexerRegistryUtil.nullSafeGetIndexer(className);
-
-		boolean indexerEnabled = indexer.isIndexerEnabled();
-
-		if (indexerEnabled) {
-			indexer.setIndexerEnabled(false);
-		}
-		else {
-			indexer.setIndexerEnabled(true);
-
-			reindex(actionRequest);
-		}
-	}
-
 	protected void updateCaptcha(
 			ActionRequest actionRequest, PortletPreferences portletPreferences)
 		throws Exception {
@@ -715,12 +668,6 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 			actionRequest, "journalImageSmallMaxSize");
 		String shoppingImageExtensions = getFileExtensions(
 			actionRequest, "shoppingImageExtensions");
-		long scImageMaxSize = ParamUtil.getLong(
-			actionRequest, "scImageMaxSize");
-		long scImageThumbnailMaxHeight = ParamUtil.getLong(
-			actionRequest, "scImageThumbnailMaxHeight");
-		long scImageThumbnailMaxWidth = ParamUtil.getLong(
-			actionRequest, "scImageThumbnailMaxWidth");
 		long shoppingImageLargeMaxSize = ParamUtil.getLong(
 			actionRequest, "shoppingImageLargeMaxSize");
 		long shoppingImageMediumMaxSize = ParamUtil.getLong(
@@ -763,14 +710,6 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 		portletPreferences.setValue(
 			PropsKeys.SHOPPING_IMAGE_SMALL_MAX_SIZE,
 			String.valueOf(shoppingImageSmallMaxSize));
-		portletPreferences.setValue(
-			PropsKeys.SC_IMAGE_MAX_SIZE, String.valueOf(scImageMaxSize));
-		portletPreferences.setValue(
-			PropsKeys.SC_IMAGE_THUMBNAIL_MAX_HEIGHT,
-			String.valueOf(scImageThumbnailMaxHeight));
-		portletPreferences.setValue(
-			PropsKeys.SC_IMAGE_THUMBNAIL_MAX_WIDTH,
-			String.valueOf(scImageThumbnailMaxWidth));
 		portletPreferences.setValue(
 			PropsKeys.UPLOAD_SERVLET_REQUEST_IMPL_MAX_SIZE,
 			String.valueOf(uploadServletRequestImplMaxSize));
@@ -941,7 +880,7 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 	private static final Log _log = LogFactoryUtil.getLog(
 		EditServerMVCActionCommand.class);
 
-	private MailService _mailService;
-	private ServiceComponentLocalService _serviceComponentLocalService;
+	private volatile MailService _mailService;
+	private volatile ServiceComponentLocalService _serviceComponentLocalService;
 
 }

@@ -14,14 +14,22 @@
 
 package com.liferay.application.list;
 
+import com.liferay.application.list.util.LatentGroupManagerUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Portlet;
+import com.liferay.portal.model.User;
+import com.liferay.portal.model.UserNotificationDeliveryConstants;
 import com.liferay.portal.security.permission.PermissionChecker;
+import com.liferay.portal.service.UserNotificationEventLocalService;
+import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
+import com.liferay.portal.util.PortletCategoryKeys;
 import com.liferay.portlet.ControlPanelEntry;
 
 import java.io.IOException;
@@ -54,6 +62,18 @@ public abstract class BasePanelApp implements PanelApp {
 				getPortletId());
 	}
 
+	@Override
+	public int getNotificationsCount(User user) {
+		if (_userNotificationEventLocalService == null) {
+			return 0;
+		}
+
+		return _userNotificationEventLocalService.
+			getUserNotificationEventsCount(
+				user.getUserId(), _portlet.getPortletId(),
+				UserNotificationDeliveryConstants.TYPE_WEBSITE, false);
+	}
+
 	public Portlet getPortlet() {
 		return _portlet;
 	}
@@ -63,7 +83,7 @@ public abstract class BasePanelApp implements PanelApp {
 		throws PortalException {
 
 		return PortalUtil.getControlPanelPortletURL(
-			request, getGroup(request), getPortletId(), 0,
+			request, getGroup(request), getPortletId(), 0, 0,
 			PortletRequest.RENDER_PHASE);
 	}
 
@@ -114,9 +134,42 @@ public abstract class BasePanelApp implements PanelApp {
 	}
 
 	protected Group getGroup(HttpServletRequest request) {
-		return null;
+		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		Group group = themeDisplay.getScopeGroup();
+
+		if (!group.isControlPanel()) {
+			return null;
+		}
+
+		Portlet portlet = getPortlet();
+
+		String controlPanelEntryCategory =
+			portlet.getControlPanelEntryCategory();
+
+		if (Validator.isNull(controlPanelEntryCategory) ||
+			!controlPanelEntryCategory.startsWith(
+				PortletCategoryKeys.SITE_ADMINISTRATION)) {
+
+			return null;
+		}
+
+		HttpServletRequest originalRequest =
+			PortalUtil.getOriginalServletRequest(request);
+
+		return LatentGroupManagerUtil.getLatentGroup(
+			originalRequest.getSession());
+	}
+
+	protected void setUserNotificationEventLocalService(
+		UserNotificationEventLocalService userNotificationEventLocalService) {
+
+		_userNotificationEventLocalService = userNotificationEventLocalService;
 	}
 
 	private Portlet _portlet;
+	private UserNotificationEventLocalService
+		_userNotificationEventLocalService;
 
 }

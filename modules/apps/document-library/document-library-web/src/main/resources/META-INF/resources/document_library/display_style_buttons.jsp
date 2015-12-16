@@ -19,6 +19,7 @@
 <%
 String navigation = ParamUtil.getString(request, "navigation", "home");
 
+int curEntry = ParamUtil.getInteger(request, "curEntry");
 int deltaEntry = ParamUtil.getInteger(request, "deltaEntry");
 
 long folderId = GetterUtil.getLong((String)request.getAttribute("view.jsp-folderId"));
@@ -38,6 +39,10 @@ PortletURL displayStyleURL = renderResponse.createRenderURL();
 displayStyleURL.setParameter("mvcRenderCommandName", Validator.isNull(keywords) ? "/document_library/view" : "/document_library/search");
 displayStyleURL.setParameter("navigation", HtmlUtil.escapeJS(navigation));
 
+if (curEntry > 0) {
+	displayStyleURL.setParameter("curEntry", String.valueOf(curEntry));
+}
+
 if (deltaEntry > 0) {
 	displayStyleURL.setParameter("deltaEntry", String.valueOf(deltaEntry));
 }
@@ -49,8 +54,8 @@ if (fileEntryTypeId != -1) {
 }
 %>
 
-<liferay-ui:app-view-display-style
-	displayStyle="<%= displayStyle %>"
-	displayStyles="<%= dlPortletInstanceSettings.getDisplayViews() %>"
-	displayStyleURL="<%= displayStyleURL %>"
+<liferay-frontend:management-bar-display-buttons
+	displayViews="<%= dlPortletInstanceSettings.getDisplayViews() %>"
+	portletURL="<%= displayStyleURL %>"
+	selectedDisplayStyle="<%= displayStyle %>"
 />

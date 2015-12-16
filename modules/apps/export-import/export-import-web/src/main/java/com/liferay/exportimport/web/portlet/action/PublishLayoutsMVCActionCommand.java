@@ -25,17 +25,13 @@ import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.auth.AuthException;
 import com.liferay.portal.security.auth.PrincipalException;
 import com.liferay.portal.security.auth.RemoteAuthException;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portlet.exportimport.RemoteExportException;
-import com.liferay.portlet.exportimport.configuration.ExportImportConfigurationParameterMapFactory;
 import com.liferay.portlet.exportimport.staging.StagingUtil;
-
-import java.util.Map;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -63,19 +59,15 @@ public class PublishLayoutsMVCActionCommand extends BaseMVCActionCommand {
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
 
 		if (Validator.isNull(cmd)) {
-			String portletId = PortalUtil.getPortletId(actionRequest);
-
-			Map<String, String[]> parameterMap =
-				ExportImportConfigurationParameterMapFactory.buildParameterMap(
-					actionRequest);
-
 			SessionMessages.add(
-				actionRequest, portletId + "parameterMap", parameterMap);
+				actionRequest,
+				PortalUtil.getPortletId(actionRequest) +
+					SessionMessages.KEY_SUFFIX_FORCE_SEND_REDIRECT);
+
+			hideDefaultSuccessMessage(actionRequest);
 
 			return;
 		}
-
-		String redirect = ParamUtil.getString(actionRequest, "redirect");
 
 		try {
 			if (cmd.equals("copy_from_live")) {
@@ -110,7 +102,7 @@ public class PublishLayoutsMVCActionCommand extends BaseMVCActionCommand {
 				StagingUtil.unschedulePublishToRemote(actionRequest);
 			}
 
-			sendRedirect(actionRequest, actionResponse, redirect);
+			sendRedirect(actionRequest, actionResponse);
 		}
 		catch (Exception e) {
 			if (e instanceof PrincipalException) {
@@ -133,11 +125,7 @@ public class PublishLayoutsMVCActionCommand extends BaseMVCActionCommand {
 					SessionErrors.add(actionRequest, e.getClass(), e);
 				}
 
-				redirect = StringUtil.replace(
-					redirect, "tabs2=current-and-previous",
-					"tabs2=new-publication-process");
-
-				sendRedirect(actionRequest, actionResponse, redirect);
+				sendRedirect(actionRequest, actionResponse);
 			}
 			else {
 				throw e;

@@ -17,6 +17,10 @@ AUI.add(
 				value: themeDisplay.getLanguageId()
 			},
 
+			readOnly: {
+				value: false
+			},
+
 			templateNamespace: {
 				value: 'ddm.paginated_form'
 			}
@@ -39,7 +43,9 @@ AUI.add(
 				var normalizedLayout = instance._normalizeLayout(layout);
 
 				return {
-					pages: normalizedLayout.pages
+					pages: normalizedLayout.pages,
+					readOnly: instance.get('readOnly'),
+					strings: instance.get('strings')
 				};
 			},
 
@@ -104,7 +110,8 @@ AUI.add(
 				return A.merge(
 					column,
 					{
-						fields: column.fieldNames.map(A.bind('_renderFieldTemplate', instance))
+						fields: column.fieldNames.map(A.bind('_renderFieldTemplate', instance)),
+						size: column.size
 					}
 				);
 			},
@@ -168,7 +175,7 @@ AUI.add(
 							columns: [
 								{
 									fieldNames: [fieldName],
-									size: 12
+									size: instance.get('size')
 								}
 							]
 						};

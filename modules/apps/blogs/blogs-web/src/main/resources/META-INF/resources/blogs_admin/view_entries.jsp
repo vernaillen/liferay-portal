@@ -33,6 +33,8 @@ else {
 	request.setAttribute(WebKeys.SINGLE_PAGE_APPLICATION_CLEAR_CACHE, Boolean.TRUE);
 }
 
+int cur = ParamUtil.getInteger(request, SearchContainer.DEFAULT_CUR_PARAM);
+int delta = ParamUtil.getInteger(request, SearchContainer.DEFAULT_DELTA_PARAM);
 String orderByCol = ParamUtil.getString(request, "orderByCol", "title");
 String orderByType = ParamUtil.getString(request, "orderByType", "asc");
 
@@ -40,23 +42,35 @@ PortletURL navigationPortletURL = renderResponse.createRenderURL();
 
 navigationPortletURL.setParameter("mvcRenderCommandName", "/blogs_admin/view");
 
-PortletURL portletURL = renderResponse.createRenderURL();
+if (delta > 0) {
+	navigationPortletURL.setParameter("delta", String.valueOf(delta));
+}
 
-portletURL.setParameter("mvcRenderCommandName", "/blogs_admin/view");
+navigationPortletURL.setParameter("orderBycol", orderByCol);
+navigationPortletURL.setParameter("orderByType", orderByType);
+
+PortletURL portletURL = PortletURLUtil.clone(navigationPortletURL, liferayPortletResponse);
+
 portletURL.setParameter("entriesNavigation", entriesNavigation);
+
+PortletURL displayStyleURL = PortletURLUtil.clone(portletURL, liferayPortletResponse);
+
+if (cur > 0) {
+	displayStyleURL.setParameter("cur", String.valueOf(cur));
+}
 
 String keywords = ParamUtil.getString(request, "keywords");
 %>
 
 <liferay-frontend:management-bar
-	checkBoxContainerId="blogEntriesSearchContainer"
 	includeCheckBox="<%= true %>"
+	searchContainerId="blogEntries"
 >
 	<c:if test="<%= Validator.isNull(keywords) %>">
 		<liferay-frontend:management-bar-buttons>
 			<liferay-frontend:management-bar-display-buttons
 				displayViews='<%= new String[] {"icon", "descriptive", "list"} %>'
-				portletURL="<%= portletURL %>"
+				portletURL="<%= displayStyleURL %>"
 				selectedDisplayStyle="<%= displayStyle %>"
 			/>
 		</liferay-frontend:management-bar-buttons>
@@ -83,7 +97,7 @@ String keywords = ParamUtil.getString(request, "keywords");
 		String taglibURL = "javascript:" + renderResponse.getNamespace() + "deleteEntries();";
 		%>
 
-		<aui:a cssClass="btn" href="<%= taglibURL %>" iconCssClass='<%= TrashUtil.isTrashEnabled(scopeGroupId) ? "icon-trash" : "icon-remove" %>' />
+		<liferay-frontend:management-bar-button href="<%= taglibURL %>" icon='<%= TrashUtil.isTrashEnabled(scopeGroupId) ? "trash" : "times" %>' label='<%= TrashUtil.isTrashEnabled(scopeGroupId) ? "recycle-bin" : "delete" %>' />
 	</liferay-frontend:management-bar-action-buttons>
 </liferay-frontend:management-bar>
 
@@ -110,12 +124,8 @@ String keywords = ParamUtil.getString(request, "keywords");
 			id="blogEntries"
 			orderByComparator="<%= BlogsUtil.getOrderByComparator(orderByCol, orderByType) %>"
 			rowChecker="<%= new EmptyOnClickRowChecker(renderResponse) %>"
-			searchContainer="<%= new EntrySearch(renderRequest, portletURL) %>"
+			searchContainer='<%= new SearchContainer(renderRequest, PortletURLUtil.clone(portletURL, liferayPortletResponse), null, "no-entries-were-found") %>'
 		>
-
-			<%
-			EntrySearchTerms searchTerms = (EntrySearchTerms)searchContainer.getSearchTerms();
-			%>
 
 			<liferay-ui:search-container-results>
 				<%@ include file="/blogs_admin/entry_search_results.jspf" %>

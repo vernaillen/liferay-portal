@@ -18,14 +18,16 @@ import com.liferay.control.menu.BaseControlMenuEntry;
 import com.liferay.control.menu.ControlMenuEntry;
 import com.liferay.control.menu.constants.ControlMenuCategoryKeys;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.Layout;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
-import com.liferay.portal.util.WebKeys;
 
 import java.util.Locale;
+import java.util.Map;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletURL;
@@ -35,7 +37,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.osgi.service.component.annotations.Component;
 
 /**
- *
  * @author Julio Camarero
  */
 @Component(
@@ -50,13 +51,27 @@ public class ManageLayoutControlMenuEntry
 	extends BaseControlMenuEntry implements ControlMenuEntry {
 
 	@Override
+	public Map<String, Object> getData(HttpServletRequest request) {
+		Map<String, Object> data = super.getData(request);
+
+		data.put("qa-id", "edit");
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		data.put("title", getLabel(themeDisplay.getLocale()));
+
+		return data;
+	}
+
+	@Override
 	public String getIconCssClass(HttpServletRequest request) {
-		return "icon-cog";
+		return "cog";
 	}
 
 	@Override
 	public String getLabel(Locale locale) {
-		return "edit";
+		return LanguageUtil.get(locale, "edit");
 	}
 
 	@Override
@@ -65,7 +80,7 @@ public class ManageLayoutControlMenuEntry
 			Layout.class.getName(), PortletProvider.Action.EDIT);
 
 		PortletURL editPageURL = PortalUtil.getControlPanelPortletURL(
-			request, portletId, 0, PortletRequest.RENDER_PHASE);
+			request, portletId, PortletRequest.RENDER_PHASE);
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
 			WebKeys.THEME_DISPLAY);

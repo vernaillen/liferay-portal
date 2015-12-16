@@ -43,7 +43,6 @@ public class TeamLocalServiceWrapper implements TeamLocalService,
 	}
 
 	/**
-	* @throws PortalException
 	* @deprecated As of 7.0.0, replaced by {@link #addTeam(long, long, String,
 	String, ServiceContext)}
 	*/
@@ -339,6 +338,11 @@ public class TeamLocalServiceWrapper implements TeamLocalService,
 		return _teamLocalService.getGroupTeams(groupId);
 	}
 
+	@Override
+	public com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery getIndexableActionableDynamicQuery() {
+		return _teamLocalService.getIndexableActionableDynamicQuery();
+	}
+
 	/**
 	* Returns the OSGi service identifier.
 	*
@@ -483,6 +487,12 @@ public class TeamLocalServiceWrapper implements TeamLocalService,
 	@Override
 	public int getUserGroupTeamsCount(long userGroupId) {
 		return _teamLocalService.getUserGroupTeamsCount(userGroupId);
+	}
+
+	@Override
+	public java.util.List<com.liferay.portal.model.Team> getUserOrUserGroupTeams(
+		long groupId, long userId) {
+		return _teamLocalService.getUserOrUserGroupTeams(groupId, userId);
 	}
 
 	/**

@@ -1,11 +1,14 @@
 ;(function() {
-	var PATH_DDM_TYPE_OPTIONS = Liferay.ThemeDisplay.getPathContext() + '/o/ddm-type-options';
+	var LiferayAUI = Liferay.AUI;
+
+	var PATH_DDM_TYPE_OPTIONS = Liferay.ThemeDisplay.getPathContext() + '/o/dynamic-data-mapping-type-options';
 
 	AUI().applyConfig(
 		{
 			groups: {
 				'field-options': {
 					base: PATH_DDM_TYPE_OPTIONS + '/',
+					filter: LiferayAUI.getFilterConfig(),
 					modules: {
 						'liferay-ddm-form-field-options': {
 							condition: {
@@ -13,7 +16,8 @@
 							},
 							path: 'options_field.js',
 							requires: [
-								'liferay-auto-fields',
+								'aui-sortable-list',
+								'liferay-ddm-form-field-key-value',
 								'liferay-ddm-form-renderer-field'
 							]
 						},

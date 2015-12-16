@@ -30,6 +30,15 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
+ * Participates in every unauthenticated HTTP request to Liferay Portal.
+ *
+ * <p>
+ * This class looks for the <code>OPENID_ID_LOGIN</code> HTTP session attribute.
+ * If this attribute is found and if the attribute's value matches the ID of an
+ * existing Liferay Portal user, then the user is logged in without any further
+ * challenge.
+ * </p>
+ *
  * @author Jorge Ferrer
  */
 @Component(immediate = true, service = AutoLogin.class)
@@ -67,7 +76,7 @@ public class OpenIdAutoLogin extends BaseAutoLogin {
 		return credentials;
 	}
 
-	@Reference
+	@Reference(unbind = "-")
 	protected void setOpenId(OpenId openId) {
 		_openId = openId;
 	}
@@ -77,7 +86,7 @@ public class OpenIdAutoLogin extends BaseAutoLogin {
 		_userLocalService = userLocalService;
 	}
 
-	private OpenId _openId;
-	private UserLocalService _userLocalService;
+	private volatile OpenId _openId;
+	private volatile UserLocalService _userLocalService;
 
 }

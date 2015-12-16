@@ -484,6 +484,11 @@ public class WikiPageLocalServiceWrapper implements WikiPageLocalService,
 	}
 
 	@Override
+	public com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery getIndexableActionableDynamicQuery() {
+		return _wikiPageLocalService.getIndexableActionableDynamicQuery();
+	}
+
+	@Override
 	public com.liferay.wiki.model.WikiPage getLatestPage(long nodeId,
 		java.lang.String title, int status, boolean preferApproved)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -1021,10 +1026,10 @@ public class WikiPageLocalServiceWrapper implements WikiPageLocalService,
 	@Override
 	public void updateAsset(long userId, com.liferay.wiki.model.WikiPage page,
 		long[] assetCategoryIds, java.lang.String[] assetTagNames,
-		long[] assetLinkEntryIds)
+		long[] assetLinkEntryIds, java.lang.Double priority)
 		throws com.liferay.portal.kernel.exception.PortalException {
 		_wikiPageLocalService.updateAsset(userId, page, assetCategoryIds,
-			assetTagNames, assetLinkEntryIds);
+			assetTagNames, assetLinkEntryIds, priority);
 	}
 
 	@Override

@@ -18,7 +18,9 @@ import com.liferay.control.menu.BaseControlMenuEntry;
 import com.liferay.control.menu.ControlMenuEntry;
 import com.liferay.control.menu.constants.ControlMenuCategoryKeys;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Layout;
 import com.liferay.portal.model.LayoutTypePortlet;
@@ -27,16 +29,15 @@ import com.liferay.portal.service.permission.LayoutPermissionUtil;
 import com.liferay.portal.service.permission.PortletPermissionUtil;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.SessionClicks;
-import com.liferay.portal.util.WebKeys;
 
 import java.util.Locale;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
 
 /**
- *
  * @author Julio Camarero
  */
 @Component(
@@ -51,6 +52,20 @@ public class ToggleControlsControlMenuEntry
 	extends BaseControlMenuEntry implements ControlMenuEntry {
 
 	@Override
+	public Map<String, Object> getData(HttpServletRequest request) {
+		Map<String, Object> data = super.getData(request);
+
+		data.put("qa-id", "showControls");
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		data.put("title", getLabel(themeDisplay.getLocale()));
+
+		return data;
+	}
+
+	@Override
 	public String getIconCssClass(HttpServletRequest request) {
 		String stateCss = null;
 
@@ -60,18 +75,18 @@ public class ToggleControlsControlMenuEntry
 				"visible"));
 
 		if (toggleControls.equals("visible")) {
-			stateCss = "icon-eye-open";
+			stateCss = "view";
 		}
 		else {
-			stateCss = "icon-eye-close";
+			stateCss = "hidden";
 		}
 
-		return "controls-state-icon " + stateCss;
+		return stateCss;
 	}
 
 	@Override
 	public String getLabel(Locale locale) {
-		return "edit-controls";
+		return LanguageUtil.get(locale, "edit-controls");
 	}
 
 	@Override

@@ -16,6 +16,7 @@ package com.liferay.exportimport.lar;
 
 import com.liferay.exportimport.xstream.ConverterAdapter;
 import com.liferay.exportimport.xstream.configurator.XStreamConfigurator;
+import com.liferay.exportimport.xstream.configurator.XStreamConfiguratorRegistryUtil;
 import com.liferay.portal.NoSuchRoleException;
 import com.liferay.portal.NoSuchTeamException;
 import com.liferay.portal.kernel.bean.BeanPropertiesUtil;
@@ -28,19 +29,22 @@ import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.lock.Lock;
-import com.liferay.portal.kernel.lock.LockManagerUtil;
+import com.liferay.portal.kernel.lock.LockManager;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.DateRange;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.KeyValuePair;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.xml.Attribute;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.Node;
@@ -64,6 +68,7 @@ import com.liferay.portal.model.RoleConstants;
 import com.liferay.portal.model.StagedGroupedModel;
 import com.liferay.portal.model.StagedModel;
 import com.liferay.portal.model.Team;
+import com.liferay.portal.model.WorkflowedModel;
 import com.liferay.portal.security.permission.ResourceActionsUtil;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.ResourceBlockLocalServiceUtil;
@@ -92,7 +97,6 @@ import com.liferay.portlet.exportimport.lar.StagedModelDataHandlerUtil;
 import com.liferay.portlet.exportimport.lar.StagedModelType;
 import com.liferay.portlet.exportimport.lar.UserIdStrategy;
 import com.liferay.portlet.exportimport.xstream.XStreamAlias;
-import com.liferay.portlet.exportimport.xstream.XStreamAliasRegistryUtil;
 import com.liferay.portlet.exportimport.xstream.XStreamConverter;
 import com.liferay.portlet.messageboards.model.MBMessage;
 import com.liferay.portlet.ratings.model.RatingsEntry;
@@ -116,10 +120,6 @@ import java.util.Set;
 
 import jodd.bean.BeanUtil;
 
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
-
 /**
  * <p>
  * Holds context information that is used during exporting and importing portlet
@@ -134,8 +134,10 @@ import org.osgi.service.component.annotations.ReferencePolicy;
  */
 public class PortletDataContextImpl implements PortletDataContext {
 
-	public PortletDataContextImpl() {
+	public PortletDataContextImpl(LockManager lockManager) {
 		initXStream();
+
+		_lockManager = lockManager;
 	}
 
 	/**
@@ -164,33 +166,11 @@ public class PortletDataContextImpl implements PortletDataContext {
 			return;
 		}
 
-		List<AssetLink> directAssetLinks =
-			AssetLinkLocalServiceUtil.getDirectLinks(assetEntry.getEntryId());
+		List<AssetLink> assetLinks = AssetLinkLocalServiceUtil.getLinks(
+			assetEntry.getEntryId());
 
-		if (directAssetLinks.isEmpty()) {
-			return;
-		}
-
-		Map<Integer, List<AssetLink>> assetLinksMap = new HashMap<>();
-
-		for (AssetLink assetLink : directAssetLinks) {
-			List<AssetLink> assetLinks = assetLinksMap.get(assetLink.getType());
-
-			if (assetLinks == null) {
-				assetLinks = new ArrayList<>();
-
-				assetLinksMap.put(assetLink.getType(), assetLinks);
-			}
-
-			assetLinks.add(assetLink);
-		}
-
-		for (Map.Entry<Integer, List<AssetLink>> entry :
-				assetLinksMap.entrySet()) {
-
-			_assetLinksMap.put(
-				getPrimaryKeyString(assetEntry.getClassUuid(), entry.getKey()),
-				entry.getValue());
+		for (AssetLink assetLink : assetLinks) {
+			_assetLinkIds.add(assetLink.getLinkId());
 		}
 	}
 
@@ -233,19 +213,7 @@ public class PortletDataContextImpl implements PortletDataContext {
 
 		element.addAttribute("path", path);
 
-		if (classedModel instanceof AttachedModel) {
-			AttachedModel attachedModel = (AttachedModel)classedModel;
-
-			element.addAttribute("class-name", attachedModel.getClassName());
-		}
-		else if (BeanUtil.hasProperty(classedModel, "className")) {
-			String className = BeanPropertiesUtil.getStringSilent(
-				classedModel, "className");
-
-			if (className != null) {
-				element.addAttribute("class-name", className);
-			}
-		}
+		populateClassNameAttribute(classedModel, element);
 
 		if (!hasPrimaryKey(String.class, path)) {
 			if (classedModel instanceof AuditedModel) {
@@ -354,9 +322,9 @@ public class PortletDataContextImpl implements PortletDataContext {
 	@Override
 	public void addLocks(Class<?> clazz, String key) throws PortalException {
 		if (!_locksMap.containsKey(getPrimaryKeyString(clazz, key)) &&
-			LockManagerUtil.isLocked(clazz.getName(), key)) {
+			_lockManager.isLocked(clazz.getName(), key)) {
 
-			Lock lock = LockManagerUtil.getLock(clazz.getName(), key);
+			Lock lock = _lockManager.getLock(clazz.getName(), key);
 
 			addLocks(clazz.getName(), key, lock);
 		}
@@ -755,8 +723,17 @@ public class PortletDataContextImpl implements PortletDataContext {
 	}
 
 	@Override
+	public Set<Long> getAssetLinkIds() {
+		return _assetLinkIds;
+	}
+
+	/**
+	 * @deprecated As of 7.0.0, replaced by {@link #getAssetLinkIds()}
+	 */
+	@Deprecated
+	@Override
 	public Map<String, List<AssetLink>> getAssetLinksMap() {
-		return _assetLinksMap;
+		return Collections.emptyMap();
 	}
 
 	@Override
@@ -1400,9 +1377,9 @@ public class PortletDataContextImpl implements PortletDataContext {
 	public Object getZipEntryAsObject(Element element, String path) {
 		Object object = fromXML(getZipEntryAsString(path));
 
-		Attribute classNameAttribute = element.attribute("class-name");
+		Attribute classNameAttribute = element.attribute("attached-class-name");
 
-		if (classNameAttribute != null) {
+		if ((object != null) && (classNameAttribute != null)) {
 			BeanPropertiesUtil.setProperty(
 				object, "className", classNameAttribute.getText());
 		}
@@ -1590,7 +1567,7 @@ public class PortletDataContextImpl implements PortletDataContext {
 			expirationTime = expirationDate.getTime();
 		}
 
-		LockManagerUtil.lock(
+		_lockManager.lock(
 			userId, clazz.getName(), newKey, lock.getOwner(),
 			lock.isInheritable(), expirationTime);
 	}
@@ -1769,6 +1746,42 @@ public class PortletDataContextImpl implements PortletDataContext {
 		}
 
 		return false;
+	}
+
+	@Override
+	public boolean isMissingReference(Element referenceElement) {
+		Attribute missingAttribute = referenceElement.attribute("missing");
+
+		if ((missingAttribute != null) &&
+			!GetterUtil.getBoolean(
+				referenceElement.attributeValue("missing"))) {
+
+			return false;
+		}
+
+		if (_missingReferences.isEmpty()) {
+			List<Element> missingReferenceElements =
+				_missingReferencesElement.elements();
+
+			for (Element missingReferenceElement : missingReferenceElements) {
+				String missingReferenceClassName =
+					missingReferenceElement.attributeValue("class-name");
+				String missingReferenceClassPK =
+					missingReferenceElement.attributeValue("class-pk");
+
+				String missingReferenceKey = getReferenceKey(
+					missingReferenceClassName, missingReferenceClassPK);
+
+				_missingReferences.add(missingReferenceKey);
+			}
+		}
+
+		String className = referenceElement.attributeValue("class-name");
+		String classPK = referenceElement.attributeValue("class-pk");
+
+		String referenceKey = getReferenceKey(className, classPK);
+
+		return _missingReferences.contains(referenceKey);
 	}
 
 	@Override
@@ -2121,6 +2134,25 @@ public class PortletDataContextImpl implements PortletDataContext {
 			}
 		}
 
+		// Workflow
+
+		if (classedModel instanceof WorkflowedModel) {
+			WorkflowedModel workflowedModel = (WorkflowedModel)classedModel;
+
+			if (workflowedModel.getStatus() ==
+					WorkflowConstants.STATUS_APPROVED) {
+
+				serviceContext.setWorkflowAction(
+					WorkflowConstants.ACTION_PUBLISH);
+			}
+			else if (workflowedModel.getStatus() ==
+						WorkflowConstants.STATUS_DRAFT) {
+
+				serviceContext.setWorkflowAction(
+					WorkflowConstants.ACTION_SAVE_DRAFT);
+			}
+		}
+
 		return serviceContext;
 	}
 
@@ -2151,6 +2183,8 @@ public class PortletDataContextImpl implements PortletDataContext {
 
 		referenceElement.addAttribute(
 			"class-pk", String.valueOf(classedModel.getPrimaryKeyObj()));
+
+		populateClassNameAttribute(classedModel, referenceElement);
 
 		if (missing) {
 			if (classedModel instanceof StagedModel) {
@@ -2465,11 +2499,13 @@ public class PortletDataContextImpl implements PortletDataContext {
 	}
 
 	protected String getReferenceKey(ClassedModel classedModel) {
-		String referenceKey = ExportImportClassedModelUtil.getClassName(
-			classedModel);
-
-		return referenceKey.concat(StringPool.POUND).concat(
+		return getReferenceKey(
+			ExportImportClassedModelUtil.getClassName(classedModel),
 			String.valueOf(classedModel.getPrimaryKeyObj()));
+	}
+
+	protected String getReferenceKey(String className, String classPK) {
+		return className.concat(StringPool.POUND).concat(classPK);
 	}
 
 	protected long getUserId(AuditedModel auditedModel) {
@@ -2491,16 +2527,19 @@ public class PortletDataContextImpl implements PortletDataContext {
 		_xStream = new XStream(
 			null, new XppDriver(),
 			new ClassLoaderReference(
-				XStreamAliasRegistryUtil.getAliasesClassLoader(
+				XStreamConfiguratorRegistryUtil.getConfiguratorsClassLoader(
 					XStream.class.getClassLoader())));
 
 		_xStream.omitField(HashMap.class, "cache_bitmask");
 
-		if (ListUtil.isEmpty(_xStreamConfigurators)) {
+		Set<XStreamConfigurator> xStreamConfigurators =
+			XStreamConfiguratorRegistryUtil.getXStreamConfigurators();
+
+		if (SetUtil.isEmpty(xStreamConfigurators)) {
 			return;
 		}
 
-		for (XStreamConfigurator xStreamConfigurator : _xStreamConfigurators) {
+		for (XStreamConfigurator xStreamConfigurator : xStreamConfigurators) {
 			List<XStreamAlias> xStreamAliases =
 				xStreamConfigurator.getXStreamAliases();
 
@@ -2514,10 +2553,12 @@ public class PortletDataContextImpl implements PortletDataContext {
 			List<XStreamConverter> xStreamConverters =
 				xStreamConfigurator.getXStreamConverters();
 
-			for (XStreamConverter xStreamConverter : xStreamConverters) {
-				_xStream.registerConverter(
-					new ConverterAdapter(xStreamConverter),
-					XStream.PRIORITY_VERY_HIGH);
+			if (ListUtil.isNotEmpty(xStreamConverters)) {
+				for (XStreamConverter xStreamConverter : xStreamConverters) {
+					_xStream.registerConverter(
+						new ConverterAdapter(xStreamConverter),
+						XStream.PRIORITY_VERY_HIGH);
+				}
 			}
 		}
 	}
@@ -2532,21 +2573,31 @@ public class PortletDataContextImpl implements PortletDataContext {
 		return true;
 	}
 
-	@Reference(
-		cardinality = ReferenceCardinality.MULTIPLE,
-		policy = ReferencePolicy.DYNAMIC
-	)
-	protected void setXStreamConfigurators(
-		List<XStreamConfigurator> xStreamConfigurators) {
+	protected void populateClassNameAttribute(
+		ClassedModel classedModel, Element element) {
 
-		_xStreamConfigurators = xStreamConfigurators;
+		String attachedClassName = null;
+
+		if (classedModel instanceof AttachedModel) {
+			AttachedModel attachedModel = (AttachedModel)classedModel;
+
+			attachedClassName = attachedModel.getClassName();
+		}
+		else if (BeanUtil.hasProperty(classedModel, "className")) {
+			attachedClassName = BeanPropertiesUtil.getStringSilent(
+				classedModel, "className");
+		}
+
+		if (Validator.isNotNull(attachedClassName)) {
+			element.addAttribute("attached-class-name", attachedClassName);
+		}
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		PortletDataContextImpl.class);
 
 	private final Map<String, long[]> _assetCategoryIdsMap = new HashMap<>();
-	private final Map<String, List<AssetLink>> _assetLinksMap = new HashMap<>();
+	private final Set<Long> _assetLinkIds = new HashSet<>();
 	private final Map<String, String[]> _assetTagNamesMap = new HashMap<>();
 	private long _companyGroupId;
 	private long _companyId;
@@ -2559,6 +2610,7 @@ public class PortletDataContextImpl implements PortletDataContext {
 	private transient Element _exportDataRootElement;
 	private long _groupId;
 	private transient Element _importDataRootElement;
+	private transient final LockManager _lockManager;
 	private transient final Map<String, Lock> _locksMap = new HashMap<>();
 	private transient ManifestSummary _manifestSummary = new ManifestSummary();
 	private transient final Set<String> _missingReferences = new HashSet<>();
@@ -2588,7 +2640,6 @@ public class PortletDataContextImpl implements PortletDataContext {
 	private transient UserIdStrategy _userIdStrategy;
 	private long _userPersonalSiteGroupId;
 	private transient XStream _xStream;
-	private transient List<XStreamConfigurator> _xStreamConfigurators;
 	private transient ZipReader _zipReader;
 	private transient ZipWriter _zipWriter;
 

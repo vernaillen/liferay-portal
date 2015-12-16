@@ -431,6 +431,11 @@ public class BookmarksFolderLocalServiceWrapper
 	}
 
 	@Override
+	public com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery getIndexableActionableDynamicQuery() {
+		return _bookmarksFolderLocalService.getIndexableActionableDynamicQuery();
+	}
+
+	@Override
 	public java.util.List<com.liferay.bookmarks.model.BookmarksFolder> getNoAssetFolders() {
 		return _bookmarksFolderLocalService.getNoAssetFolders();
 	}
@@ -525,10 +530,10 @@ public class BookmarksFolderLocalServiceWrapper
 	public void updateAsset(long userId,
 		com.liferay.bookmarks.model.BookmarksFolder folder,
 		long[] assetCategoryIds, java.lang.String[] assetTagNames,
-		long[] assetLinkEntryIds)
+		long[] assetLinkEntryIds, java.lang.Double priority)
 		throws com.liferay.portal.kernel.exception.PortalException {
 		_bookmarksFolderLocalService.updateAsset(userId, folder,
-			assetCategoryIds, assetTagNames, assetLinkEntryIds);
+			assetCategoryIds, assetTagNames, assetLinkEntryIds, priority);
 	}
 
 	/**

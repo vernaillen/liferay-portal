@@ -25,6 +25,10 @@
 	.lfr-ddm-form-field-container {
 		position: relative;
 
+		&.has-error .liferay-ddm-form-field-date .input-group-addon {
+			border-width: 0 0 2px 0;
+		}
+
 		@include keyframes(spin) {
 			100% {
 				transform: rotate(359deg);
@@ -33,6 +37,10 @@
 
 		.icon-spinner {
 			@include animation(spin 1000ms infinite linear);
+		}
+
+		.liferay-ddm-form-field-checkbox .toggle-switch-handle .toggle-switch-text {
+			margin-left: 6px;
 		}
 
 		.lfr-ddm-form-field-repeatable-add-button {
@@ -47,8 +55,8 @@
 			top: 0;
 		}
 
-		.validation-message {
-			position: absolute;
+		.liferay-ddm-form-field-date .input-group-addon {
+			cursor: pointer;
 		}
 	}
 
@@ -73,9 +81,9 @@
 		padding-top: 20px;
 	}
 
-	.validation-message {
+	.help-block {
+		font-size: 14px;
 		margin-top: -45px;
-		position: absolute;
 	}
 }
 
@@ -91,10 +99,6 @@
 	.lfr-ddm-form-page-description {
 		padding-left: $side-spacing;
 		padding-right: $side-spacing;
-	}
-
-	.lfr-ddm-form-page {
-		padding-bottom: $side-spacing;
 	}
 }
 

@@ -76,8 +76,7 @@ import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PortletKeys;
 import com.liferay.portlet.PortletPreferencesFactoryUtil;
 import com.liferay.portlet.PortletPreferencesImpl;
-import com.liferay.portlet.asset.model.AssetEntry;
-import com.liferay.portlet.asset.model.AssetLink;
+import com.liferay.portlet.asset.model.adapter.StagedAssetLink;
 import com.liferay.portlet.asset.service.AssetEntryLocalService;
 import com.liferay.portlet.asset.service.AssetLinkLocalService;
 import com.liferay.portlet.expando.NoSuchTableException;
@@ -103,6 +102,7 @@ import com.liferay.portlet.exportimport.lar.PortletDataContextFactoryUtil;
 import com.liferay.portlet.exportimport.lar.PortletDataHandler;
 import com.liferay.portlet.exportimport.lar.PortletDataHandlerKeys;
 import com.liferay.portlet.exportimport.lar.PortletDataHandlerStatusMessageSenderUtil;
+import com.liferay.portlet.exportimport.lar.StagedModelDataHandlerUtil;
 import com.liferay.portlet.exportimport.lar.UserIdStrategy;
 import com.liferay.portlet.exportimport.lifecycle.ExportImportLifecycleManager;
 import com.liferay.portlet.exportimport.model.ExportImportConfiguration;
@@ -635,7 +635,7 @@ public class PortletImportController implements ImportController {
 			_log.debug("Importing asset links");
 		}
 
-		readAssetLinks(portletDataContext);
+		importAssetLinks(portletDataContext);
 
 		// Deletion system events
 
@@ -751,6 +751,42 @@ public class PortletImportController implements ImportController {
 		}
 
 		return PROCESS_FLAG_PORTLET_IMPORT_IN_PROCESS;
+	}
+
+	protected void importAssetLinks(PortletDataContext portletDataContext)
+		throws Exception {
+
+		String xml = portletDataContext.getZipEntryAsString(
+			ExportImportPathUtil.getSourceRootPath(portletDataContext) +
+				"/links.xml");
+
+		if (xml == null) {
+			return;
+		}
+
+		Element importDataRootElement =
+			portletDataContext.getImportDataRootElement();
+
+		try {
+			Document document = SAXReaderUtil.read(xml);
+
+			Element rootElement = document.getRootElement();
+
+			portletDataContext.setImportDataRootElement(rootElement);
+
+			Element linksElement = portletDataContext.getImportDataGroupElement(
+				StagedAssetLink.class);
+
+			List<Element> linkElements = linksElement.elements();
+
+			for (Element linkElement : linkElements) {
+				StagedModelDataHandlerUtil.importStagedModel(
+					portletDataContext, linkElement);
+			}
+		}
+		finally {
+			portletDataContext.setImportDataRootElement(importDataRootElement);
+		}
 	}
 
 	protected void importPortletData(
@@ -1033,91 +1069,6 @@ public class PortletImportController implements ImportController {
 			portletDataHandler.getDeletionSystemEventStagedModelTypes());
 	}
 
-	protected void readAssetLinks(PortletDataContext portletDataContext)
-		throws Exception {
-
-		String xml = portletDataContext.getZipEntryAsString(
-			ExportImportPathUtil.getSourceRootPath(portletDataContext) +
-				"/links.xml");
-
-		if (xml == null) {
-			return;
-		}
-
-		Document document = SAXReaderUtil.read(xml);
-
-		Element rootElement = document.getRootElement();
-
-		List<Element> assetLinkGroupElements = rootElement.elements(
-			"asset-link-group");
-
-		for (Element assetLinkGroupElement : assetLinkGroupElements) {
-			String sourceUuid = assetLinkGroupElement.attributeValue(
-				"source-uuid");
-
-			AssetEntry sourceAssetEntry = _assetEntryLocalService.fetchEntry(
-				portletDataContext.getScopeGroupId(), sourceUuid);
-
-			if (sourceAssetEntry == null) {
-				sourceAssetEntry = _assetEntryLocalService.fetchEntry(
-					portletDataContext.getCompanyGroupId(), sourceUuid);
-			}
-
-			if (sourceAssetEntry == null) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						"Unable to find asset entry with uuid " + sourceUuid);
-				}
-
-				continue;
-			}
-
-			List<Element> assetLinksElements = assetLinkGroupElement.elements(
-				"asset-link");
-
-			for (Element assetLinkElement : assetLinksElements) {
-				String path = assetLinkElement.attributeValue("path");
-
-				if (!portletDataContext.isPathNotProcessed(path)) {
-					continue;
-				}
-
-				String targetUuid = assetLinkElement.attributeValue(
-					"target-uuid");
-
-				AssetEntry targetAssetEntry =
-					_assetEntryLocalService.fetchEntry(
-						portletDataContext.getScopeGroupId(), targetUuid);
-
-				if (targetAssetEntry == null) {
-					targetAssetEntry = _assetEntryLocalService.fetchEntry(
-						portletDataContext.getCompanyGroupId(), targetUuid);
-				}
-
-				if (targetAssetEntry == null) {
-					if (_log.isWarnEnabled()) {
-						_log.warn(
-							"Unable to find asset entry with uuid " +
-								targetUuid);
-					}
-
-					continue;
-				}
-
-				AssetLink assetLink =
-					(AssetLink)portletDataContext.getZipEntryAsObject(path);
-
-				long userId = portletDataContext.getUserId(
-					assetLink.getUserUuid());
-
-				_assetLinkLocalService.updateLink(
-					userId, sourceAssetEntry.getEntryId(),
-					targetAssetEntry.getEntryId(), assetLink.getType(),
-					assetLink.getWeight());
-			}
-		}
-	}
-
 	protected void readExpandoTables(PortletDataContext portletDataContext)
 		throws Exception {
 
@@ -1230,28 +1181,28 @@ public class PortletImportController implements ImportController {
 		portletDataContext.setScopeType(StringPool.BLANK);
 	}
 
-	@Reference
+	@Reference(unbind = "-")
 	protected void setAssetEntryLocalService(
 		AssetEntryLocalService assetEntryLocalService) {
 
 		_assetEntryLocalService = assetEntryLocalService;
 	}
 
-	@Reference
+	@Reference(unbind = "-")
 	protected void setAssetLinkLocalService(
 		AssetLinkLocalService assetLinkLocalService) {
 
 		_assetLinkLocalService = assetLinkLocalService;
 	}
 
-	@Reference
+	@Reference(unbind = "-")
 	protected void setExpandoColumnLocalService(
 		ExpandoColumnLocalService expandoColumnLocalService) {
 
 		_expandoColumnLocalService = expandoColumnLocalService;
 	}
 
-	@Reference
+	@Reference(unbind = "-")
 	protected void setExpandoTableLocalService(
 		ExpandoTableLocalService expandoTableLocalService) {
 
@@ -1265,40 +1216,40 @@ public class PortletImportController implements ImportController {
 		_exportImportLifecycleManager = exportImportLifecycleManager;
 	}
 
-	@Reference
+	@Reference(unbind = "-")
 	protected void setGroupLocalService(GroupLocalService groupLocalService) {
 		_groupLocalService = groupLocalService;
 	}
 
-	@Reference
+	@Reference(unbind = "-")
 	protected void setLayoutLocalService(
 		LayoutLocalService layoutLocalService) {
 
 		_layoutLocalService = layoutLocalService;
 	}
 
-	@Reference
+	@Reference(unbind = "-")
 	protected void setPortletItemLocalService(
 		PortletItemLocalService portletItemLocalService) {
 
 		_portletItemLocalService = portletItemLocalService;
 	}
 
-	@Reference
+	@Reference(unbind = "-")
 	protected void setPortletLocalService(
 		PortletLocalService portletLocalService) {
 
 		_portletLocalService = portletLocalService;
 	}
 
-	@Reference
+	@Reference(unbind = "-")
 	protected void setPortletPreferencesLocalService(
 		PortletPreferencesLocalService portletPreferencesLocalService) {
 
 		_portletPreferencesLocalService = portletPreferencesLocalService;
 	}
 
-	@Reference
+	@Reference(unbind = "-")
 	protected void setUserLocalService(UserLocalService userLocalService) {
 		_userLocalService = userLocalService;
 	}
@@ -1466,20 +1417,21 @@ public class PortletImportController implements ImportController {
 	private static final Log _log = LogFactoryUtil.getLog(
 		PortletImportController.class);
 
-	private AssetEntryLocalService _assetEntryLocalService;
-	private AssetLinkLocalService _assetLinkLocalService;
+	private volatile AssetEntryLocalService _assetEntryLocalService;
+	private volatile AssetLinkLocalService _assetLinkLocalService;
 	private final DeletionSystemEventImporter _deletionSystemEventImporter =
 		DeletionSystemEventImporter.getInstance();
-	private ExpandoColumnLocalService _expandoColumnLocalService;
-	private ExpandoTableLocalService _expandoTableLocalService;
-	private ExportImportLifecycleManager _exportImportLifecycleManager;
-	private GroupLocalService _groupLocalService;
-	private LayoutLocalService _layoutLocalService;
+	private volatile ExpandoColumnLocalService _expandoColumnLocalService;
+	private volatile ExpandoTableLocalService _expandoTableLocalService;
+	private volatile ExportImportLifecycleManager _exportImportLifecycleManager;
+	private volatile GroupLocalService _groupLocalService;
+	private volatile LayoutLocalService _layoutLocalService;
 	private final PermissionImporter _permissionImporter =
 		PermissionImporter.getInstance();
-	private PortletItemLocalService _portletItemLocalService;
-	private PortletLocalService _portletLocalService;
-	private PortletPreferencesLocalService _portletPreferencesLocalService;
-	private UserLocalService _userLocalService;
+	private volatile PortletItemLocalService _portletItemLocalService;
+	private volatile PortletLocalService _portletLocalService;
+	private volatile PortletPreferencesLocalService
+		_portletPreferencesLocalService;
+	private volatile UserLocalService _userLocalService;
 
 }

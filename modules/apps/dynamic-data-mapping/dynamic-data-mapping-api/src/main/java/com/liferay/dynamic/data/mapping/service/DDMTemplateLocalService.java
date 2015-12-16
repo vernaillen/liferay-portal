@@ -145,7 +145,7 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 	* @param template the template to add resources to
 	* @param addGroupPermissions whether to add group permissions
 	* @param addGuestPermissions whether to add guest permissions
-	* @throws PortalException if a portal exception occurred
+	* @throws PortalException
 	*/
 	public void addTemplateResources(
 		com.liferay.dynamic.data.mapping.model.DDMTemplate template,
@@ -406,6 +406,17 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 		long groupId, long classNameId, java.lang.String templateKey,
 		boolean includeAncestorTemplates) throws PortalException;
 
+	/**
+	* Returns the template with the primary key.
+	*
+	* @param templateId the primary key of the template
+	* @return the matching template, or <code>null</code> if a matching
+	template could not be found
+	*/
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public com.liferay.dynamic.data.mapping.model.DDMTemplate fetchTemplate(
+		long templateId);
+
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery getActionableDynamicQuery();
 
@@ -485,6 +496,9 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 	public com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery getExportActionableDynamicQuery(
 		com.liferay.portlet.exportimport.lar.PortletDataContext portletDataContext);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery getIndexableActionableDynamicQuery();
+
 	/**
 	* Returns the OSGi service identifier.
 	*
@@ -505,7 +519,7 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 	related model
 	* @param templateKey the unique string identifying the template
 	* @return the matching template
-	* @throws PortalException if a matching template could not be found
+	* @throws PortalException if a portal exception occurred
 	*/
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public com.liferay.dynamic.data.mapping.model.DDMTemplate getTemplate(
@@ -532,7 +546,7 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 	have sharing enabled) and include global scoped sites in the
 	search in the search
 	* @return the matching template
-	* @throws PortalException if a matching template could not be found
+	* @throws PortalException if a portal exception occurred
 	*/
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public com.liferay.dynamic.data.mapping.model.DDMTemplate getTemplate(
@@ -540,11 +554,11 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 		boolean includeAncestorTemplates) throws PortalException;
 
 	/**
-	* Returns the template with the ID.
+	* Returns the template with the primary key.
 	*
 	* @param templateId the primary key of the template
-	* @return the template with the ID
-	* @throws PortalException if a matching template could not be found
+	* @return the template with the primary key
+	* @throws PortalException if a portal exception occurred
 	*/
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public com.liferay.dynamic.data.mapping.model.DDMTemplate getTemplate(
@@ -657,8 +671,8 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 	public int getTemplatesByClassPKCount(long groupId, long classPK);
 
 	/**
-	* Returns an ordered range of all the templates matching the group and
-	* structure class name ID.
+	* Returns an ordered range of all the templates matching the group,
+	* structure class name ID, and status.
 	*
 	* <p>
 	* Useful when paginating results. Returns a maximum of <code>end -
@@ -673,6 +687,9 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 	* @param groupId the primary key of the group
 	* @param structureClassNameId the primary key of the class name for the
 	template's related structure
+	* @param status the template's workflow status. For more information see
+	{@link WorkflowConstants} for constants starting with the
+	"STATUS_" prefix.
 	* @param start the lower bound of the range of templates to return
 	* @param end the upper bound of the range of templates to return (not
 	inclusive)
@@ -687,12 +704,15 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 		com.liferay.portal.kernel.util.OrderByComparator<com.liferay.dynamic.data.mapping.model.DDMTemplate> orderByComparator);
 
 	/**
-	* Returns the number of templates matching the group and structure class
-	* name ID, including Generic Templates.
+	* Returns the number of templates matching the group, structure class name
+	* ID, and status, including Generic Templates.
 	*
 	* @param groupId the primary key of the group
 	* @param structureClassNameId the primary key of the class name for the
 	template's related structure
+	* @param status the template's workflow status. For more information see
+	{@link WorkflowConstants} for constants starting with the
+	"STATUS_" prefix.
 	* @return the number of matching templates
 	*/
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
@@ -739,8 +759,8 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 
 	/**
 	* Returns an ordered range of all the templates matching the group, class
-	* name ID, class PK, type, and mode, and matching the keywords in the
-	* template names and descriptions.
+	* name ID, class PK, type, mode, and status, and matching the keywords in
+	* the template names and descriptions.
 	*
 	* <p>
 	* Useful when paginating results. Returns a maximum of <code>end -
@@ -767,6 +787,9 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 	* @param mode the template's mode (optionally <code>null</code>). For more
 	information, see DDMTemplateConstants in the
 	dynamic-data-mapping-api module.
+	* @param status the template's workflow status. For more information see
+	{@link WorkflowConstants} for constants starting with the
+	"STATUS_" prefix.
 	* @param start the lower bound of the range of templates to return
 	* @param end the upper bound of the range of templates to return (not
 	inclusive)
@@ -784,8 +807,8 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 
 	/**
 	* Returns an ordered range of all the templates matching the group, class
-	* name ID, class PK, name keyword, description keyword, type, mode, and
-	* language.
+	* name ID, class PK, name keyword, description keyword, type, mode, status,
+	* and language.
 	*
 	* <p>
 	* Useful when paginating results. Returns a maximum of <code>end -
@@ -816,6 +839,9 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 	* @param language the template's script language (optionally
 	<code>null</code>). For more information, see
 	DDMTemplateConstants in the dynamic-data-mapping-api module.
+	* @param status the template's workflow status. For more information see
+	{@link WorkflowConstants} for constants starting with the
+	"STATUS_" prefix.
 	* @param andOperator whether every field must match its keywords, or just
 	one field
 	* @param start the lower bound of the range of templates to return
@@ -836,8 +862,8 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 
 	/**
 	* Returns an ordered range of all the templates matching the group IDs,
-	* class Name IDs, class PK, type, and mode, and include the keywords on its
-	* names and descriptions.
+	* class Name IDs, class PK, type, mode, and status, and include the
+	* keywords on its names and descriptions.
 	*
 	* <p>
 	* Useful when paginating results. Returns a maximum of <code>end -
@@ -864,6 +890,9 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 	* @param mode the template's mode (optionally <code>null</code>). For more
 	information, see DDMTemplateConstants in the
 	dynamic-data-mapping-api module.
+	* @param status the template's workflow status. For more information see
+	{@link WorkflowConstants} for constants starting with the
+	"STATUS_" prefix.
 	* @param start the lower bound of the range of templates to return
 	* @param end the upper bound of the range of templates to return (not
 	inclusive)
@@ -882,7 +911,7 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 	/**
 	* Returns an ordered range of all the templates matching the group IDs,
 	* class name IDs, class PK, name keyword, description keyword, type, mode,
-	* and language.
+	* language, and status.
 	*
 	* <p>
 	* Useful when paginating results. Returns a maximum of <code>end -
@@ -913,6 +942,9 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 	* @param language the template's script language (optionally
 	<code>null</code>). For more information, see
 	DDMTemplateConstants in the dynamic-data-mapping-api module.
+	* @param status the template's workflow status. For more information see
+	{@link WorkflowConstants} for constants starting with the
+	"STATUS_" prefix.
 	* @param andOperator whether every field must match its keywords, or just
 	one field.
 	* @param start the lower bound of the range of templates to return
@@ -933,8 +965,8 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 
 	/**
 	* Returns the number of templates matching the group, class name ID, class
-	* PK, type, and matching the keywords in the template names and
-	* descriptions.
+	* PK, type, mode, and status, and matching the keywords in the template
+	* names and descriptions.
 	*
 	* @param companyId the primary key of the template's company
 	* @param groupId the primary key of the group
@@ -951,6 +983,9 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 	* @param mode the template's mode (optionally <code>null</code>). For more
 	information, see DDMTemplateConstants in the
 	dynamic-data-mapping-api module.
+	* @param status the template's workflow status. For more information see
+	{@link WorkflowConstants} for constants starting with the
+	"STATUS_" prefix.
 	* @return the number of matching templates
 	*/
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
@@ -960,7 +995,7 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 
 	/**
 	* Returns the number of templates matching the group, class name ID, class
-	* PK, name keyword, description keyword, type, mode, and language.
+	* PK, name keyword, description keyword, type, mode, language, and status.
 	*
 	* @param companyId the primary key of the template's company
 	* @param groupId the primary key of the group
@@ -981,6 +1016,9 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 	* @param language the template's script language (optionally
 	<code>null</code>). For more information, see
 	DDMTemplateConstants in the dynamic-data-mapping-api module.
+	* @param status the template's workflow status. For more information see
+	{@link WorkflowConstants} for constants starting with the
+	"STATUS_" prefix.
 	* @param andOperator whether every field must match its keywords, or just
 	one field.
 	* @return the number of matching templates
@@ -994,8 +1032,8 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 
 	/**
 	* Returns the number of templates matching the group IDs, class name IDs,
-	* class PK, type, and mode, and matching the keywords in the template names
-	* and descriptions.
+	* class PK, type, mode, and status, and matching the keywords in the
+	* template names and descriptions.
 	*
 	* @param companyId the primary key of the template's company
 	* @param groupIds the primary keys of the groups
@@ -1012,6 +1050,9 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 	* @param mode the template's mode (optionally <code>null</code>). For more
 	information, see DDMTemplateConstants in the
 	dynamic-data-mapping-api module.
+	* @param status the template's workflow status. For more information see
+	{@link WorkflowConstants} for constants starting with the
+	"STATUS_" prefix.
 	* @return the number of matching templates
 	*/
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
@@ -1022,7 +1063,8 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 
 	/**
 	* Returns the number of templates matching the group IDs, class name IDs,
-	* class PKs, name keyword, description keyword, type, mode, and language.
+	* class PKs, name keyword, description keyword, type, mode, language, and
+	* status.
 	*
 	* @param companyId the primary key of the templates company
 	* @param groupIds the primary keys of the groups
@@ -1043,6 +1085,9 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 	* @param language the template's script language (optionally
 	<code>null</code>). For more information, see
 	DDMTemplateConstants in the dynamic-data-mapping-api module.
+	* @param status the template's workflow status. For more information see
+	{@link WorkflowConstants} for constants starting with the
+	"STATUS_" prefix.
 	* @param andOperator whether every field must match its keywords, or just
 	one field.
 	* @return the number of matching templates
@@ -1065,7 +1110,7 @@ public interface DDMTemplateLocalService extends BaseLocalService,
 		com.liferay.dynamic.data.mapping.model.DDMTemplate ddmTemplate);
 
 	/**
-	* Updates the template matching the ID.
+	* Updates the template matching the primary key.
 	*
 	* @param userId the primary key of the template's creator/owner
 	* @param templateId the primary key of the template

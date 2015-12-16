@@ -38,6 +38,17 @@ public class UpdateFileEntriesHandler extends BaseJSONHandler {
 	}
 
 	@Override
+	public boolean handlePortalException(String exception) throws Exception {
+		if (exception.equals(
+				"com.liferay.portal.kernel.upload.UploadException")) {
+
+			return true;
+		}
+
+		return super.handlePortalException(exception);
+	}
+
+	@Override
 	public void processResponse(String response) throws Exception {
 		Map<String, Handler> handlers = (Map<String, Handler>)getParameterValue(
 			"handlers");
@@ -54,16 +65,7 @@ public class UpdateFileEntriesHandler extends BaseJSONHandler {
 
 				JsonNode fieldValue = field.getValue();
 
-				String exception = null;
-
-				if (fieldValue.isNull()) {
-					exception =
-						"com.liferay.portal.kernel.jsonwebservice." +
-							"NoSuchJSONWebServiceException";
-				}
-				else {
-					exception = handler.getException(fieldValue.textValue());
-				}
+				String exception = handler.getException(fieldValue.textValue());
 
 				if (handler.handlePortalException(exception)) {
 					continue;

@@ -32,11 +32,12 @@ if (article.getGroupId() != themeDisplay.getScopeGroupId()) {
 <liferay-frontend:vertical-card
 	cssClass="article-preview-content"
 	imageUrl="<%= HtmlUtil.escapeAttribute(assetRenderer.getThumbnailPath(liferayPortletRequest)) %>"
-	subtitle="<%= assetRenderer.getSummary() %>"
+	subtitle="<%= assetRenderer.getSummary(liferayPortletRequest, liferayPortletResponse) %>"
 	title="<%= title %>"
 >
 	<liferay-frontend:vertical-card-sticker-bottom>
 		<liferay-ui:user-portrait
+			imageCssClass="user-icon-lg"
 			userId="<%= assetRenderer.getUserId() %>"
 		/>
 	</liferay-frontend:vertical-card-sticker-bottom>

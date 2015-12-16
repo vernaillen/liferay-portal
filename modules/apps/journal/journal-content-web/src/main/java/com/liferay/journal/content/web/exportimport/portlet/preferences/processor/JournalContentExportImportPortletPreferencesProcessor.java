@@ -41,6 +41,7 @@ import com.liferay.portal.util.PortalUtil;
 import com.liferay.portlet.exportimport.lar.PortletDataContext;
 import com.liferay.portlet.exportimport.lar.PortletDataException;
 import com.liferay.portlet.exportimport.lar.StagedModelDataHandlerUtil;
+import com.liferay.portlet.exportimport.staging.MergeLayoutPrototypesThreadLocal;
 
 import java.util.List;
 import java.util.Map;
@@ -192,6 +193,7 @@ public class JournalContentExportImportPortletPreferencesProcessor
 		}
 
 		long previousScopeGroupId = portletDataContext.getScopeGroupId();
+		String previousScopeType = portletDataContext.getScopeType();
 
 		Map<Long, Long> groupIds =
 			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
@@ -199,6 +201,12 @@ public class JournalContentExportImportPortletPreferencesProcessor
 
 		long importGroupId = GetterUtil.getLong(
 			portletPreferences.getValue("groupId", null));
+
+		if ((importGroupId == portletDataContext.getCompanyGroupId()) &&
+			MergeLayoutPrototypesThreadLocal.isInProgress()) {
+
+			portletDataContext.setScopeType("company");
+		}
 
 		long groupId = MapUtil.getLong(groupIds, importGroupId, importGroupId);
 
@@ -261,6 +269,7 @@ public class JournalContentExportImportPortletPreferencesProcessor
 		}
 
 		portletDataContext.setScopeGroupId(previousScopeGroupId);
+		portletDataContext.setScopeType(previousScopeType);
 
 		return portletPreferences;
 	}
@@ -305,11 +314,12 @@ public class JournalContentExportImportPortletPreferencesProcessor
 	private static final Log _log = LogFactoryUtil.getLog(
 		JournalContentExportImportPortletPreferencesProcessor.class);
 
-	private DDMTemplateLocalService _ddmTemplateLocalService;
-	private JournalArticleLocalService _journalArticleLocalService;
-	private JournalContentSearchLocalService _journalContentSearchLocalService;
-	private LayoutLocalService _layoutLocalService;
-	private ReferencedStagedModelImporterCapability
+	private volatile DDMTemplateLocalService _ddmTemplateLocalService;
+	private volatile JournalArticleLocalService _journalArticleLocalService;
+	private volatile JournalContentSearchLocalService
+		_journalContentSearchLocalService;
+	private volatile LayoutLocalService _layoutLocalService;
+	private volatile ReferencedStagedModelImporterCapability
 		_referencedStagedModelImporterCapability;
 
 }

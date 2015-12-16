@@ -9,6 +9,12 @@ AUI.add(
 
 				return A.Component.create(
 					{
+						ATTRS: {
+							enableEvaluations: {
+								value: false
+							}
+						},
+
 						AUGMENTS: [Liferay.DDL.FormBuilderSettingsSupport],
 
 						EXTENDS: fieldClass,
@@ -16,6 +22,12 @@ AUI.add(
 						NAME: fieldClass.NAME
 					}
 				);
+			},
+
+			normalizeModalXY: function(xy) {
+				xy[1] = 0;
+
+				return xy;
 			}
 		};
 

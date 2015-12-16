@@ -1,11 +1,14 @@
 ;(function() {
-	var PATH_FORM_RENDERER = Liferay.ThemeDisplay.getPathContext() + '/o/ddm-form-renderer';
+	var LiferayAUI = Liferay.AUI;
+
+	var PATH_FORM_RENDERER = Liferay.ThemeDisplay.getPathContext() + '/o/dynamic-data-mapping-form-renderer';
 
 	AUI().applyConfig(
 		{
 			groups: {
 				'form': {
 					base: PATH_FORM_RENDERER + '/js/',
+					filter: LiferayAUI.getFilterConfig(),
 					modules: {
 						'liferay-ddm-form-renderer': {
 							path: 'form.js',
@@ -34,7 +37,8 @@
 						'liferay-ddm-form-renderer-expressions-evaluator': {
 							path: 'expressions_evaluator.js',
 							requires: [
-								'aui-request'
+								'aui-component',
+								'aui-io-request'
 							]
 						},
 						'liferay-ddm-form-renderer-feedback': {
@@ -92,6 +96,7 @@
 						'liferay-ddm-form-renderer-nested-fields': {
 							path: 'nested_fields_support.js',
 							requires: [
+								'array-invoke',
 								'liferay-ddm-form-renderer-types',
 								'liferay-ddm-form-renderer-util'
 							]

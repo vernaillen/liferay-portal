@@ -31,10 +31,30 @@ if (exportImportConfiguration.getType() == ExportImportConfigurationConstants.TY
 	publishActionKey = "publish-to-remote-live";
 }
 
+long selPlid = ParamUtil.getLong(request, "selPlid", LayoutConstants.DEFAULT_PARENT_LAYOUT_ID);
 boolean privateLayout = ParamUtil.getBoolean(request, "privateLayout");
 
 GroupDisplayContextHelper groupDisplayContextHelper = new GroupDisplayContextHelper(request);
 %>
+
+<aui:nav-bar>
+	<aui:nav cssClass="navbar-nav" id="publishConfigurationButtons">
+		<portlet:renderURL var="advancedPublishURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
+			<portlet:param name="mvcRenderCommandName" value="publishLayouts" />
+			<portlet:param name="tabs1" value='<%= privateLayout ? "private-pages" : "public-pages" %>' />
+			<portlet:param name="groupId" value="<%= String.valueOf(groupDisplayContextHelper.getGroupId()) %>" />
+			<portlet:param name="selPlid" value="<%= String.valueOf(selPlid) %>" />
+			<portlet:param name="privateLayout" value="<%= String.valueOf(privateLayout) %>" />
+			<portlet:param name="quickPublish" value="<%= Boolean.FALSE.toString() %>" />
+		</portlet:renderURL>
+
+		<aui:nav-item
+			href="<%= advancedPublishURL %>"
+			iconCssClass="icon-cog"
+			label="switch-to-advanced-publication"
+		/>
+	</aui:nav>
+</aui:nav-bar>
 
 <portlet:actionURL name='<%= cmd.equals(Constants.EXPORT) ? "editExportConfiguration" : "editPublishConfiguration" %>' var="confirmedActionURL">
 	<portlet:param name="mvcRenderCommandName" value='<%= cmd.equals(Constants.EXPORT) ? "editExportConfiguration" : "editPublishConfiguration" %>' />
@@ -50,27 +70,6 @@ GroupDisplayContextHelper groupDisplayContextHelper = new GroupDisplayContextHel
 
 	<div class="export-dialog-tree">
 		<ul class="lfr-tree list-unstyled">
-			<portlet:renderURL var="advancedPublishURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
-				<portlet:param name="mvcRenderCommandName" value="publishLayouts" />
-				<portlet:param name="tabs2" value="new-publication-process" />
-				<portlet:param name="groupId" value="<%= String.valueOf(groupDisplayContextHelper.getGroupId()) %>" />
-				<portlet:param name="privateLayout" value="<%= String.valueOf(privateLayout) %>" />
-				<portlet:param name="quickPublish" value="<%= Boolean.FALSE.toString() %>" />
-			</portlet:renderURL>
-
-			<liferay-ui:icon
-				cssClass="label publish-mode-switch"
-				iconCssClass="icon-cog"
-				label="<%= true %>"
-				message="switch-to-advanced-publication"
-				method="post"
-				url="<%= advancedPublishURL %>"
-			/>
-
-			<span class="alert alert-info">
-				<liferay-ui:message key="this-process-is-going-to-publish-the-changes-made-since-the-last-publication" />
-			</span>
-
 			<aui:fieldset cssClass="options-group" label="changes-since-last-publication">
 				<li class="options portlet-list-simple">
 					<ul class="portlet-list">
@@ -90,12 +89,6 @@ GroupDisplayContextHelper groupDisplayContextHelper = new GroupDisplayContextHel
 						<%
 						List<Portlet> dataSiteLevelPortlets = ExportImportHelperUtil.getDataSiteLevelPortlets(company.getCompanyId(), false);
 
-						DateRange dateRange = ExportImportDateUtil.getDateRange(exportImportConfiguration);
-
-						PortletDataContext portletDataContext = PortletDataContextFactoryUtil.createPreparePortletDataContext(company.getCompanyId(), groupDisplayContextHelper.getStagingGroupId(), dateRange.getStartDate(), dateRange.getEndDate());
-
-						ManifestSummary manifestSummary = portletDataContext.getManifestSummary();
-
 						Set<String> portletDataHandlerClasses = new HashSet<String>();
 
 						if (!dataSiteLevelPortlets.isEmpty()) {
@@ -110,7 +103,17 @@ GroupDisplayContextHelper groupDisplayContextHelper = new GroupDisplayContextHel
 
 								PortletDataHandler portletDataHandler = portlet.getPortletDataHandlerInstance();
 
+								Map<String, Serializable> settingsMap = exportImportConfiguration.getSettingsMap();
+
+								settingsMap.put("portletId", portlet.getRootPortletId());
+
+								DateRange dateRange = ExportImportDateUtil.getDateRange(exportImportConfiguration);
+
+								PortletDataContext portletDataContext = PortletDataContextFactoryUtil.createPreparePortletDataContext(company.getCompanyId(), groupDisplayContextHelper.getStagingGroupId(), dateRange.getStartDate(), dateRange.getEndDate());
+
 								portletDataHandler.prepareManifestSummary(portletDataContext);
+
+								ManifestSummary manifestSummary = portletDataContext.getManifestSummary();
 
 								long exportModelCount = portletDataHandler.getExportModelCount(manifestSummary);
 								long modelDeletionCount = manifestSummary.getModelDeletionCount(portletDataHandler.getDeletionSystemEventStagedModelTypes());
@@ -119,7 +122,7 @@ GroupDisplayContextHelper groupDisplayContextHelper = new GroupDisplayContextHel
 
 								UnicodeProperties liveGroupTypeSettings = liveGroup.getTypeSettingsProperties();
 
-								if (((exportModelCount != 0) || (modelDeletionCount != 0)) && GetterUtil.getBoolean(liveGroupTypeSettings.getProperty(StagingUtil.getStagedPortletId(portlet.getRootPortletId())), portletDataHandler.isPublishToLiveByDefault())) {
+								if (((exportModelCount > 0) || (modelDeletionCount > 0)) && GetterUtil.getBoolean(liveGroupTypeSettings.getProperty(StagingUtil.getStagedPortletId(portlet.getRootPortletId())), portletDataHandler.isPublishToLiveByDefault())) {
 						%>
 
 									<liferay-util:buffer var="badgeHTML">

@@ -14,6 +14,7 @@
 
 package com.liferay.marketplace.upgrade;
 
+import com.liferay.marketplace.upgrade.v1_0_0.UpgradeCompanyId;
 import com.liferay.marketplace.upgrade.v1_0_0.UpgradeExpando;
 import com.liferay.marketplace.upgrade.v1_0_0.UpgradeModule;
 import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
@@ -29,7 +30,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Joan Kim
  * @author Ryan Park
  */
-@Component(immediate = true)
+@Component(immediate = true, service = UpgradeStepRegistrator.class)
 public class MarketplaceServiceUpgrade implements UpgradeStepRegistrator {
 
 	@Override
@@ -38,8 +39,15 @@ public class MarketplaceServiceUpgrade implements UpgradeStepRegistrator {
 			"com.liferay.marketplace.service", "0.0.1", "1.0.0",
 			new UpgradeExpando(
 				_expandoColumnLocalService, _expandoTableLocalService,
-				_expandoValueLocalService),
+				_expandoValueLocalService));
+
+		registry.register(
+			"com.liferay.marketplace.service", "1.0.0", "1.0.1",
 			new UpgradeModule());
+
+		registry.register(
+			"com.liferay.marketplace.service", "1.0.1", "1.0.2",
+			new UpgradeCompanyId());
 	}
 
 	@Reference(unbind = "-")
@@ -68,8 +76,8 @@ public class MarketplaceServiceUpgrade implements UpgradeStepRegistrator {
 		ModuleServiceLifecycle moduleServiceLifecycle) {
 	}
 
-	private ExpandoColumnLocalService _expandoColumnLocalService;
-	private ExpandoTableLocalService _expandoTableLocalService;
-	private ExpandoValueLocalService _expandoValueLocalService;
+	private volatile ExpandoColumnLocalService _expandoColumnLocalService;
+	private volatile ExpandoTableLocalService _expandoTableLocalService;
+	private volatile ExpandoValueLocalService _expandoValueLocalService;
 
 }

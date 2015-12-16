@@ -38,6 +38,10 @@ public class PanelCategoryTag extends BasePanelTag {
 		_panelCategory = panelCategory;
 	}
 
+	public void setShowBody(boolean showBody) {
+		_showBody = showBody;
+	}
+
 	public void setShowHeader(boolean showHeader) {
 		_showHeader = showHeader;
 	}
@@ -51,7 +55,8 @@ public class PanelCategoryTag extends BasePanelTag {
 		super.cleanUp();
 
 		_panelCategory = null;
-		_showHeader = false;
+		_showBody = true;
+		_showHeader = true;
 		_showOpen = false;
 	}
 
@@ -84,12 +89,11 @@ public class PanelCategoryTag extends BasePanelTag {
 			_panelCategory, themeDisplay.getPermissionChecker(),
 			themeDisplay.getScopeGroup());
 
-		if (!_showOpen && !panelApps.isEmpty()) {
-			PanelCategoryHelper panelCategoryHelper = new PanelCategoryHelper(
-				panelAppRegistry, panelCategoryRegistry);
+		PanelCategoryHelper panelCategoryHelper = new PanelCategoryHelper(
+			panelAppRegistry, panelCategoryRegistry);
 
-			active = panelCategoryHelper.containsPortlet(
-				themeDisplay.getPpid(), _panelCategory);
+		if (!_showOpen && !panelApps.isEmpty()) {
+			active = _panelCategory.isActive(request, panelCategoryHelper);
 		}
 
 		request.setAttribute(
@@ -102,11 +106,21 @@ public class PanelCategoryTag extends BasePanelTag {
 
 		request.setAttribute("liferay-application-list:panel-category:id", id);
 
+		int notificationsCount = panelCategoryHelper.getNotificationsCount(
+			_panelCategory.getKey(), themeDisplay.getPermissionChecker(),
+			themeDisplay.getScopeGroup(), themeDisplay.getUser());
+
+		request.setAttribute(
+			"liferay-application-list:panel-category:notificationsCount",
+			notificationsCount);
+
 		request.setAttribute(
 			"liferay-application-list:panel-category:panelApps", panelApps);
 		request.setAttribute(
 			"liferay-application-list:panel-category:panelCategory",
 			_panelCategory);
+		request.setAttribute(
+			"liferay-application-list:panel-category:showBody", _showBody);
 		request.setAttribute(
 			"liferay-application-list:panel-category:showHeader", _showHeader);
 		request.setAttribute(
@@ -114,7 +128,8 @@ public class PanelCategoryTag extends BasePanelTag {
 	}
 
 	private PanelCategory _panelCategory;
-	private boolean _showHeader;
+	private boolean _showBody = true;
+	private boolean _showHeader = true;
 	private boolean _showOpen;
 
 }

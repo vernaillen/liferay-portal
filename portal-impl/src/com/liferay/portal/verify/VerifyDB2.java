@@ -15,11 +15,11 @@
 package com.liferay.portal.verify;
 
 import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
+import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.util.StringBundler;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
@@ -30,24 +30,26 @@ public class VerifyDB2 extends VerifyProcess {
 
 	@Override
 	protected void doVerify() throws Exception {
-		DB db = DBFactoryUtil.getDB();
+		DB db = DBManagerUtil.getDB();
 
-		String dbType = db.getType();
-
-		if (!dbType.equals(DB.TYPE_DB2)) {
+		if (db.getDBType() != DBType.DB2) {
 			return;
 		}
 
-		StringBundler sb = new StringBundler(4);
+		PreparedStatement ps = null;
+		ResultSet rs = null;
 
-		sb.append("select tbname, name, coltype, length from ");
-		sb.append("sysibm.syscolumns where tbcreator = (select distinct ");
-		sb.append("current schema from sysibm.sysschemata) AND coltype = ");
-		sb.append("'VARCHAR' and length = 500");
+		try {
+			StringBundler sb = new StringBundler(4);
 
-		try (Connection con = DataAccess.getUpgradeOptimizedConnection();
-			PreparedStatement ps = con.prepareStatement(sb.toString());
-			ResultSet rs = ps.executeQuery()) {
+			sb.append("select tbname, name, coltype, length from ");
+			sb.append("sysibm.syscolumns where tbcreator = (select distinct ");
+			sb.append("current schema from sysibm.sysschemata) AND coltype = ");
+			sb.append("'VARCHAR' and length = 500");
+
+			ps = connection.prepareStatement(sb.toString());
+
+			rs = ps.executeQuery();
 
 			while (rs.next()) {
 				String tableName = rs.getString(1);
@@ -59,10 +61,12 @@ public class VerifyDB2 extends VerifyProcess {
 				String columnName = rs.getString(2);
 
 				runSQL(
-					con,
 					"alter table " + tableName + " alter column " + columnName +
 						" set data type varchar(600)");
 			}
+		}
+		finally {
+			DataAccess.cleanUp(ps, rs);
 		}
 	}
 

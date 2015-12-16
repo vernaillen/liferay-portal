@@ -374,6 +374,11 @@ public class DDLRecordLocalServiceWrapper implements DDLRecordLocalService,
 		return _ddlRecordLocalService.getExportActionableDynamicQuery(portletDataContext);
 	}
 
+	@Override
+	public com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery getIndexableActionableDynamicQuery() {
+		return _ddlRecordLocalService.getIndexableActionableDynamicQuery();
+	}
+
 	/**
 	* @deprecated As of 7.0.0, replaced by {@link
 	com.liferay.dynamic.data.lists.service.DDLRecordVersionLocalService#getLatestRecordVersion(
@@ -542,10 +547,10 @@ public class DDLRecordLocalServiceWrapper implements DDLRecordLocalService,
 		com.liferay.dynamic.data.lists.model.DDLRecord record,
 		com.liferay.dynamic.data.lists.model.DDLRecordVersion recordVersion,
 		long[] assetCategoryIds, java.lang.String[] assetTagNames,
-		java.util.Locale locale)
+		java.util.Locale locale, java.lang.Double priority)
 		throws com.liferay.portal.kernel.exception.PortalException {
 		_ddlRecordLocalService.updateAsset(userId, record, recordVersion,
-			assetCategoryIds, assetTagNames, locale);
+			assetCategoryIds, assetTagNames, locale, priority);
 	}
 
 	/**

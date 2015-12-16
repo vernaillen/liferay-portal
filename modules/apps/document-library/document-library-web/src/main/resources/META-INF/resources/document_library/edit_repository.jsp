@@ -24,11 +24,20 @@ Repository repository = (Repository)request.getAttribute(WebKeys.DOCUMENT_LIBRAR
 long repositoryId = BeanParamUtil.getLong(repository, request, "repositoryId");
 
 long folderId = ParamUtil.getLong(request, "folderId");
+
+String headerTitle = (repository == null) ? LanguageUtil.get(request, "new-repository") : repository.getName();
+
+boolean portletTitleBasedNavigation = GetterUtil.getBoolean(portletConfig.getInitParameter("portlet-title-based-navigation"));
+
+if (portletTitleBasedNavigation) {
+	portletDisplay.setShowBackIcon(true);
+	portletDisplay.setURLBack(redirect);
+
+	renderResponse.setTitle(headerTitle);
+}
 %>
 
-<div <%= portletName.equals(DLPortletKeys.DOCUMENT_LIBRARY_ADMIN) ? "class=\"container-fluid-1280\"" : StringPool.BLANK %>>
-	<liferay-util:include page="/document_library/top_links.jsp" servletContext="<%= application %>" />
-
+<div <%= portletTitleBasedNavigation ? "class=\"container-fluid-1280\"" : StringPool.BLANK %>>
 	<portlet:actionURL name="/document_library/edit_repository" var="editRepositoryURL">
 		<portlet:param name="mvcRenderCommandName" value="/document_library/edit_repository" />
 	</portlet:actionURL>
@@ -39,11 +48,13 @@ long folderId = ParamUtil.getLong(request, "folderId");
 		<aui:input name="repositoryId" type="hidden" value="<%= repositoryId %>" />
 		<aui:input name="folderId" type="hidden" value="<%= folderId %>" />
 
-		<liferay-ui:header
-			backURL="<%= redirect %>"
-			localizeTitle="<%= (repository == null) %>"
-			title='<%= (repository == null) ? "new-repository" : repository.getName() %>'
-		/>
+		<c:if test="<%= !portletTitleBasedNavigation %>">
+			<liferay-ui:header
+				backURL="<%= redirect %>"
+				localizeTitle="<%= false %>"
+				title="<%= headerTitle %>"
+			/>
+		</c:if>
 
 		<liferay-ui:error exception="<%= DuplicateFolderNameException.class %>" message="please-enter-a-unique-repository-name" />
 		<liferay-ui:error exception="<%= DuplicateRepositoryNameException.class %>" message="please-enter-a-unique-repository-name" />
@@ -53,83 +64,88 @@ long folderId = ParamUtil.getLong(request, "folderId");
 
 		<aui:model-context bean="<%= repository %>" model="<%= Repository.class %>" />
 
-		<aui:fieldset>
-			<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" name="name" />
+		<aui:fieldset-group markupView="lexicon">
+			<aui:fieldset>
+				<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" name="name" />
 
-			<aui:input name="description" />
+				<aui:input name="description" />
+			</aui:fieldset>
 
-			<c:choose>
-				<c:when test="<%= repository == null %>">
-					<aui:select id="repositoryTypes" label="repository-type" name="className">
+			<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" label="repository-configuration">
+				<c:choose>
+					<c:when test="<%= repository == null %>">
+						<aui:select id="repositoryTypes" label="repository-type" name="className">
 
-						<%
-						for (RepositoryClassDefinition repositoryClassDefinition : RepositoryClassDefinitionCatalogUtil.getExternalRepositoryClassDefinitions()) {
-						%>
+							<%
+							for (RepositoryClassDefinition repositoryClassDefinition : RepositoryClassDefinitionCatalogUtil.getExternalRepositoryClassDefinitions()) {
+							%>
 
-							<aui:option label="<%= HtmlUtil.escape(repositoryClassDefinition.getRepositoryTypeLabel(locale)) %>" value="<%= HtmlUtil.escapeAttribute(repositoryClassDefinition.getClassName()) %>" />
+								<aui:option label="<%= HtmlUtil.escape(repositoryClassDefinition.getRepositoryTypeLabel(locale)) %>" value="<%= HtmlUtil.escapeAttribute(repositoryClassDefinition.getClassName()) %>" />
 
-						<%
-						}
-						%>
-
-					</aui:select>
-
-					<div id="<portlet:namespace />settingsParameters"></div>
-				</c:when>
-				<c:otherwise>
-
-					<%
-					RepositoryClassDefinition repositoryClassDefinition = RepositoryClassDefinitionCatalogUtil.getRepositoryClassDefinition(repository.getClassName());
-					%>
-
-					<div class="repository-settings-display">
-						<dt>
-							<liferay-ui:message key="repository-type" />
-						</dt>
-						<dd>
-							<%= repositoryClassDefinition.getRepositoryTypeLabel(locale) %>
-						</dd>
-
-						<%
-						UnicodeProperties typeSettingsProperties = repository.getTypeSettingsProperties();
-
-						RepositoryConfiguration repositoryConfiguration = repositoryClassDefinition.getRepositoryConfiguration();
-
-						for (RepositoryConfiguration.Parameter repositoryConfigurationParameter : repositoryConfiguration.getParameters()) {
-							String parameterValue = typeSettingsProperties.getProperty(repositoryConfigurationParameter.getName());
-
-							if (Validator.isNotNull(parameterValue)) {
-						%>
-
-								<dt>
-									<%= HtmlUtil.escape(repositoryConfigurationParameter.getLabel(locale)) %>
-								</dt>
-								<dd>
-									<%= HtmlUtil.escape(parameterValue) %>
-								</dd>
-
-						<%
+							<%
 							}
-						}
+							%>
+
+						</aui:select>
+
+						<div id="<portlet:namespace />settingsParameters"></div>
+					</c:when>
+					<c:otherwise>
+
+						<%
+						RepositoryClassDefinition repositoryClassDefinition = RepositoryClassDefinitionCatalogUtil.getRepositoryClassDefinition(repository.getClassName());
 						%>
 
-					</div>
-				</c:otherwise>
-			</c:choose>
+						<div class="repository-settings-display">
+							<dt>
+								<liferay-ui:message key="repository-type" />
+							</dt>
+							<dd>
+								<%= repositoryClassDefinition.getRepositoryTypeLabel(locale) %>
+							</dd>
+
+							<%
+							UnicodeProperties typeSettingsProperties = repository.getTypeSettingsProperties();
+
+							RepositoryConfiguration repositoryConfiguration = repositoryClassDefinition.getRepositoryConfiguration();
+
+							for (RepositoryConfiguration.Parameter repositoryConfigurationParameter : repositoryConfiguration.getParameters()) {
+								String parameterValue = typeSettingsProperties.getProperty(repositoryConfigurationParameter.getName());
+
+								if (Validator.isNotNull(parameterValue)) {
+							%>
+
+									<dt>
+										<%= HtmlUtil.escape(repositoryConfigurationParameter.getLabel(locale)) %>
+									</dt>
+									<dd>
+										<%= HtmlUtil.escape(parameterValue) %>
+									</dd>
+
+							<%
+								}
+							}
+							%>
+
+						</div>
+					</c:otherwise>
+				</c:choose>
+			</aui:fieldset>
+
 			<c:if test="<%= repository == null %>">
-				<aui:field-wrapper label="permissions">
+				<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" label="permissions">
 					<liferay-ui:input-permissions
 						modelName="<%= DLFolderConstants.getClassName() %>"
 					/>
-				</aui:field-wrapper>
+				</aui:fieldset>
 			</c:if>
+		</aui:fieldset-group>
 
-			<aui:button-row>
-				<aui:button type="submit" />
+		<aui:button-row>
+			<aui:button cssClass="btn-lg" type="submit" />
 
-				<aui:button href="<%= redirect %>" type="cancel" />
-			</aui:button-row>
-		</aui:fieldset>
+			<aui:button cssClass="btn-lg" href="<%= redirect %>" type="cancel" />
+		</aui:button-row>
 	</aui:form>
 
 	<div class="hide" id="<portlet:namespace />settingsSupported">

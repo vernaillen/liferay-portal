@@ -16,6 +16,7 @@ package com.liferay.exportimport.web.portlet.action;
 
 import com.liferay.exportimport.web.constants.ExportImportPortletKeys;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTask;
+import com.liferay.portal.kernel.backgroundtask.BackgroundTaskConstants;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskManagerUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
@@ -141,9 +142,7 @@ public class EditPublishConfigurationMVCActionCommand
 				addSessionMessages(actionRequest);
 			}
 
-			String redirect = ParamUtil.getString(actionRequest, "redirect");
-
-			sendRedirect(actionRequest, actionResponse, redirect);
+			sendRedirect(actionRequest, actionResponse);
 		}
 		catch (Exception e) {
 			_log.error(e, e);
@@ -157,7 +156,7 @@ public class EditPublishConfigurationMVCActionCommand
 		throws PortalException {
 
 		long backgroundTaskId = ParamUtil.getLong(
-			actionRequest, "backgroundTaskId");
+			actionRequest, BackgroundTaskConstants.BACKGROUND_TASK_ID);
 
 		BackgroundTask backgroundTask =
 			BackgroundTaskManagerUtil.getBackgroundTask(backgroundTaskId);
@@ -182,7 +181,7 @@ public class EditPublishConfigurationMVCActionCommand
 		}
 	}
 
-	@Reference
+	@Reference(unbind = "-")
 	protected void setExportImportConfigurationLocalService(
 		ExportImportConfigurationLocalService
 			exportImportConfigurationLocalService) {
@@ -230,7 +229,7 @@ public class EditPublishConfigurationMVCActionCommand
 	private static final Log _log = LogFactoryUtil.getLog(
 		EditPublishConfigurationMVCActionCommand.class);
 
-	private ExportImportConfigurationLocalService
+	private volatile ExportImportConfigurationLocalService
 		_exportImportConfigurationLocalService;
 
 }

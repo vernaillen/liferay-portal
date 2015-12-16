@@ -24,65 +24,63 @@ PortletURL portletURL = (PortletURL)request.getAttribute("liferay-frontend:manag
 %>
 
 <c:if test="<%= !orderColumns.isEmpty() %>">
-	<li>
-		<aui:select inlineField="<%= true %>" inlineLabel="left" label="order-by" name="orderByCol">
+	<li class="dropdown">
+		<a aria-expanded="true" class="dropdown-toggle" data-qa-id="orderBy" data-toggle="dropdown" href="javascript:;">
+			<span class="management-bar-item-title"><liferay-ui:message key="order-by" />: <liferay-ui:message key="<%= orderColumns.get(orderByCol) %>" /></span>
+			<span class="icon-sort"></span>
+		</a>
+
+		<ul class="dropdown-menu" data-qa-id="orderByValues">
 
 			<%
+			PortletURL orderByColURL = PortletURLUtil.clone(portletURL, liferayPortletResponse);
+
+			orderByColURL.setParameter("orderByType", orderByType);
+
 			for (String orderColumn : orderColumns.keySet()) {
+				orderByColURL.setParameter("orderByCol", orderColumn);
 			%>
 
-				<aui:option label="<%= orderColumns.get(orderColumn) %>" selected="<%= orderByCol.equals(orderColumn) %>" value="<%= orderColumn %>" />
+				<li class="<%= orderByCol.equals(orderColumn) ? "active" : StringPool.BLANK %>">
+					<aui:a href="<%= orderByColURL.toString() %>" label="<%= orderColumns.get(orderColumn) %>" />
+				</li>
 
 			<%
 			}
 			%>
 
-		</aui:select>
+		</ul>
 	</li>
 </c:if>
 
-<li class="<%= ((Validator.isNotNull(orderByType)) && orderByType.equals("asc")) ? "active" : StringPool.BLANK %>">
+<%
+PortletURL orderByColAscURL = PortletURLUtil.clone(portletURL, liferayPortletResponse);
 
-	<%
-	PortletURL orderByColAscURL = PortletURLUtil.clone(portletURL, liferayPortletResponse);
+orderByColAscURL.setParameter("orderByCol", orderByCol);
+orderByColAscURL.setParameter("orderByType", "asc");
+%>
 
-	orderByColAscURL.setParameter("orderByCol", orderByCol);
-	orderByColAscURL.setParameter("orderByType", "asc");
-	%>
-
-	<a class="btn hidden-xs" href="<%= orderByColAscURL %>"><span class="icon-caret-up icon-monospaced"></span></a>
+<li>
+	<liferay-frontend:management-bar-button
+		active='<%= ((Validator.isNotNull(orderByType)) && orderByType.equals("asc")) %>'
+		href="<%= orderByColAscURL.toString() %>"
+		icon="caret-top"
+		label="ascending"
+	/>
 </li>
 
-<li class="<%= ((Validator.isNotNull(orderByType)) && orderByType.equals("desc")) ? "active" : StringPool.BLANK %>">
+<%
+PortletURL orderByColDescURL = PortletURLUtil.clone(portletURL, liferayPortletResponse);
 
-	<%
-	PortletURL orderByColDescURL = PortletURLUtil.clone(portletURL, liferayPortletResponse);
+orderByColDescURL.setParameter("orderByCol", orderByCol);
+orderByColDescURL.setParameter("orderByType", "desc");
+%>
 
-	orderByColDescURL.setParameter("orderByCol", orderByCol);
-	orderByColDescURL.setParameter("orderByType", "desc");
-	%>
-
-	<a class="btn hidden-xs" href="<%= orderByColDescURL %>"><span class="icon-caret-down icon-monospaced"></span></a>
+<li>
+	<liferay-frontend:management-bar-button
+		active='<%= Validator.isNotNull(orderByType) && orderByType.equals("desc") %>'
+		href="<%= orderByColDescURL.toString() %>"
+		icon="caret-bottom"
+		label="descending"
+	/>
 </li>
-
-<aui:script>
-
-	<%
-	PortletURL orderByTypeURL = PortletURLUtil.clone(portletURL, liferayPortletResponse);
-
-	orderByTypeURL.setParameter("orderByType", orderByType);
-	%>
-
-	var orderByCol = $('#<%= namespace %>orderByCol');
-
-	orderByCol.on(
-		'change',
-		function(event) {
-			var uri = '<%= orderByTypeURL %>';
-
-			uri = Liferay.Util.addParams('<%= namespace %>orderByCol=' + orderByCol.val(), uri);
-
-			window.location.href = uri;
-		}
-	);
-</aui:script>

@@ -5,6 +5,8 @@ AUI.add(
 
 		var FieldTypes = Liferay.DDM.Renderer.FieldTypes;
 
+		var FormBuilderUtil = Liferay.DDL.FormBuilderUtil;
+
 		var CSS_FIELD = A.getClassName('form', 'builder', 'field');
 
 		var CSS_FIELD_CONTENT_TOOLBAR = A.getClassName('form', 'builder', 'field', 'content', 'toolbar');
@@ -23,6 +25,9 @@ AUI.add(
 		FormBuilderSettingsSupport.ATTRS = {
 			builder: {
 				value: null
+			},
+
+			dataProviders: {
 			},
 
 			content: {
@@ -78,7 +83,13 @@ AUI.add(
 
 				var builder = instance.get('builder');
 
-				return builder._fieldSettingsModal;
+				var settingsModal = builder._fieldSettingsModal;
+
+				if (!settingsModal._positionEventHandler) {
+					settingsModal._positionEventHandler = settingsModal._modal.on('xyChange', instance._onModalXYChange);
+				}
+
+				return settingsModal;
 			},
 
 			renderSettingsPanel: function() {
@@ -86,17 +97,25 @@ AUI.add(
 
 				var settingsForm = instance.get('settingsForm');
 
-				settingsForm.render();
-
 				instance._updateSettingsFormValues();
 
-				var settingsModal = instance.getSettingsModal();
+				settingsForm.render();
 
-				settingsModal._modal.get('boundingBox').addClass(CSS_FIELD_SETTINGS_MODAL);
+				var settingsModal = instance.getSettingsModal()._modal;
 
-				var builder = instance.get('builder');
+				var settingsModalBoundingBox = settingsModal.get('boundingBox');
 
-				settingsModal._modal.render(builder.get('boundingBox'));
+				settingsModalBoundingBox.addClass(CSS_FIELD_SETTINGS_MODAL);
+
+				var settingsModalToolbar = settingsModal.getToolbar('footer');
+
+				settingsModalToolbar.item(0).set('cssClass', 'btn-lg btn-primary');
+				settingsModalToolbar.item(1).set('cssClass', 'btn-lg btn-link');
+
+				var portletNode = A.one('#p_p_id' + instance.get('portletNamespace'));
+
+				settingsModal.set('centered', portletNode);
+				settingsModal.set('zIndex', Liferay.zIndex.OVERLAY);
 			},
 
 			saveSettings: function() {
@@ -135,6 +154,10 @@ AUI.add(
 				settingsForm.submit(callback);
 
 				return false;
+			},
+
+			_onModalXYChange: function(event) {
+				event.newVal = FormBuilderUtil.normalizeModalXY(event.newVal);
 			},
 
 			_renderFormBuilderField: function() {
@@ -180,6 +203,7 @@ AUI.add(
 
 				return new Liferay.DDL.FormBuilderSettingsForm(
 					{
+						dataProviders: instance.get('dataProviders'),
 						definition: fieldType.get('settings'),
 						field: instance,
 						layout: fieldType.get('settingsLayout'),
@@ -194,6 +218,6 @@ AUI.add(
 	},
 	'',
 	{
-		requires: ['liferay-ddl-form-builder-settings-form']
+		requires: ['liferay-ddl-form-builder-settings-form', 'liferay-ddl-form-builder-util']
 	}
 );

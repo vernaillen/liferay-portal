@@ -15,8 +15,8 @@
 package com.liferay.message.boards.web.portlet;
 
 import com.liferay.message.boards.web.constants.MBPortletKeys;
-import com.liferay.message.boards.web.upgrade.MBWebUpgrade;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
+import com.liferay.portal.model.Release;
 
 import javax.portlet.Portlet;
 
@@ -42,9 +42,10 @@ import org.osgi.service.component.annotations.Reference;
 		"com.liferay.portlet.scopeable=true",
 		"com.liferay.portlet.struts-path=message_boards",
 		"com.liferay.portlet.use-default-template=true",
-		"javax.portlet.display-name=Message Boards Admim",
+		"javax.portlet.display-name=Message Boards",
 		"javax.portlet.expiration-cache=0",
 		"javax.portlet.init-param.config-template=/message_boards_admin/configuration.jsp",
+		"javax.portlet.init-param.portlet-title-based-navigation=true",
 		"javax.portlet.init-param.template-path=/",
 		"javax.portlet.init-param.view-template=/message_boards/view",
 		"javax.portlet.name=" + MBPortletKeys.MESSAGE_BOARDS_ADMIN,
@@ -56,8 +57,11 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class MBAdminPortlet extends MVCPortlet {
 
-	@Reference(unbind = "-")
-	protected void setMBWebUpgrade(MBWebUpgrade mbWebUpgrade) {
+	@Reference(
+		target = "(&(release.bundle.symbolic.name=com.liferay.message.boards.web)(release.schema.version=1.0.0))",
+		unbind = "-"
+	)
+	protected void setRelease(Release release) {
 	}
 
 }

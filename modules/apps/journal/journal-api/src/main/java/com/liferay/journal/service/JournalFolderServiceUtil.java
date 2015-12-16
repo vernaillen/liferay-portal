@@ -16,8 +16,7 @@ package com.liferay.journal.service;
 
 import aQute.bnd.annotation.ProviderType;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
+import com.liferay.osgi.util.ServiceTrackerFactory;
 
 import org.osgi.util.tracker.ServiceTracker;
 
@@ -175,8 +174,8 @@ public class JournalFolderServiceUtil {
 	}
 
 	/**
-	* @deprecated As of 7.0.0, replaced by {@link
-	#getSubfolderIds(java.util.List, long, long, boolean)}
+	* @deprecated As of 7.0.0, replaced by {@link #getSubfolderIds(List, long,
+	long, boolean)}
 	*/
 	@Deprecated
 	public static void getSubfolderIds(
@@ -266,14 +265,6 @@ public class JournalFolderServiceUtil {
 	public void setService(JournalFolderService service) {
 	}
 
-	private static ServiceTracker<JournalFolderService, JournalFolderService> _serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(JournalFolderServiceUtil.class);
-
-		_serviceTracker = new ServiceTracker<JournalFolderService, JournalFolderService>(bundle.getBundleContext(),
-				JournalFolderService.class, null);
-
-		_serviceTracker.open();
-	}
+	private static ServiceTracker<JournalFolderService, JournalFolderService> _serviceTracker =
+		ServiceTrackerFactory.open(JournalFolderService.class);
 }

@@ -16,9 +16,14 @@ package com.liferay.portal.cxf.common.configuration;
 
 import aQute.bnd.annotation.metatype.Meta;
 
+import com.liferay.configuration.admin.ConfigurationAdmin;
+
 /**
  * @author Carlos Sierra Andrés
  */
+@ConfigurationAdmin(
+	category = "platform", factoryInstanceLabelAttribute = "contextPath"
+)
 @Meta.OCD(
 	factory = true,
 	id = "com.liferay.portal.cxf.common.configuration.CXFEndpointPublisherConfiguration"

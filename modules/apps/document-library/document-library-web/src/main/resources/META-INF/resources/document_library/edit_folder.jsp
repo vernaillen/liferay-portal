@@ -50,11 +50,20 @@ List<WorkflowDefinition> workflowDefinitions = null;
 if (workflowEnabled) {
 	workflowDefinitions = WorkflowDefinitionManagerUtil.getActiveWorkflowDefinitions(company.getCompanyId(), QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 }
+
+String headerTitle = (folder == null) ? (rootFolder ? LanguageUtil.get(request, "home") : LanguageUtil.get(request, "new-folder")) : folder.getName();
+
+boolean portletTitleBasedNavigation = GetterUtil.getBoolean(portletConfig.getInitParameter("portlet-title-based-navigation"));
+
+if (portletTitleBasedNavigation) {
+	portletDisplay.setShowBackIcon(true);
+	portletDisplay.setURLBack(redirect);
+
+	renderResponse.setTitle(headerTitle);
+}
 %>
 
-<div <%= portletName.equals(DLPortletKeys.DOCUMENT_LIBRARY_ADMIN) ? "class=\"container-fluid-1280\"" : StringPool.BLANK %>>
-	<liferay-util:include page="/document_library/top_links.jsp" servletContext="<%= application %>" />
-
+<div <%= portletTitleBasedNavigation ? "class=\"container-fluid-1280\"" : StringPool.BLANK %>>
 	<liferay-util:buffer var="removeFileEntryTypeIcon">
 		<liferay-ui:icon
 			iconCssClass="icon-remove"
@@ -74,12 +83,15 @@ if (workflowEnabled) {
 		<aui:input name="repositoryId" type="hidden" value="<%= repositoryId %>" />
 		<aui:input name="parentFolderId" type="hidden" value="<%= parentFolderId %>" />
 
-		<liferay-ui:header
-			backURL="<%= redirect %>"
-			localizeTitle="<%= (folder == null) %>"
-			title='<%= (folder == null) ? (rootFolder ? "home" : "new-folder") : folder.getName() %>'
-		/>
+		<c:if test="<%= !portletTitleBasedNavigation %>">
+			<liferay-ui:header
+				backURL="<%= redirect %>"
+				localizeTitle="<%= false %>"
+				title="<%= headerTitle %>"
+			/>
+		</c:if>
 
+		<liferay-ui:error exception="<%= DuplicateFileEntryException.class %>" message="please-enter-a-unique-folder-name" />
 		<liferay-ui:error exception="<%= DuplicateFolderNameException.class %>" message="please-enter-a-unique-folder-name" />
 
 		<liferay-ui:error exception="<%= FolderNameException.class %>">
@@ -100,27 +112,20 @@ if (workflowEnabled) {
 
 		<aui:model-context bean="<%= folder %>" model="<%= DLFolder.class %>" />
 
-		<aui:fieldset>
-			<c:if test="<%= !rootFolder %>">
-				<c:if test="<%= folder != null %>">
-					<aui:input name="parentFolder" type="resource" value="<%= parentFolderName %>" />
+		<aui:fieldset-group markupView="lexicon">
+			<aui:fieldset>
+				<c:if test="<%= !rootFolder %>">
+					<c:if test="<%= folder != null %>">
+						<aui:input name="parentFolder" type="resource" value="<%= parentFolderName %>" />
+					</c:if>
+
+					<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" name="name" />
+
+					<c:if test="<%= (parentFolder == null) || parentFolder.isSupportsMetadata() %>">
+						<aui:input name="description" />
+					</c:if>
 				</c:if>
-
-				<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" name="name" />
-
-				<c:if test="<%= (parentFolder == null) || parentFolder.isSupportsMetadata() %>">
-					<aui:input name="description" />
-
-					<liferay-ui:custom-attributes-available className="<%= DLFolderConstants.getClassName() %>">
-						<liferay-ui:custom-attribute-list
-							className="<%= DLFolderConstants.getClassName() %>"
-							classPK="<%= (folder != null) ? folder.getFolderId() : 0 %>"
-							editable="<%= true %>"
-							label="<%= true %>"
-						/>
-					</liferay-ui:custom-attributes-available>
-				</c:if>
-			</c:if>
+			</aui:fieldset>
 
 			<c:if test="<%= rootFolder || ((folder != null) && (folder.getModel() instanceof DLFolder)) %>">
 
@@ -147,7 +152,7 @@ if (workflowEnabled) {
 				}
 				%>
 
-				<aui:field-wrapper helpMessage='<%= rootFolder ? "" : "document-type-restrictions-help" %>' label='<%= rootFolder ? "" : (workflowEnabled ? "document-type-restrictions-and-workflow" : "document-type-restrictions") %>'>
+				<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" helpMessage='<%= rootFolder ? "" : "document-type-restrictions-help" %>' label='<%= rootFolder ? "" : (workflowEnabled ? "document-type-restrictions-and-workflow" : "document-type-restrictions") %>'>
 					<c:if test="<%= !rootFolder %>">
 						<aui:input checked="<%= dlFolder.getRestrictionType() == DLFolderConstants.RESTRICTION_TYPE_INHERIT %>" id="restrictionTypeInherit" label='<%= workflowEnabled ? LanguageUtil.format(request, "use-document-type-restrictions-and-workflow-of-the-parent-folder-x", parentFolderName, false) : LanguageUtil.format(request, "use-document-type-restrictions-of-the-parent-folder-x", parentFolderName, false) %>' name="restrictionType" type="radio" value="<%= DLFolderConstants.RESTRICTION_TYPE_INHERIT %>" />
 
@@ -278,23 +283,36 @@ if (workflowEnabled) {
 							</aui:select>
 						</div>
 					</c:if>
-				</aui:field-wrapper>
+				</aui:fieldset>
+			</c:if>
+
+			<c:if test="<%= (parentFolder == null) || parentFolder.isSupportsMetadata() %>">
+				<liferay-ui:custom-attributes-available className="<%= DLFolderConstants.getClassName() %>">
+					<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" label="custom-fields">
+						<liferay-ui:custom-attribute-list
+							className="<%= DLFolderConstants.getClassName() %>"
+							classPK="<%= (folder != null) ? folder.getFolderId() : 0 %>"
+							editable="<%= true %>"
+							label="<%= true %>"
+						/>
+					</aui:fieldset>
+				</liferay-ui:custom-attributes-available>
 			</c:if>
 
 			<c:if test="<%= !rootFolder && (folder == null) %>">
-				<aui:field-wrapper label="permissions">
+				<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" label="permissions">
 					<liferay-ui:input-permissions
 						modelName="<%= DLFolderConstants.getClassName() %>"
 					/>
-				</aui:field-wrapper>
+				</aui:fieldset>
 			</c:if>
+		</aui:fieldset-group>
 
-			<aui:button-row>
-				<aui:button type="submit" />
+		<aui:button-row>
+			<aui:button cssClass="btn-lg" type="submit" />
 
-				<aui:button href="<%= redirect %>" type="cancel" />
-			</aui:button-row>
-		</aui:fieldset>
+			<aui:button cssClass="btn-lg" href="<%= redirect %>" type="cancel" />
+		</aui:button-row>
 	</aui:form>
 </div>
 

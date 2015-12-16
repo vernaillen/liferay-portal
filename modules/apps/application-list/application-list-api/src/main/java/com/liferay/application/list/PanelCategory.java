@@ -14,6 +14,11 @@
 
 package com.liferay.application.list;
 
+import com.liferay.application.list.display.context.logic.PanelCategoryHelper;
+import com.liferay.portal.model.Group;
+import com.liferay.portal.model.User;
+import com.liferay.portal.security.permission.PermissionChecker;
+
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -26,6 +31,10 @@ public interface PanelCategory extends PanelEntry {
 
 	public String getIconCssClass();
 
+	public int getNotificationsCount(
+		PanelCategoryHelper panelCategoryHelper,
+		PermissionChecker permissionChecker, Group group, User user);
+
 	public boolean include(
 			HttpServletRequest request, HttpServletResponse response)
 		throws IOException;
@@ -33,5 +42,8 @@ public interface PanelCategory extends PanelEntry {
 	public boolean includeHeader(
 			HttpServletRequest request, HttpServletResponse response)
 		throws IOException;
+
+	public boolean isActive(
+		HttpServletRequest request, PanelCategoryHelper panelCategoryHelper);
 
 }

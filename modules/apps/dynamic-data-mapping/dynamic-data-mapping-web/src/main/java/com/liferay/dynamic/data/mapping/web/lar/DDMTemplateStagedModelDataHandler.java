@@ -142,51 +142,6 @@ public class DDMTemplateStagedModelDataHandler
 	}
 
 	@Override
-	public void importMissingReference(
-			PortletDataContext portletDataContext, Element referenceElement)
-		throws PortletDataException {
-
-		importMissingGroupReference(portletDataContext, referenceElement);
-
-		String uuid = referenceElement.attributeValue("uuid");
-
-		Map<Long, Long> groupIds =
-			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
-				Group.class);
-
-		long groupId = GetterUtil.getLong(
-			referenceElement.attributeValue("group-id"));
-
-		groupId = MapUtil.getLong(groupIds, groupId);
-
-		long classNameId = PortalUtil.getClassNameId(
-			referenceElement.attributeValue("referenced-class-name"));
-		String templateKey = referenceElement.attributeValue("template-key");
-		boolean preloaded = GetterUtil.getBoolean(
-			referenceElement.attributeValue("preloaded"));
-
-		DDMTemplate existingTemplate = null;
-
-		existingTemplate = fetchExistingTemplate(
-			uuid, groupId, classNameId, templateKey, preloaded);
-
-		Map<Long, Long> templateIds =
-			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
-				DDMTemplate.class);
-
-		long templateId = GetterUtil.getLong(
-			referenceElement.attributeValue("class-pk"));
-
-		templateIds.put(templateId, existingTemplate.getTemplateId());
-
-		Map<String, String> templateKeys =
-			(Map<String, String>)portletDataContext.getNewPrimaryKeysMap(
-				DDMTemplate.class + ".ddmTemplateKey");
-
-		templateKeys.put(templateKey, existingTemplate.getTemplateKey());
-	}
-
-	@Override
 	public boolean validateReference(
 		PortletDataContext portletDataContext, Element referenceElement) {
 
@@ -283,9 +238,60 @@ public class DDMTemplateStagedModelDataHandler
 			templateElement.addAttribute("preloaded", "true");
 		}
 
+		if (template.getResourceClassNameId() > 0) {
+			templateElement.addAttribute(
+				"resource-class-name",
+				PortalUtil.getClassName(template.getResourceClassNameId()));
+		}
+
 		portletDataContext.addClassedModel(
 			templateElement, ExportImportPathUtil.getModelPath(template),
 			template);
+	}
+
+	@Override
+	protected void doImportMissingReference(
+			PortletDataContext portletDataContext, Element referenceElement)
+		throws PortletDataException {
+
+		importMissingGroupReference(portletDataContext, referenceElement);
+
+		String uuid = referenceElement.attributeValue("uuid");
+
+		Map<Long, Long> groupIds =
+			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
+				Group.class);
+
+		long groupId = GetterUtil.getLong(
+			referenceElement.attributeValue("group-id"));
+
+		groupId = MapUtil.getLong(groupIds, groupId);
+
+		long classNameId = PortalUtil.getClassNameId(
+			referenceElement.attributeValue("referenced-class-name"));
+		String templateKey = referenceElement.attributeValue("template-key");
+		boolean preloaded = GetterUtil.getBoolean(
+			referenceElement.attributeValue("preloaded"));
+
+		DDMTemplate existingTemplate = null;
+
+		existingTemplate = fetchExistingTemplate(
+			uuid, groupId, classNameId, templateKey, preloaded);
+
+		Map<Long, Long> templateIds =
+			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
+				DDMTemplate.class);
+
+		long templateId = GetterUtil.getLong(
+			referenceElement.attributeValue("class-pk"));
+
+		templateIds.put(templateId, existingTemplate.getTemplateId());
+
+		Map<String, String> templateKeys =
+			(Map<String, String>)portletDataContext.getNewPrimaryKeysMap(
+				DDMTemplate.class + ".ddmTemplateKey");
+
+		templateKeys.put(templateKey, existingTemplate.getTemplateKey());
 	}
 
 	@Override
@@ -305,14 +311,13 @@ public class DDMTemplateStagedModelDataHandler
 			classPK = MapUtil.getLong(structureIds, classPK, classPK);
 		}
 
+		Element element = portletDataContext.getImportDataStagedModelElement(
+			template);
+
 		File smallFile = null;
 
 		try {
 			if (template.isSmallImage()) {
-				Element element =
-					portletDataContext.getImportDataStagedModelElement(
-						template);
-
 				String smallImagePath = element.attributeValue(
 					"small-image-path");
 
@@ -345,16 +350,24 @@ public class DDMTemplateStagedModelDataHandler
 
 			template.setScript(script);
 
+			long resourceClassNameId = 0L;
+
+			if (template.getResourceClassNameId() > 0) {
+				String resourceClassName = element.attributeValue(
+					"resource-class-name");
+
+				if (Validator.isNotNull(resourceClassName)) {
+					resourceClassNameId = PortalUtil.getClassNameId(
+						resourceClassName);
+				}
+			}
+
 			ServiceContext serviceContext =
 				portletDataContext.createServiceContext(template);
 
 			DDMTemplate importedTemplate = null;
 
 			if (portletDataContext.isDataStrategyMirror()) {
-				Element element =
-					portletDataContext.getImportDataStagedModelElement(
-						template);
-
 				boolean preloaded = GetterUtil.getBoolean(
 					element.attributeValue("preloaded"));
 
@@ -368,8 +381,7 @@ public class DDMTemplateStagedModelDataHandler
 
 					importedTemplate = _ddmTemplateLocalService.addTemplate(
 						userId, portletDataContext.getScopeGroupId(),
-						template.getClassNameId(), classPK,
-						template.getResourceClassNameId(),
+						template.getClassNameId(), classPK, resourceClassNameId,
 						template.getTemplateKey(), template.getNameMap(),
 						template.getDescriptionMap(), template.getType(),
 						template.getMode(), template.getLanguage(),
@@ -391,9 +403,8 @@ public class DDMTemplateStagedModelDataHandler
 			else {
 				importedTemplate = _ddmTemplateLocalService.addTemplate(
 					userId, portletDataContext.getScopeGroupId(),
-					template.getClassNameId(), classPK,
-					template.getResourceClassNameId(), null,
-					template.getNameMap(), template.getDescriptionMap(),
+					template.getClassNameId(), classPK, resourceClassNameId,
+					null, template.getNameMap(), template.getDescriptionMap(),
 					template.getType(), template.getMode(),
 					template.getLanguage(), template.getScript(),
 					template.isCacheable(), template.isSmallImage(),
@@ -466,11 +477,11 @@ public class DDMTemplateStagedModelDataHandler
 		_userLocalService = userLocalService;
 	}
 
-	private DDMStructureLocalService _ddmStructureLocalService;
-	private DDMTemplateExportImportContentProcessor
+	private volatile DDMStructureLocalService _ddmStructureLocalService;
+	private volatile DDMTemplateExportImportContentProcessor
 		_ddmTemplateExportImportContentProcessor;
-	private DDMTemplateLocalService _ddmTemplateLocalService;
-	private ImageLocalService _imageLocalService;
-	private UserLocalService _userLocalService;
+	private volatile DDMTemplateLocalService _ddmTemplateLocalService;
+	private volatile ImageLocalService _imageLocalService;
+	private volatile UserLocalService _userLocalService;
 
 }

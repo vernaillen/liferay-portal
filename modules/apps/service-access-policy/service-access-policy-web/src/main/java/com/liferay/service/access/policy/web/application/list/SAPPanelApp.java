@@ -30,7 +30,7 @@ import org.osgi.service.component.annotations.Reference;
 	immediate = true,
 	property = {
 		"panel.category.key=" + PanelCategoryKeys.CONTROL_PANEL_CONFIGURATION,
-		"service.ranking:Integer=800"
+		"service.ranking:Integer=600"
 	},
 	service = PanelApp.class
 )
@@ -41,6 +41,7 @@ public class SAPPanelApp extends BasePanelApp {
 		return SAPPortletKeys.SERVICE_ACCESS_POLICY;
 	}
 
+	@Override
 	@Reference(
 		target = "(javax.portlet.name=" + SAPPortletKeys.SERVICE_ACCESS_POLICY + ")",
 		unbind = "-"

@@ -16,53 +16,51 @@
 
 <%@ include file="/portlet/init.jsp" %>
 
-<c:if test="<%= productMenuDisplayContext.showProductMenu() %>">
+<c:if test="<%= productMenuDisplayContext.isShowProductMenu() %>">
 	<h4 class="sidebar-header">
-		<span class="company-details">
-			<img alt="" class="company-logo" src="<%= themeDisplay.getCompanyLogo() %>" />
-			<span class="company-name"><%= company.getName() %></span>
-		</span>
+		<a href="<%= themeDisplay.getURLPortal() %>">
+			<span class="company-details">
+				<img alt="" class="company-logo" src="<%= themeDisplay.getCompanyLogo() %>" />
+				<span class="company-name"><%= company.getName() %></span>
+			</span>
 
-		<aui:icon cssClass="icon-monospaced sidenav-close visible-xs-block" image="remove" url="javascript:;" />
+			<aui:icon cssClass="icon-monospaced sidenav-close visible-xs-block" image="remove" url="javascript:;" />
+		</a>
 	</h4>
 
-	<ul class="nav nav-tabs product-menu-tabs">
-
-		<%
-		List<PanelCategory> childPanelCategories = productMenuDisplayContext.getChildPanelCategories();
-
-		for (PanelCategory childPanelCategory : childPanelCategories) {
-		%>
-
-			<li class="<%= "col-xs-" + (12 / childPanelCategories.size()) %> <%= Validator.equals(childPanelCategory.getKey(), productMenuDisplayContext.getRootPanelCategoryKey()) ? "active" : StringPool.BLANK %>">
-				<a aria-expanded="true" data-toggle="tab" href="#<portlet:namespace /><%= AUIUtil.normalizeId(childPanelCategory.getKey()) %>">
-					<c:if test="<%= !childPanelCategory.includeHeader(request, new PipingServletResponse(pageContext)) %>">
-						<div class="product-menu-tab-icon">
-							<span class="<%= childPanelCategory.getIconCssClass() %> icon-monospaced"></span>
-						</div>
-
-						<div class="product-menu-tab-text">
-							<%= childPanelCategory.getLabel(locale) %>
-						</div>
-					</c:if>
-				</a>
-			</li>
-
-		<%
-		}
-		%>
-
-	</ul>
-
 	<div class="sidebar-body">
-		<div class="tab-content">
+		<div aria-multiselectable="true" class="panel-group" id="<portlet:namespace />Accordion" role="tablist">
 
 			<%
+			List<PanelCategory> childPanelCategories = productMenuDisplayContext.getChildPanelCategories();
+
 			for (PanelCategory childPanelCategory : childPanelCategories) {
 			%>
 
-				<div class="fade in tab-pane <%= Validator.equals(childPanelCategory.getKey(), productMenuDisplayContext.getRootPanelCategoryKey()) ? "active" : StringPool.BLANK %>" id="<portlet:namespace /><%= AUIUtil.normalizeId(childPanelCategory.getKey()) %>">
-					<liferay-application-list:panel-content panelCategory="<%= childPanelCategory %>" />
+				<div class="panel">
+					<div class="panel-heading" id="<portlet:namespace /><%= AUIUtil.normalizeId(childPanelCategory.getKey()) %>Heading" role="tab">
+						<div class="panel-title">
+							<c:if test="<%= !childPanelCategory.includeHeader(request, new PipingServletResponse(pageContext)) %>">
+								<div aria-controls="#<portlet:namespace /><%= AUIUtil.normalizeId(childPanelCategory.getKey()) %>Collapse" aria-expanded="<%= Validator.equals(childPanelCategory.getKey(), productMenuDisplayContext.getRootPanelCategoryKey()) %>" class="panel-toggler collapse-icon <%= Validator.equals(childPanelCategory.getKey(), productMenuDisplayContext.getRootPanelCategoryKey()) ? StringPool.BLANK : "collapsed" %>" class="collapsed" data-parent="#<portlet:namespace />Accordion" data-toggle="collapse" href="#<portlet:namespace /><%= AUIUtil.normalizeId(childPanelCategory.getKey()) %>Collapse" role="button">
+									<span><%= childPanelCategory.getLabel(locale) %></span>
+
+									<%
+									int notificationsCount = productMenuDisplayContext.getNotificationsCount(childPanelCategory);
+									%>
+
+									<c:if test="<%= notificationsCount > 0 %>">
+										<span class="panel-notifications-count sticker sticker-right sticker-rounded sticker-sm sticker-warning"><%= notificationsCount %></span>
+									</c:if>
+								</div>
+							</c:if>
+						</div>
+					</div>
+
+					<div aria-expanded="false" aria-labelledby="<portlet:namespace /><%= AUIUtil.normalizeId(childPanelCategory.getKey()) %>Heading" class="panel-collapse collapse <%= Validator.equals(childPanelCategory.getKey(), productMenuDisplayContext.getRootPanelCategoryKey()) ? "in" : StringPool.BLANK %>" id="<portlet:namespace /><%= AUIUtil.normalizeId(childPanelCategory.getKey()) %>Collapse" role="tabpanel">
+						<div class="panel-body">
+							<liferay-application-list:panel-content panelCategory="<%= childPanelCategory %>" />
+						</div>
+					</div>
 				</div>
 
 			<%
@@ -72,46 +70,13 @@
 		</div>
 	</div>
 
-	<div class="sidebar-footer">
-		<div class="nameplate">
-			<div class="nameplate-field">
-				<liferay-ui:user-portrait
-					userId="<%= user.getUserId() %>"
-				/>
-			</div>
-
-			<div class="nameplate-content">
-				<div class="user-heading">
-					<%= HtmlUtil.escape(user.getFullName()) %>
-				</div>
-
-				<ul class="user-subheading">
-					<c:if test="<%= productMenuDisplayContext.showMySiteGroup(false) %>">
-						<li>
-							<aui:a href="<%= productMenuDisplayContext.getMySiteGroupURL(false) %>" label="profile" />
-						</li>
-					</c:if>
-
-					<c:if test="<%= productMenuDisplayContext.showMySiteGroup(true) %>">
-						<li>
-							<aui:a href="<%= productMenuDisplayContext.getMySiteGroupURL(true) %>" label="dashboard" />
-						</li>
-					</c:if>
-				</ul>
-			</div>
-
-			<c:if test="<%= themeDisplay.isShowSignOutIcon() %>">
-				<div class="nameplate-field">
-					<a class="icon-lg icon-monospaced icon-off user-signout" href="<%= themeDisplay.getURLSignOut() %>"></a>
-				</div>
-			</c:if>
-		</div>
-	</div>
-
 	<aui:script use="liferay-store">
 		AUI.$('#sidenavToggleId').sideNavigation();
 
 		var sidenavSlider = AUI.$('#sidenavSliderId');
+
+		sidenavSlider.off('closed.lexicon.sidenav');
+		sidenavSlider.off('open.lexicon.sidenav');
 
 		sidenavSlider.on(
 			'closed.lexicon.sidenav',

@@ -30,7 +30,7 @@ import org.osgi.service.component.annotations.Reference;
 	immediate = true,
 	property = {
 		"panel.category.key=" + PanelCategoryKeys.CONTROL_PANEL_CONFIGURATION,
-		"service.ranking:Integer=200"
+		"service.ranking:Integer=300"
 	},
 	service = PanelApp.class
 )
@@ -41,6 +41,7 @@ public class CustomFieldsPanelApp extends BasePanelApp {
 		return ExpandoPortletKeys.EXPANDO;
 	}
 
+	@Override
 	@Reference(
 		target = "(javax.portlet.name=" + ExpandoPortletKeys.EXPANDO + ")",
 		unbind = "-"

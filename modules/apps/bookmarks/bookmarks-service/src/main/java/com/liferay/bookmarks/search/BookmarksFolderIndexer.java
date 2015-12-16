@@ -18,12 +18,12 @@ import com.liferay.bookmarks.model.BookmarksFolder;
 import com.liferay.bookmarks.service.BookmarksFolderLocalService;
 import com.liferay.bookmarks.service.permission.BookmarksFolderPermissionChecker;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.BaseIndexer;
 import com.liferay.portal.kernel.search.Document;
-import com.liferay.portal.kernel.search.DocumentImpl;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.SearchContext;
@@ -88,13 +88,8 @@ public class BookmarksFolderIndexer extends BaseIndexer<BookmarksFolder> {
 
 	@Override
 	protected void doDelete(BookmarksFolder bookmarksFolder) throws Exception {
-		Document document = new DocumentImpl();
-
-		document.addUID(CLASS_NAME, bookmarksFolder.getFolderId());
-
-		SearchEngineUtil.deleteDocument(
-			getSearchEngineId(), bookmarksFolder.getCompanyId(),
-			document.get(Field.UID), isCommitImmediately());
+		deleteDocument(
+			bookmarksFolder.getCompanyId(), bookmarksFolder.getFolderId());
 	}
 
 	@Override
@@ -137,17 +132,11 @@ public class BookmarksFolderIndexer extends BaseIndexer<BookmarksFolder> {
 
 	@Override
 	protected void doReindex(BookmarksFolder bookmarksFolder) throws Exception {
-		Document document = getDocument(bookmarksFolder);
-
 		if (!bookmarksFolder.isApproved() && !bookmarksFolder.isInTrash()) {
 			return;
 		}
 
-		if (document != null) {
-			SearchEngineUtil.updateDocument(
-				getSearchEngineId(), bookmarksFolder.getCompanyId(), document,
-				isCommitImmediately());
-		}
+		Document document = getDocument(bookmarksFolder);
 
 		SearchEngineUtil.updateDocument(
 			getSearchEngineId(), bookmarksFolder.getCompanyId(), document,
@@ -170,11 +159,11 @@ public class BookmarksFolderIndexer extends BaseIndexer<BookmarksFolder> {
 	}
 
 	protected void reindexFolders(long companyId) throws PortalException {
-		final ActionableDynamicQuery actionableDynamicQuery =
-			_bookmarksFolderLocalService.getActionableDynamicQuery();
+		final IndexableActionableDynamicQuery indexableActionableDynamicQuery =
+			_bookmarksFolderLocalService.getIndexableActionableDynamicQuery();
 
-		actionableDynamicQuery.setCompanyId(companyId);
-		actionableDynamicQuery.setPerformActionMethod(
+		indexableActionableDynamicQuery.setCompanyId(companyId);
+		indexableActionableDynamicQuery.setPerformActionMethod(
 			new ActionableDynamicQuery.PerformActionMethod<BookmarksFolder>() {
 
 				@Override
@@ -182,7 +171,7 @@ public class BookmarksFolderIndexer extends BaseIndexer<BookmarksFolder> {
 					try {
 						Document document = getDocument(folder);
 
-						actionableDynamicQuery.addDocument(document);
+						indexableActionableDynamicQuery.addDocuments(document);
 					}
 					catch (PortalException pe) {
 						if (_log.isWarnEnabled()) {
@@ -195,9 +184,9 @@ public class BookmarksFolderIndexer extends BaseIndexer<BookmarksFolder> {
 				}
 
 			});
-		actionableDynamicQuery.setSearchEngineId(getSearchEngineId());
+		indexableActionableDynamicQuery.setSearchEngineId(getSearchEngineId());
 
-		actionableDynamicQuery.performActions();
+		indexableActionableDynamicQuery.performActions();
 	}
 
 	@Reference(unbind = "-")
@@ -210,6 +199,6 @@ public class BookmarksFolderIndexer extends BaseIndexer<BookmarksFolder> {
 	private static final Log _log = LogFactoryUtil.getLog(
 		BookmarksFolderIndexer.class);
 
-	private BookmarksFolderLocalService _bookmarksFolderLocalService;
+	private volatile BookmarksFolderLocalService _bookmarksFolderLocalService;
 
 }

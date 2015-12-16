@@ -19,7 +19,9 @@ import com.liferay.bookmarks.exception.EntryURLException;
 import com.liferay.bookmarks.exception.NoSuchEntryException;
 import com.liferay.bookmarks.exception.NoSuchFolderException;
 import com.liferay.bookmarks.model.BookmarksEntry;
+import com.liferay.bookmarks.model.BookmarksFolder;
 import com.liferay.bookmarks.service.BookmarksEntryService;
+import com.liferay.bookmarks.service.BookmarksFolderService;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
@@ -29,13 +31,13 @@ import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.TrashedModel;
 import com.liferay.portal.security.auth.PrincipalException;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextFactory;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
-import com.liferay.portal.util.WebKeys;
 import com.liferay.portlet.asset.AssetCategoryException;
 import com.liferay.portlet.asset.AssetTagException;
 import com.liferay.portlet.trash.service.TrashEntryService;
@@ -77,8 +79,8 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 			deleteEntryIds = new long[] {entryId};
 		}
 		else {
-			deleteEntryIds = StringUtil.split(
-				ParamUtil.getString(actionRequest, "deleteEntryIds"), 0L);
+			deleteEntryIds = ParamUtil.getLongValues(
+				actionRequest, "rowIdsBookmarksEntry");
 		}
 
 		List<TrashedModel> trashedModels = new ArrayList<>();
@@ -92,6 +94,23 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 			}
 			else {
 				_bookmarksEntryService.deleteEntry(deleteEntryId);
+			}
+		}
+
+		long[] deleteFolderIds = ParamUtil.getLongValues(
+			actionRequest, "rowIdsBookmarksFolder");
+
+		for (int i = 0; i < deleteFolderIds.length; i++) {
+			long deleteFolderId = deleteFolderIds[i];
+
+			if (moveToTrash) {
+				BookmarksFolder folder =
+					_bookmarksFolderService.moveFolderToTrash(deleteFolderId);
+
+				trashedModels.add(folder);
+			}
+			else {
+				_bookmarksFolderService.deleteFolder(deleteFolderId);
 			}
 		}
 
@@ -153,7 +172,7 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 							entry.getEntryId());
 					}
 
-					actionResponse.sendRedirect(redirect);
+					actionRequest.setAttribute(WebKeys.REDIRECT, redirect);
 				}
 			}
 		}
@@ -198,6 +217,13 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 		BookmarksEntryService bookmarksEntryService) {
 
 		_bookmarksEntryService = bookmarksEntryService;
+	}
+
+	@Reference(unbind = "-")
+	protected void setBookmarksFolderService(
+		BookmarksFolderService bookmarksFolderService) {
+
+		_bookmarksFolderService = bookmarksFolderService;
 	}
 
 	@Reference(unbind = "-")
@@ -259,7 +285,8 @@ public class EditEntryMVCActionCommand extends BaseMVCActionCommand {
 		return entry;
 	}
 
-	private BookmarksEntryService _bookmarksEntryService;
-	private TrashEntryService _trashEntryService;
+	private volatile BookmarksEntryService _bookmarksEntryService;
+	private volatile BookmarksFolderService _bookmarksFolderService;
+	private volatile TrashEntryService _trashEntryService;
 
 }

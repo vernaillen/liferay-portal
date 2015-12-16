@@ -202,7 +202,8 @@ public class CalendarBookingLocalServiceImpl
 		updateAsset(
 			userId, calendarBooking, serviceContext.getAssetCategoryIds(),
 			serviceContext.getAssetTagNames(),
-			serviceContext.getAssetLinkEntryIds());
+			serviceContext.getAssetLinkEntryIds(),
+			serviceContext.getAssetPriority());
 
 		// Social
 
@@ -326,9 +327,9 @@ public class CalendarBookingLocalServiceImpl
 		// Workflow
 
 		workflowInstanceLinkLocalService.deleteWorkflowInstanceLinks(
-				calendarBooking.getCompanyId(), calendarBooking.getGroupId(),
-				CalendarBooking.class.getName(),
-				calendarBooking.getCalendarBookingId());
+			calendarBooking.getCompanyId(), calendarBooking.getGroupId(),
+			CalendarBooking.class.getName(),
+			calendarBooking.getCalendarBookingId());
 
 		return calendarBooking;
 	}
@@ -590,6 +591,8 @@ public class CalendarBookingLocalServiceImpl
 			long userId, CalendarBooking calendarBooking)
 		throws PortalException {
 
+		// Calendar booking
+
 		if (!calendarBooking.isMasterBooking()) {
 			return calendarBooking;
 		}
@@ -602,6 +605,8 @@ public class CalendarBookingLocalServiceImpl
 			userId, calendarBooking,
 			CalendarBookingWorkflowConstants.STATUS_IN_TRASH, serviceContext);
 
+		// Social
+
 		socialActivityCounterLocalService.disableActivityCounters(
 			CalendarBooking.class.getName(),
 			calendarBooking.getCalendarBookingId());
@@ -612,6 +617,13 @@ public class CalendarBookingLocalServiceImpl
 			calendarBooking.getCalendarBookingId(),
 			SocialActivityConstants.TYPE_MOVE_TO_TRASH,
 			getExtraDataJSON(calendarBooking), 0);
+
+		// Workflow
+
+		workflowInstanceLinkLocalService.deleteWorkflowInstanceLinks(
+			calendarBooking.getCompanyId(), calendarBooking.getGroupId(),
+			CalendarBooking.class.getName(),
+			calendarBooking.getCalendarBookingId());
 
 		return calendarBooking;
 	}
@@ -632,6 +644,8 @@ public class CalendarBookingLocalServiceImpl
 			long userId, long calendarBookingId)
 		throws PortalException {
 
+		// Calendar booking
+
 		CalendarBooking calendarBooking = getCalendarBooking(calendarBookingId);
 
 		if (!calendarBooking.isMasterBooking()) {
@@ -648,6 +662,8 @@ public class CalendarBookingLocalServiceImpl
 		calendarBookingLocalService.updateStatus(
 			userId, calendarBookingId, trashEntry.getStatus(), serviceContext);
 
+		// Social
+
 		socialActivityCounterLocalService.enableActivityCounters(
 			CalendarBooking.class.getName(), calendarBookingId);
 
@@ -656,6 +672,14 @@ public class CalendarBookingLocalServiceImpl
 			CalendarBooking.class.getName(), calendarBookingId,
 			SocialActivityConstants.TYPE_RESTORE_FROM_TRASH,
 			getExtraDataJSON(calendarBooking), 0);
+
+		// Workflow
+
+		WorkflowHandlerRegistryUtil.startWorkflowInstance(
+			calendarBooking.getCompanyId(), calendarBooking.getGroupId(),
+			userId, CalendarBooking.class.getName(),
+			calendarBooking.getCalendarBookingId(), calendarBooking,
+			serviceContext);
 
 		return calendarBooking;
 	}
@@ -733,7 +757,7 @@ public class CalendarBookingLocalServiceImpl
 	public void updateAsset(
 			long userId, CalendarBooking calendarBooking,
 			long[] assetCategoryIds, String[] assetTagNames,
-			long[] assetLinkEntryIds)
+			long[] assetLinkEntryIds, Double priority)
 		throws PortalException {
 
 		boolean visible = false;
@@ -752,7 +776,8 @@ public class CalendarBookingLocalServiceImpl
 			calendarBooking.getCalendarBookingId(), calendarBooking.getUuid(),
 			0, assetCategoryIds, assetTagNames, visible, null, null, null,
 			ContentTypes.TEXT_HTML, calendarBooking.getTitle(),
-			calendarBooking.getDescription(), summary, null, null, 0, 0, null);
+			calendarBooking.getDescription(), summary, null, null, 0, 0,
+			priority);
 
 		assetLinkLocalService.updateLinks(
 			userId, assetEntry.getEntryId(), assetLinkEntryIds,
@@ -850,7 +875,8 @@ public class CalendarBookingLocalServiceImpl
 		updateAsset(
 			userId, calendarBooking, serviceContext.getAssetCategoryIds(),
 			serviceContext.getAssetTagNames(),
-			serviceContext.getAssetLinkEntryIds());
+			serviceContext.getAssetLinkEntryIds(),
+			serviceContext.getAssetPriority());
 
 		// Social
 
@@ -926,8 +952,10 @@ public class CalendarBookingLocalServiceImpl
 			calendarBooking, instanceIndex, allFollowing);
 
 		if (allFollowing) {
+			Calendar calendar = calendarLocalService.getCalendar(calendarId);
+
 			Recurrence recurrenceObj = RecurrenceSerializer.deserialize(
-				recurrence);
+				recurrence, calendar.getTimeZone());
 
 			if (oldRecurrence.equals(recurrence) &&
 				(recurrenceObj.getCount() > 0)) {
@@ -1294,7 +1322,8 @@ public class CalendarBookingLocalServiceImpl
 			return;
 		}
 
-		Recurrence recurrenceObj = RecurrenceSerializer.deserialize(recurrence);
+		Recurrence recurrenceObj = RecurrenceSerializer.deserialize(
+			recurrence, startTimeJCalendar.getTimeZone());
 
 		if ((recurrenceObj.getUntilJCalendar() != null) &&
 			startTimeJCalendar.after(recurrenceObj.getUntilJCalendar())) {

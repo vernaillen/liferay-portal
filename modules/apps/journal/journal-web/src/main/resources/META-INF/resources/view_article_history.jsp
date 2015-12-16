@@ -18,15 +18,13 @@
 
 <%
 String redirect = ParamUtil.getString(request, "redirect");
+String backURL = ParamUtil.getString(request, "backURL");
 
 String referringPortletResource = ParamUtil.getString(request, "referringPortletResource");
 
 String displayStyle = ParamUtil.getString(request, "displayStyle", "list");
 
-String orderByCol = ParamUtil.getString(request, "orderByCol", "version");
-String orderByType = ParamUtil.getString(request, "orderByType", "asc");
-
-JournalArticle article = ActionUtil.getArticle(request);
+JournalArticle article = journalDisplayContext.getArticle();
 %>
 
 <c:choose>
@@ -36,16 +34,6 @@ JournalArticle article = ActionUtil.getArticle(request);
 		</div>
 	</c:when>
 	<c:otherwise>
-
-		<portlet:renderURL var="backURL">
-			<portlet:param name="mvcPath" value="/edit_article.jsp" />
-			<portlet:param name="redirect" value="<%= currentURL %>" />
-			<portlet:param name="referringPortletResource" value="<%= referringPortletResource %>" />
-			<portlet:param name="groupId" value="<%= String.valueOf(article.getGroupId()) %>" />
-			<portlet:param name="folderId" value="<%= String.valueOf(article.getFolderId()) %>" />
-			<portlet:param name="articleId" value="<%= article.getArticleId() %>" />
-			<portlet:param name="version" value="<%= String.valueOf(article.getVersion()) %>" />
-		</portlet:renderURL>
 
 		<%
 		portletDisplay.setShowBackIcon(true);
@@ -63,8 +51,8 @@ JournalArticle article = ActionUtil.getArticle(request);
 		%>
 
 		<liferay-frontend:management-bar
-			checkBoxContainerId="articleVersionsSearchContainer"
 			includeCheckBox="<%= true %>"
+			searchContainerId="articleVersions"
 		>
 			<liferay-frontend:management-bar-buttons>
 
@@ -81,8 +69,8 @@ JournalArticle article = ActionUtil.getArticle(request);
 
 			<liferay-frontend:management-bar-filters>
 				<liferay-frontend:management-bar-sort
-					orderByCol="<%= orderByCol %>"
-					orderByType="<%= orderByType %>"
+					orderByCol="<%= journalDisplayContext.getOrderByCol() %>"
+					orderByType="<%= journalDisplayContext.getOrderByType() %>"
 					orderColumns='<%= new String[] {"version", "display-date", "modified-date"} %>'
 					portletURL="<%= portletURL %>"
 				/>
@@ -90,11 +78,11 @@ JournalArticle article = ActionUtil.getArticle(request);
 
 			<liferay-frontend:management-bar-action-buttons>
 				<c:if test="<%= JournalArticlePermission.contains(permissionChecker, article, ActionKeys.DELETE) %>">
-					<aui:a cssClass="btn" href="javascript:;" iconCssClass="icon-trash" id="deleteArticles" />
+					<liferay-frontend:management-bar-button href="javascript:;" icon="trash" id="deleteArticles" label="delete" />
 				</c:if>
 
 				<c:if test="<%= JournalArticlePermission.contains(permissionChecker, article, ActionKeys.EXPIRE) %>">
-					<aui:a cssClass="btn" href="javascript:;" iconCssClass="icon-time" id="expireArticles" />
+					<liferay-frontend:management-bar-button href="javascript:;" icon="time" id="expireArticles" label="expire" />
 				</c:if>
 			</liferay-frontend:management-bar-action-buttons>
 		</liferay-frontend:management-bar>
@@ -102,8 +90,6 @@ JournalArticle article = ActionUtil.getArticle(request);
 		<aui:form action="<%= portletURL.toString() %>" cssClass="container-fluid-1280" method="post" name="fm">
 			<aui:input name="referringPortletResource" type="hidden" value="<%= referringPortletResource %>" />
 			<aui:input name="groupId" type="hidden" value="<%= String.valueOf(article.getGroupId()) %>" />
-			<aui:input name="articleIds" type="hidden" />
-			<aui:input name="expireArticleIds" type="hidden" />
 
 			<liferay-ui:search-container
 				id="articleVersions"
@@ -218,8 +204,6 @@ JournalArticle article = ActionUtil.getArticle(request);
 						if (confirm('<%= UnicodeLanguageUtil.get(request, "are-you-sure-you-want-to-delete-the-selected-version") %>')) {
 							var form = AUI.$(document.<portlet:namespace />fm);
 
-							form.fm('articleIds').val(Liferay.Util.listCheckedExcept(form, '<portlet:namespace />allRowIds'));
-
 							submitForm(form, '<portlet:actionURL name="deleteArticles"><portlet:param name="redirect" value="<%= currentURL %>" /></portlet:actionURL>');
 						}
 					}
@@ -232,8 +216,6 @@ JournalArticle article = ActionUtil.getArticle(request);
 					function() {
 						if (confirm('<%= UnicodeLanguageUtil.get(request, "are-you-sure-you-want-to-expire-the-selected-version") %>')) {
 							var form = AUI.$(document.<portlet:namespace />fm);
-
-							form.fm('expireArticleIds').val(Liferay.Util.listCheckedExcept(form, '<portlet:namespace />allRowIds'));
 
 							submitForm(form, '<portlet:actionURL name="expireArticles"><portlet:param name="redirect" value="<%= currentURL %>" /></portlet:actionURL>');
 						}

@@ -16,6 +16,7 @@ package com.liferay.wiki.search;
 
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -23,7 +24,6 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.BaseIndexer;
 import com.liferay.portal.kernel.search.Document;
-import com.liferay.portal.kernel.search.DocumentImpl;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.SearchEngineUtil;
@@ -79,13 +79,7 @@ public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 
 	@Override
 	protected void doDelete(WikiNode wikiNode) throws Exception {
-		Document document = new DocumentImpl();
-
-		document.addUID(CLASS_NAME, wikiNode.getNodeId());
-
-		SearchEngineUtil.deleteDocument(
-			getSearchEngineId(), wikiNode.getCompanyId(),
-			document.get(Field.UID), isCommitImmediately());
+		deleteDocument(wikiNode.getCompanyId(), wikiNode.getNodeId());
 	}
 
 	@Override
@@ -141,10 +135,10 @@ public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 	}
 
 	protected void reindexEntries(long companyId) throws PortalException {
-		final ActionableDynamicQuery actionableDynamicQuery =
-			_wikiNodeLocalService.getActionableDynamicQuery();
+		final IndexableActionableDynamicQuery indexableActionableDynamicQuery =
+			_wikiNodeLocalService.getIndexableActionableDynamicQuery();
 
-		actionableDynamicQuery.setAddCriteriaMethod(
+		indexableActionableDynamicQuery.setAddCriteriaMethod(
 			new ActionableDynamicQuery.AddCriteriaMethod() {
 
 				@Override
@@ -156,8 +150,8 @@ public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 				}
 
 			});
-		actionableDynamicQuery.setCompanyId(companyId);
-		actionableDynamicQuery.setPerformActionMethod(
+		indexableActionableDynamicQuery.setCompanyId(companyId);
+		indexableActionableDynamicQuery.setPerformActionMethod(
 			new ActionableDynamicQuery.PerformActionMethod<WikiNode>() {
 
 				@Override
@@ -165,7 +159,7 @@ public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 					try {
 						Document document = getDocument(node);
 
-						actionableDynamicQuery.addDocument(document);
+						indexableActionableDynamicQuery.addDocuments(document);
 					}
 					catch (PortalException pe) {
 						if (_log.isWarnEnabled()) {
@@ -177,9 +171,9 @@ public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 				}
 
 			});
-		actionableDynamicQuery.setSearchEngineId(getSearchEngineId());
+		indexableActionableDynamicQuery.setSearchEngineId(getSearchEngineId());
 
-		actionableDynamicQuery.performActions();
+		indexableActionableDynamicQuery.performActions();
 	}
 
 	@Reference(unbind = "-")
@@ -192,6 +186,6 @@ public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 	private static final Log _log = LogFactoryUtil.getLog(
 		WikiNodeIndexer.class);
 
-	private WikiNodeLocalService _wikiNodeLocalService;
+	private volatile WikiNodeLocalService _wikiNodeLocalService;
 
 }

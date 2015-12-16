@@ -295,6 +295,9 @@ public interface DDLRecordSetLocalService extends BaseLocalService,
 	public com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery getExportActionableDynamicQuery(
 		com.liferay.portlet.exportimport.lar.PortletDataContext portletDataContext);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery getIndexableActionableDynamicQuery();
+
 	/**
 	* Returns the OSGi service identifier.
 	*
@@ -373,4 +376,7 @@ public interface DDLRecordSetLocalService extends BaseLocalService,
 		int minDisplayRows,
 		com.liferay.portal.service.ServiceContext serviceContext)
 		throws PortalException;
+
+	public com.liferay.dynamic.data.lists.model.DDLRecordSet updateRecordSet(
+		long recordSetId, java.lang.String settings) throws PortalException;
 }

@@ -123,7 +123,7 @@
 </tr>
 <tr>
 	<td>REPEAT_ENDS_AFTER_FIELD</td>
-	<td>//input[contains(@id,'CalendarPortlet_count')]</td>
+	<td>//input[contains(@id,'CalendarPortlet_count')and(@class='field form-control')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -144,6 +144,21 @@
 <tr>
 	<td>REPEAT_DONE_BUTTON</td>
 	<td>//div[contains(@class,'widget-content-expanded')]/div/div/button[contains(.,'Done')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>REPEAT_MONTHLY_CURRENT_DAY</td>
+	<td>//td[contains(@class,'calendar-recurrence-month-radio')]//input[contains(@id,'CalendarPortlet_weekday') and @type='hidden']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>REPEAT_MONTHLY_CURRENT_MONTH_POSITION</td>
+	<td>//td[contains(@class,'calendar-recurrence-month-radio')]//input[contains(@id,'CalendarPortlet_position') and @type='hidden']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>REPEAT_WEEKLY_CURRENT_DAY</td>
+	<td>//td[contains(@class,'calendar-recurrence-weekday-checkbox')]//input[@disabled='']</td>
 	<td></td>
 </tr>
 <tr>

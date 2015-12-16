@@ -16,11 +16,13 @@ package com.liferay.portal.ldap.exportimport.configuration;
 
 import aQute.bnd.annotation.metatype.Meta;
 
+import com.liferay.configuration.admin.ConfigurationAdmin;
 import com.liferay.portal.ldap.configuration.CompanyScopedConfiguration;
 
 /**
  * @author Michael C. Han
  */
+@ConfigurationAdmin(category = "platform")
 @Meta.OCD(
 	factory = true,
 	id = "com.liferay.portal.ldap.exportimport.configuration.LDAPExportConfiguration",
@@ -32,10 +34,15 @@ public interface LDAPExportConfiguration extends CompanyScopedConfiguration {
 	@Override
 	public long companyId();
 
-	@Meta.AD(deflt = "false", required = false)
+	@Meta.AD(
+		deflt = "false", description = "%export-enabled-help", required = false
+	)
 	public boolean exportEnabled();
 
-	@Meta.AD(deflt = "true", required = false)
+	@Meta.AD(
+		deflt = "true", description = "%export-group-enabled-help",
+		required = false
+	)
 	public boolean exportGroupEnabled();
 
 }

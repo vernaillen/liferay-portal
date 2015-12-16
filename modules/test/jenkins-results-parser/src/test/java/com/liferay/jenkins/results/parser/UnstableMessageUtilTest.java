@@ -68,7 +68,7 @@ public class UnstableMessageUtilTest extends BaseJenkinsResultsParserTestCase {
 		urlString = replaceToken(urlString, "hostName", hostName);
 		urlString = replaceToken(urlString, "jobName", jobName);
 
-		URL url = createURL(urlString);
+		URL url = JenkinsResultsParserUtil.createURL(urlString);
 
 		downloadSample(sampleKey, url);
 	}
@@ -79,14 +79,14 @@ public class UnstableMessageUtilTest extends BaseJenkinsResultsParserTestCase {
 		JSONObject jobJSONObject = JenkinsResultsParserUtil.toJSONObject(
 			JenkinsResultsParserUtil.getLocalURL(toURLString(jobJSONFile)));
 
-		String number = jobJSONObject.getString("number");
+		int number = jobJSONObject.getInt("number");
 
 		JSONArray runsJSONArray = jobJSONObject.getJSONArray("runs");
 
 		for (int i = 0; i < runsJSONArray.length(); i++) {
 			JSONObject runJSONObject = runsJSONArray.getJSONObject(i);
 
-			if (!number.equals(runJSONObject.getString("number"))) {
+			if (number != runJSONObject.getInt("number")) {
 				continue;
 			}
 
@@ -95,14 +95,17 @@ public class UnstableMessageUtilTest extends BaseJenkinsResultsParserTestCase {
 
 			File runDir = new File(sampleDir, "run-" + i + "/" + number + "/");
 
-			downloadSampleURL(runDir, createURL(runURLString), "/api/json");
 			downloadSampleURL(
-				runDir, createURL(runURLString), "/testReport/api/json");
+				runDir, JenkinsResultsParserUtil.createURL(runURLString),
+				"/api/json");
+			downloadSampleURL(
+				runDir, JenkinsResultsParserUtil.createURL(runURLString),
+				"/testReport/api/json");
 
 			runJSONObject.put("url", toURLString(runDir));
 		}
 
-		write(jobJSONFile, jobJSONObject.toString(4));
+		JenkinsResultsParserUtil.write(jobJSONFile, jobJSONObject.toString(4));
 	}
 
 	@Override

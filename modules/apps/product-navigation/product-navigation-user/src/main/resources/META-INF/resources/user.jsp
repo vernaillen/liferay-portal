@@ -14,19 +14,29 @@
  */
 --%>
 
-<%@ taglib uri="http://liferay.com/tld/theme" prefix="liferay-theme" %>
-<%@ taglib uri="http://liferay.com/tld/ui" prefix="liferay-ui" %>
+<%@ include file="/init.jsp" %>
 
-<liferay-theme:defineObjects />
+<%
+PanelCategoryHelper panelCategoryHelper = (PanelCategoryHelper)request.getAttribute(ApplicationListWebKeys.PANEL_CATEGORY_HELPER);
 
-<div class="product-menu-tab-icon user-tab">
-	<div class="icon-monospaced">
-		<liferay-ui:user-portrait
-			userId="<%= user.getUserId() %>"
-		/>
-	</div>
-</div>
+UserPanelCategory userPanelCategory = (UserPanelCategory)request.getAttribute(ApplicationListWebKeys.PANEL_CATEGORY);
 
-<div class="product-menu-tab-text">
-	<%= user.getFirstName() %>
+int notificationsCount = panelCategoryHelper.getNotificationsCount(userPanelCategory.getKey(), permissionChecker, themeDisplay.getScopeGroup(), user);
+
+ProductMenuDisplayContext productMenuDisplayContext = new ProductMenuDisplayContext(liferayPortletRequest, liferayPortletResponse);
+%>
+
+<div aria-controls="#<portlet:namespace /><%= AUIUtil.normalizeId(userPanelCategory.getKey()) %>Collapse" aria-expanded="<%= Validator.equals(userPanelCategory.getKey(), productMenuDisplayContext.getRootPanelCategoryKey()) %>" class="panel-toggler collapse-icon <%= Validator.equals(userPanelCategory.getKey(), productMenuDisplayContext.getRootPanelCategoryKey()) ? StringPool.BLANK : "collapsed" %>" class="collapsed" data-parent="#<portlet:namespace />Accordion" data-toggle="collapse" href="#<portlet:namespace /><%= AUIUtil.normalizeId(userPanelCategory.getKey()) %>Collapse" role="button">
+	<liferay-ui:user-portrait
+		imageCssClass="user-icon-lg"
+		userId="<%= user.getUserId() %>"
+	/>
+
+	<span>
+		<%= HtmlUtil.escape(user.getFirstName()) %>
+	</span>
+
+	<c:if test="<%= notificationsCount > 0 %>">
+		<span class="panel-notifications-count sticker sticker-right sticker-rounded sticker-sm sticker-warning"><%= notificationsCount %></span>
+	</c:if>
 </div>

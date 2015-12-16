@@ -18,7 +18,6 @@
 
 <%
 String redirect = ParamUtil.getString(request, "redirect");
-String uploadExceptionRedirect = ParamUtil.getString(request, "uploadExceptionRedirect", currentURL);
 
 String referringPortletResource = ParamUtil.getString(request, "referringPortletResource");
 
@@ -100,9 +99,11 @@ else {
 		PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "add-message"), currentURL);
 	}
 }
+
+boolean portletTitleBasedNavigation = GetterUtil.getBoolean(portletConfig.getInitParameter("portlet-title-based-navigation"));
 %>
 
-<div <%= portletName.equals(MBPortletKeys.MESSAGE_BOARDS_ADMIN) ? "class=\"container-fluid-1280\"" : StringPool.BLANK %>>
+<div <%= portletTitleBasedNavigation ? "class=\"container-fluid-1280\"" : StringPool.BLANK %>>
 	<c:if test="<%= Validator.isNull(referringPortletResource) %>">
 		<liferay-util:include page="/message_boards/top_links.jsp" servletContext="<%= application %>" />
 	</c:if>
@@ -162,7 +163,6 @@ else {
 
 	<portlet:actionURL name="/message_boards/edit_message" var="editMessageURL">
 		<portlet:param name="mvcRenderCommandName" value="/message_boards/edit_message" />
-		<liferay-portlet:param name="uploadExceptionRedirect" value="<%= uploadExceptionRedirect %>" />
 	</portlet:actionURL>
 
 	<aui:form action="<%= editMessageURL %>" enctype="multipart/form-data" method="post" name="fm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "saveMessage(false);" %>'>
@@ -199,13 +199,17 @@ else {
 
 		<liferay-ui:error exception="<%= FileNameException.class %>" message="please-enter-a-file-with-a-valid-file-name" />
 
+		<%
+		long uploadServletRequestImplMaxSize = PrefsPropsUtil.getLong(PropsKeys.UPLOAD_SERVLET_REQUEST_IMPL_MAX_SIZE);
+		%>
+
 		<liferay-ui:error exception="<%= FileSizeException.class %>">
 
 			<%
 			long fileMaxSize = PrefsPropsUtil.getLong(PropsKeys.DL_FILE_MAX_SIZE);
 
 			if (fileMaxSize == 0) {
-				fileMaxSize = PrefsPropsUtil.getLong(PropsKeys.UPLOAD_SERVLET_REQUEST_IMPL_MAX_SIZE);
+				fileMaxSize = uploadServletRequestImplMaxSize;
 			}
 			%>
 
@@ -215,6 +219,10 @@ else {
 		<liferay-ui:error exception="<%= LockedThreadException.class %>" message="thread-is-locked" />
 		<liferay-ui:error exception="<%= MessageBodyException.class %>" message="please-enter-a-valid-message" />
 		<liferay-ui:error exception="<%= MessageSubjectException.class %>" message="please-enter-a-valid-subject" />
+
+		<liferay-ui:error exception="<%= UploadRequestSizeException.class %>">
+			<liferay-ui:message arguments="<%= TextFormatter.formatStorageSize(uploadServletRequestImplMaxSize, locale) %>" key="request-is-larger-than-x-and-could-not-be-processed" translateArguments="<%= false %>" />
+		</liferay-ui:error>
 
 		<liferay-ui:asset-categories-error />
 

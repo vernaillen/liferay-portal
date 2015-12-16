@@ -17,7 +17,7 @@
 <%@ include file="/init.jsp" %>
 
 <%
-JournalArticle article = ActionUtil.getArticle(request);
+JournalArticle article = journalDisplayContext.getArticle();
 
 long groupId = BeanParamUtil.getLong(article, request, "groupId", scopeGroupId);
 
@@ -65,7 +65,9 @@ boolean changeStructure = GetterUtil.getBoolean(request.getAttribute("edit_artic
 
 		<liferay-ui:error-marker key="errorSection" value="display-page" />
 
-		<h3><liferay-ui:message key="display-page" /> <liferay-ui:icon-help message="default-display-page-help" /></h3>
+		<div class="alert alert-info">
+			<liferay-ui:message key="default-display-page-help" />
+		</div>
 
 		<div id="<portlet:namespace />pagesContainer">
 			<aui:input id="pagesContainerInput" ignoreRequestValue="<%= true %>" name="layoutUuid" type="hidden" value="<%= layoutUuid %>" />

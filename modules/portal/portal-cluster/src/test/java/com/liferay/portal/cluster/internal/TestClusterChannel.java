@@ -14,8 +14,6 @@
 
 package com.liferay.portal.cluster.internal;
 
-import com.liferay.portal.cluster.ClusterChannel;
-import com.liferay.portal.cluster.ClusterReceiver;
 import com.liferay.portal.kernel.cluster.Address;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 
@@ -27,7 +25,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Tina Tian
@@ -75,20 +75,20 @@ public class TestClusterChannel implements ClusterChannel {
 
 		_bindInetAddress = InetAddress.getLoopbackAddress();
 
-		UUID uuid = UUID.randomUUID();
+		_localAddress = new TestAddress(_COUNTER.getAndIncrement());
 
-		_localAddress = new TestAddress(uuid.toString());
-
-		Map<Address, TestClusterChannel> clusterChannels = _clusters.get(
+		SortedMap<Address, TestClusterChannel> clusterChannels = _clusters.get(
 			_clusterName);
 
 		if (clusterChannels == null) {
-			clusterChannels = new HashMap<>();
+			clusterChannels = new TreeMap<>();
 
 			_clusters.put(_clusterName, clusterChannels);
 		}
 
 		clusterChannels.put(_localAddress, this);
+
+		_clusterReceiver.coordinatorAddressUpdated(clusterChannels.firstKey());
 	}
 
 	@Override
@@ -112,12 +112,13 @@ public class TestClusterChannel implements ClusterChannel {
 	}
 
 	@Override
-	public Address getLocalAddress() {
-		return _localAddress;
+	public ClusterReceiver getClusterReceiver() {
+		return _clusterReceiver;
 	}
 
-	public ClusterReceiver getReceiver() {
-		return _clusterReceiver;
+	@Override
+	public Address getLocalAddress() {
+		return _localAddress;
 	}
 
 	public boolean isClosed() {
@@ -134,7 +135,9 @@ public class TestClusterChannel implements ClusterChannel {
 		_unicastMessages.add(new ObjectValuePair<>(message, address));
 	}
 
-	private static final Map<String, Map<Address, TestClusterChannel>>
+	private static final AtomicInteger _COUNTER = new AtomicInteger();
+
+	private static final Map<String, SortedMap<Address, TestClusterChannel>>
 		_clusters = new HashMap<>();
 	private static final List<Serializable> _multicastMessages =
 		new ArrayList<>();

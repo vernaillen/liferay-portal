@@ -29,8 +29,8 @@ import org.osgi.service.component.annotations.Reference;
 @Component(
 	immediate = true,
 	property = {
-		"panel.category.key=" + PanelCategoryKeys.CONTROL_PANEL_SYSTEM,
-		"service.ranking:Integer=200"
+		"panel.category.key=" + PanelCategoryKeys.CONTROL_PANEL_CONFIGURATION,
+		"service.ranking:Integer=800"
 	},
 	service = PanelApp.class
 )
@@ -41,6 +41,7 @@ public class PortalInstancesPanelApp extends BasePanelApp {
 		return PortalInstancesPortletKeys.PORTAL_INSTANCES;
 	}
 
+	@Override
 	@Reference(
 		target = "(javax.portlet.name=" + PortalInstancesPortletKeys.PORTAL_INSTANCES + ")",
 		unbind = "-"

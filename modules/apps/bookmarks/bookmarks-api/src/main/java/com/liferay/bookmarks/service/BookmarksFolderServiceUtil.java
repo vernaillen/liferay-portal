@@ -16,8 +16,7 @@ package com.liferay.bookmarks.service;
 
 import aQute.bnd.annotation.ProviderType;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
+import com.liferay.osgi.util.ServiceTrackerFactory;
 
 import org.osgi.util.tracker.ServiceTracker;
 
@@ -198,8 +197,8 @@ public class BookmarksFolderServiceUtil {
 
 	/**
 	* @deprecated As of 7.0.0, replaced by {@link #updateFolder(long, long,
-	String, String, ServiceContext)} and {@link #mergeFolders(
-	long, long)}
+	String, String, ServiceContext)} and {@link
+	#mergeFolders(long, long)}
 	*/
 	@Deprecated
 	public static com.liferay.bookmarks.model.BookmarksFolder updateFolder(
@@ -233,14 +232,6 @@ public class BookmarksFolderServiceUtil {
 	public void setService(BookmarksFolderService service) {
 	}
 
-	private static ServiceTracker<BookmarksFolderService, BookmarksFolderService> _serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(BookmarksFolderServiceUtil.class);
-
-		_serviceTracker = new ServiceTracker<BookmarksFolderService, BookmarksFolderService>(bundle.getBundleContext(),
-				BookmarksFolderService.class, null);
-
-		_serviceTracker.open();
-	}
+	private static ServiceTracker<BookmarksFolderService, BookmarksFolderService> _serviceTracker =
+		ServiceTrackerFactory.open(BookmarksFolderService.class);
 }

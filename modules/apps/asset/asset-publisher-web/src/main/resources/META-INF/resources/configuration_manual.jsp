@@ -67,8 +67,6 @@ String eventName = "_" + HtmlUtil.escapeJS(assetPublisherDisplayContext.getPortl
 					%>
 
 					<liferay-ui:search-container-column-text name="title">
-						<i class="<%= assetRenderer.getIconCssClass() %>"></i>
-
 						<%= HtmlUtil.escape(assetRenderer.getTitle(locale)) %>
 
 						<c:if test="<%= !assetEntry.isVisible() %>">
@@ -93,12 +91,12 @@ String eventName = "_" + HtmlUtil.escapeJS(assetPublisherDisplayContext.getPortl
 
 					<liferay-ui:search-container-column-jsp
 						align="right"
-						cssClass="entry-action"
+						cssClass="list-group-item-field"
 						path="/asset_selection_action.jsp"
 					/>
 				</liferay-ui:search-container-row>
 
-				<liferay-ui:search-iterator paginate="<%= total > SearchContainer.DEFAULT_DELTA %>" />
+				<liferay-ui:search-iterator markupView="lexicon" paginate="<%= total > SearchContainer.DEFAULT_DELTA %>" />
 			</liferay-ui:search-container>
 
 			<c:if test='<%= SessionMessages.contains(renderRequest, "deletedMissingAssetEntries") %>'>
@@ -118,8 +116,9 @@ String eventName = "_" + HtmlUtil.escapeJS(assetPublisherDisplayContext.getPortl
 					<div class="edit-controls lfr-meta-actions">
 						<liferay-ui:icon-menu
 							cssClass="select-existing-selector"
-							direction="right" icon="../aui/plus"
+							direction="right"
 							message='<%= LanguageUtil.format(request, (groupIds.length == 1) ? "select" : "select-in-x", HtmlUtil.escape(group.getDescriptiveName(locale)), false) %>'
+							showArrow="<%= false %>"
 							showWhenSingleIcon="<%= true %>"
 						>
 
@@ -157,7 +156,6 @@ String eventName = "_" + HtmlUtil.escapeJS(assetPublisherDisplayContext.getPortl
 									<liferay-ui:icon
 										cssClass="asset-selector"
 										data="<%= data %>"
-										iconCssClass="<%= curRendererFactory.getIconCssClass() %>"
 										id="<%= groupId + FriendlyURLNormalizerUtil.normalize(type) %>"
 										message="<%= type %>"
 										url="javascript:;"
@@ -184,7 +182,6 @@ String eventName = "_" + HtmlUtil.escapeJS(assetPublisherDisplayContext.getPortl
 										<liferay-ui:icon
 											cssClass="asset-selector"
 											data="<%= data %>"
-											iconCssClass="<%= curRendererFactory.getIconCssClass() %>"
 											id="<%= groupId + FriendlyURLNormalizerUtil.normalize(type) %>"
 											message="<%= type %>"
 											url="javascript:;"
@@ -219,18 +216,21 @@ String eventName = "_" + HtmlUtil.escapeJS(assetPublisherDisplayContext.getPortl
 </liferay-ui:tabs>
 
 <aui:button-row>
-	<aui:button onClick='<%= renderResponse.getNamespace() + "saveSelectBoxes();" %>' type="submit" />
+	<aui:button cssClass="btn-lg" onClick='<%= renderResponse.getNamespace() + "saveSelectBoxes();" %>' type="submit" />
 </aui:button-row>
 
-<aui:script sandbox="<%= true %>">
+<aui:script>
 	function selectAsset(assetEntryId, assetClassName, assetType, assetEntryTitle, groupName) {
 		document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = 'add-selection';
+		document.<portlet:namespace />fm.<portlet:namespace />redirect.value = '<%= HtmlUtil.escapeJS(currentURL) %>';
 		document.<portlet:namespace />fm.<portlet:namespace />assetEntryId.value = assetEntryId;
 		document.<portlet:namespace />fm.<portlet:namespace />assetEntryType.value = assetClassName;
 
 		submitForm(document.<portlet:namespace />fm);
 	}
+</aui:script>
 
+<aui:script sandbox="<%= true %>">
 	$('body').on(
 		'click',
 		'.asset-selector a',

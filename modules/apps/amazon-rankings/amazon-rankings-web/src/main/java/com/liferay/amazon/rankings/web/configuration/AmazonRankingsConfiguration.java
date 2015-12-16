@@ -16,9 +16,12 @@ package com.liferay.amazon.rankings.web.configuration;
 
 import aQute.bnd.annotation.metatype.Meta;
 
+import com.liferay.configuration.admin.ConfigurationAdmin;
+
 /**
  * @author Jorge Ferrer
  */
+@ConfigurationAdmin(category = "other")
 @Meta.OCD(
 	id = "com.liferay.amazon.rankings.web.configuration.AmazonRankingsConfiguration"
 )
@@ -34,8 +37,7 @@ public interface AmazonRankingsConfiguration {
 	public String amazonSecretAccessKey();
 
 	@Meta.AD(
-		deflt = "0066620996|0131412752|0201633612|0310205719|0310241448",
-		required = false
+		deflt = "0066620996|0131412752|0201633612|0310241448", required = false
 	)
 	public String[] isbns();
 

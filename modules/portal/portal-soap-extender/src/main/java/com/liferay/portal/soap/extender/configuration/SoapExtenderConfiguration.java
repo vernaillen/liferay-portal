@@ -16,9 +16,14 @@ package com.liferay.portal.soap.extender.configuration;
 
 import aQute.bnd.annotation.metatype.Meta;
 
+import com.liferay.configuration.admin.ConfigurationAdmin;
+
 /**
  * @author Carlos Sierra Andrés
  */
+@ConfigurationAdmin(
+	category = "platform", factoryInstanceLabelAttribute = "contextPaths"
+)
 @Meta.OCD(
 	factory = true,
 	id = "com.liferay.portal.soap.extender.configuration.SoapExtenderConfiguration"

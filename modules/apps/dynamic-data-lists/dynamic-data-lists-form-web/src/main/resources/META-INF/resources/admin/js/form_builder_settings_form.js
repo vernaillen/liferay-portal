@@ -1,7 +1,13 @@
 AUI.add(
 	'liferay-ddl-form-builder-settings-form',
 	function(A) {
+		var Lang = A.Lang;
+
 		var CSS_FIELD_SETTINGS_SAVE = A.getClassName('form', 'builder', 'field', 'settings', 'save');
+
+		var TPL_MODE_TOGGLER = '<a class="settings-toggler" href="javascript:;"></a>';
+
+		var TPL_OPTION = '<option value="{value}">{label}</option>';
 
 		var TPL_SETTINGS_FORM = '<form action="javascript:;"></form>';
 
@@ -10,6 +16,9 @@ AUI.add(
 		var FormBuilderSettingsForm = A.Component.create(
 			{
 				ATTRS: {
+					dataProviders: {
+					},
+
 					field: {
 					}
 				},
@@ -22,8 +31,14 @@ AUI.add(
 					initializer: function() {
 						var instance = this;
 
+						instance._initDataProvider();
+
+						var labelField = instance.getField('label');
+
 						instance._eventHandlers.push(
-							instance.after('render', instance._afterSettingsFormRender)
+							instance.after('render', instance._afterSettingsFormRender),
+							labelField.on('keyChange', A.bind('_onLabelFieldKeyChange', instance)),
+							labelField.on(A.bind('_onLabelFieldNormalizeKey', instance), labelField, 'normalizeKey')
 						);
 					},
 
@@ -70,6 +85,47 @@ AUI.add(
 						);
 					},
 
+					_afterDataSourceTypeFieldValueChanged: function(event) {
+						var instance = this;
+
+						var optionsField = instance.getField('options');
+
+						optionsField.set('required', event.target.getValue() === 'manual');
+					},
+
+					_afterDDMDataProviderInstanceIdFieldRender: function(event) {
+						var instance = this;
+
+						var ddmDataProviderInstanceIdField = event.target;
+
+						ddmDataProviderInstanceIdField.getInputNode().html(
+							instance.get('dataProviders').map(
+								function(item) {
+									return Lang.sub(
+										TPL_OPTION,
+										{
+											label: item.name,
+											value: item.id
+										}
+									);
+								}
+							).join('')
+						);
+
+						var dataSourceTypeField = instance.getField('dataSourceType');
+
+						var dataSourceType = dataSourceTypeField.getValue();
+
+						ddmDataProviderInstanceIdField.set('visible', dataSourceType !== 'manual');
+
+						var optionsField = instance.getField('options');
+
+						var manualDataSourceType = dataSourceType === 'manual';
+
+						optionsField.set('required', manualDataSourceType);
+						optionsField.set('visible', manualDataSourceType);
+					},
+
 					_afterSettingsFormRender: function() {
 						var instance = this;
 
@@ -77,7 +133,9 @@ AUI.add(
 
 						container.append(TPL_SUBMIT_BUTTON);
 
-						instance._renderModeToggler();
+						instance._createModeToggler();
+
+						instance._syncModeToggler();
 
 						var formName = A.guid();
 
@@ -97,6 +155,52 @@ AUI.add(
 						instance._eventHandlers.push(
 							container.on('submit', A.bind('_onDOMSubmitForm', instance))
 						);
+
+						var labelField = instance.getField('label');
+						var nameField = instance.getField('name');
+
+						labelField.set('key', nameField.getValue());
+					},
+
+					_createModeToggler: function() {
+						var instance = this;
+
+						var advancedSettingsNode = instance.getPageNode(2);
+
+						var modeToggler = A.Node.create(TPL_MODE_TOGGLER);
+
+						advancedSettingsNode.placeBefore(modeToggler);
+
+						modeToggler.on('click', A.bind('_onClickModeToggler', instance));
+
+						instance.modeToggler = modeToggler;
+					},
+
+					_generateFieldName: function(key) {
+						var instance = this;
+
+						var counter = 0;
+
+						var field = instance.get('field');
+
+						var builder = field.get('builder');
+
+						var existingField;
+
+						var name = key;
+
+						do {
+							if (counter > 0) {
+								name = key + counter;
+							}
+
+							existingField = builder.getField(name);
+
+							counter++;
+						}
+						while (existingField !== undefined && existingField !== field);
+
+						return name;
 					},
 
 					_getModalStdModeNode: function(mode) {
@@ -124,15 +228,15 @@ AUI.add(
 
 						var builder = field.get('builder');
 
-						var nameSettingsField = instance.getField('name');
+						var nameField = instance.getField('name');
 
-						var sameNameField = builder.getField(nameSettingsField.getValue());
+						var sameNameField = builder.getField(nameField.getValue());
 
 						if (!!sameNameField && sameNameField !== field) {
-							nameSettingsField.showErrorMessage(Liferay.Language.get('field-name-is-already-in-use'));
-							nameSettingsField.showValidationStatus();
+							nameField.showErrorMessage(Liferay.Language.get('field-name-is-already-in-use'));
+							nameField.showValidationStatus();
 
-							nameSettingsField.focus();
+							nameField.focus();
 
 							hasErrors = true;
 						}
@@ -140,7 +244,27 @@ AUI.add(
 						return hasErrors;
 					},
 
-					_onClickModeToggler: function() {
+					_initDataProvider: function() {
+						var instance = this;
+
+						var ddmDataProviderInstanceIdField = instance.getField('ddmDataProviderInstanceId');
+
+						if (ddmDataProviderInstanceIdField) {
+							instance._eventHandlers.push(
+								ddmDataProviderInstanceIdField.after('render', A.bind('_afterDDMDataProviderInstanceIdFieldRender', instance))
+							);
+						}
+
+						var dataSourceTypeField = instance.getField('dataSourceType');
+
+						if (dataSourceTypeField) {
+							instance._eventHandlers.push(
+								dataSourceTypeField.after('valueChanged', A.bind('_afterDataSourceTypeFieldValueChanged', instance))
+							);
+						}
+					},
+
+					_onClickModeToggler: function(event) {
 						var instance = this;
 
 						var advancedSettingsNode = instance.getPageNode(2);
@@ -164,20 +288,18 @@ AUI.add(
 						instance.submit();
 					},
 
-					_renderModeToggler: function() {
+					_onLabelFieldKeyChange: function(event) {
 						var instance = this;
 
-						var basicSettingsNode = instance.getPageNode(1);
+						var nameField = instance.getField('name');
 
-						var modeToggler = A.Node.create('<a class="settings-toggler" href="javascript:;"></a>');
+						nameField.setValue(event.newVal);
+					},
 
-						modeToggler.on('click', A.bind('_onClickModeToggler', instance));
+					_onLabelFieldNormalizeKey: function(key) {
+						var instance = this;
 
-						basicSettingsNode.insert(modeToggler, 'after');
-
-						instance.modeToggler = modeToggler;
-
-						instance._syncModeToggler();
+						return new A.Do.AlterArgs(null, [instance._generateFieldName(key)]);
 					},
 
 					_syncModeToggler: function() {
@@ -188,9 +310,11 @@ AUI.add(
 						var modeToggler = instance.modeToggler;
 
 						if (advancedSettingsNode.hasClass('active')) {
+							modeToggler.addClass('active');
 							modeToggler.html(Liferay.Language.get('hide-options'));
 						}
 						else {
+							modeToggler.removeClass('active');
 							modeToggler.html(Liferay.Language.get('show-more-options'));
 						}
 					},
@@ -208,6 +332,6 @@ AUI.add(
 	},
 	'',
 	{
-		requires: ['liferay-ddm-form-renderer']
+		requires: ['liferay-ddm-form-renderer', 'liferay-form']
 	}
 );

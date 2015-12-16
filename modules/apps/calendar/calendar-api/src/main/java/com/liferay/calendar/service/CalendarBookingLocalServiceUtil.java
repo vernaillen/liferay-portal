@@ -16,8 +16,7 @@ package com.liferay.calendar.service;
 
 import aQute.bnd.annotation.ProviderType;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
+import com.liferay.osgi.util.ServiceTrackerFactory;
 
 import org.osgi.util.tracker.ServiceTracker;
 
@@ -416,6 +415,10 @@ public class CalendarBookingLocalServiceUtil {
 		return getService().getExportActionableDynamicQuery(portletDataContext);
 	}
 
+	public static com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery getIndexableActionableDynamicQuery() {
+		return getService().getIndexableActionableDynamicQuery();
+	}
+
 	/**
 	* Returns the OSGi service identifier.
 	*
@@ -501,11 +504,11 @@ public class CalendarBookingLocalServiceUtil {
 	public static void updateAsset(long userId,
 		com.liferay.calendar.model.CalendarBooking calendarBooking,
 		long[] assetCategoryIds, java.lang.String[] assetTagNames,
-		long[] assetLinkEntryIds)
+		long[] assetLinkEntryIds, java.lang.Double priority)
 		throws com.liferay.portal.kernel.exception.PortalException {
 		getService()
 			.updateAsset(userId, calendarBooking, assetCategoryIds,
-			assetTagNames, assetLinkEntryIds);
+			assetTagNames, assetLinkEntryIds, priority);
 	}
 
 	/**
@@ -622,14 +625,6 @@ public class CalendarBookingLocalServiceUtil {
 	public void setService(CalendarBookingLocalService service) {
 	}
 
-	private static ServiceTracker<CalendarBookingLocalService, CalendarBookingLocalService> _serviceTracker;
-
-	static {
-		Bundle bundle = FrameworkUtil.getBundle(CalendarBookingLocalServiceUtil.class);
-
-		_serviceTracker = new ServiceTracker<CalendarBookingLocalService, CalendarBookingLocalService>(bundle.getBundleContext(),
-				CalendarBookingLocalService.class, null);
-
-		_serviceTracker.open();
-	}
+	private static ServiceTracker<CalendarBookingLocalService, CalendarBookingLocalService> _serviceTracker =
+		ServiceTrackerFactory.open(CalendarBookingLocalService.class);
 }

@@ -340,6 +340,11 @@ public class CalendarResourceLocalServiceWrapper
 		return _calendarResourceLocalService.getExportActionableDynamicQuery(portletDataContext);
 	}
 
+	@Override
+	public com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery getIndexableActionableDynamicQuery() {
+		return _calendarResourceLocalService.getIndexableActionableDynamicQuery();
+	}
+
 	/**
 	* Returns the OSGi service identifier.
 	*
@@ -398,10 +403,11 @@ public class CalendarResourceLocalServiceWrapper
 	@Override
 	public void updateAsset(long userId,
 		com.liferay.calendar.model.CalendarResource calendarResource,
-		long[] assetCategoryIds, java.lang.String[] assetTagNames)
+		long[] assetCategoryIds, java.lang.String[] assetTagNames,
+		java.lang.Double priority)
 		throws com.liferay.portal.kernel.exception.PortalException {
 		_calendarResourceLocalService.updateAsset(userId, calendarResource,
-			assetCategoryIds, assetTagNames);
+			assetCategoryIds, assetTagNames, priority);
 	}
 
 	/**

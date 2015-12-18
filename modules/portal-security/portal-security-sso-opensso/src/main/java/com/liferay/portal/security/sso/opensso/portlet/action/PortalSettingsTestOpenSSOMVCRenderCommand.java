@@ -49,10 +49,10 @@ public class PortalSettingsTestOpenSSOMVCRenderCommand
 			RenderRequest renderRequest, RenderResponse renderResponse)
 		throws PortletException {
 
-		try {
-			RequestDispatcher requestDispatcher =
-				_servletContext.getRequestDispatcher(_JSP_PATH);
+		RequestDispatcher requestDispatcher =
+			_servletContext.getRequestDispatcher(_JSP_PATH);
 
+		try {
 			HttpServletRequest httpServletRequest =
 				PortalUtil.getHttpServletRequest(renderRequest);
 			HttpServletResponse httpServletResponse =
@@ -65,8 +65,7 @@ public class PortalSettingsTestOpenSSOMVCRenderCommand
 				_log.debug("Unable to include JSP " + _JSP_PATH, e);
 			}
 
-			throw new PortletException(
-				"Unable to include JSP " + _JSP_PATH, e);
+			throw new PortletException("Unable to include JSP " + _JSP_PATH, e);
 		}
 
 		return MVC_PATH_SKIP_DISPATCH;
